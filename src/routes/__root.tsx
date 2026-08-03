@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { StoreProvider, useStore } from "../lib/store";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,14 +79,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "АРВ — учёт и прогноз трудозатрат" },
+      {
+        name: "description",
+        content:
+          "Табели рабочего времени, подрядчики, проекты и загрузка отделов проектного бюро.",
+      },
+      { property: "og:title", content: "АРВ — учёт и прогноз трудозатрат" },
+      {
+        property: "og:description",
+        content: "Планирование загрузки сотрудников и подрядчиков проектного бюро.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -102,7 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <head>
         <HeadContent />
       </head>
@@ -114,13 +121,78 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const TABS = [
+  { to: "/", label: "Табель рабочего времени" },
+  { to: "/birthdays", label: "Дни рождения" },
+  { to: "/contractors", label: "Табель подрядчиков" },
+  { to: "/projects", label: "Проекты" },
+  { to: "/department", label: "Отдел" },
+  { to: "/employee", label: "Сотрудник" },
+] as const;
+
+function RoleSwitcher() {
+  const { store, update, currentUser } = useStore();
+  return (
+    <label className="flex items-center gap-2 text-xs text-primary-foreground/80">
+      Вход как:
+      <select
+        className="rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-1 text-xs text-primary-foreground outline-none"
+        value={currentUser?.id ?? ""}
+        onChange={(e) => update((d) => (d.currentUserId = e.target.value))}
+      >
+        {store.employees.map((e) => (
+          <option key={e.id} value={e.id} className="text-foreground">
+            {e.lastName} {e.firstName[0]}. — {e.position}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Chrome() {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="bg-primary">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div className="text-sm font-semibold tracking-wide text-primary-foreground">
+            АРВ · Учёт и прогнозирование трудозатрат
+          </div>
+          <RoleSwitcher />
+        </div>
+        <nav className="mx-auto flex max-w-[1600px] flex-wrap gap-1 px-4">
+          {TABS.map((t) => (
+            <Link
+              key={t.to}
+              to={t.to}
+              className="rounded-t-md px-3 py-2 text-sm text-primary-foreground/75 transition-colors hover:bg-primary-foreground/10"
+              activeOptions={{ exact: t.to === "/" }}
+              activeProps={{
+                className:
+                  "rounded-t-md px-3 py-2 text-sm bg-background text-foreground font-medium",
+              }}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
+      </header>
+      <main className="mx-auto max-w-[1600px] px-4 py-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <StoreProvider>
+        <Chrome />
+        <Toaster />
+      </StoreProvider>
     </QueryClientProvider>
   );
 }
