@@ -57,7 +57,10 @@ export type Project = {
   milestone?: string;
   description?: string;
   image?: string;
+  /** Проект на паузе */
+  paused?: boolean;
   members: ProjectMember[];
+
 };
 
 /** Коды табеля рабочего времени (стр. 1) */
