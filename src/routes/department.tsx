@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { PersonLink } from "@/components/PersonLink";
+
 import { useRowSelection } from "@/components/useRowSelection";
 import { fio, useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
