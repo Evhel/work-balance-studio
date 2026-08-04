@@ -1,4 +1,4 @@
-import type { Store } from "./types";
+import type { Store, Employee } from "./types";
 import { ABSENCE_CODES } from "./types";
 import { fio } from "./store";
 
@@ -32,6 +32,13 @@ export function allPeople(store: Store): Person[] {
 
 export function findPerson(store: Store, id: string) {
   return allPeople(store).find((p) => p.id === id);
+}
+
+/** Работает ли сотрудник в этот день (учёт дат начала и окончания работы) */
+export function isEmployedOn(emp: Employee, date: string) {
+  if (emp.startWork && date < emp.startWork) return false;
+  if (emp.endWork && date > emp.endWork) return false;
+  return true;
 }
 
 /** Код отсутствия (Б/ОТ/ДО/У) из табелей стр.1 и стр.3 */
