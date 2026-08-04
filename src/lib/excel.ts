@@ -52,7 +52,7 @@ function buildSheet(
     aoa.push([
       cell(r.fio),
       ...Array.from({ length: dim }, (_, i) =>
-        cell(r.values[i] ?? "", { center: true, fill: weekend[i] ? "F0EDF5" : undefined }),
+        cell(r.values[i] ?? "", weekend[i] ? { center: true, fill: "F0EDF5" } : { center: true }),
       ),
       cell(r.hours, { center: true, bold: true }),
       cell(r.days, { center: true, bold: true }),
