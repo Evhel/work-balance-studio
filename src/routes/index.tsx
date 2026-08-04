@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { Download, Upload, UserPlus, EyeOff, Eye } from "lucide-react";
+import { Download, Upload, UserPlus, EyeOff, Eye, FileSpreadsheet, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +29,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { PersonLink } from "@/components/PersonLink";
 import { useRowSelection } from "@/components/useRowSelection";
 import { byFio, fio, useStore } from "@/lib/store";
+import { isEmployedOn } from "@/lib/people";
 import { MONTHS, daysInMonth, iso, todayIso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import { CODE_COLORS, POSITIONS, TIME_CODES, TIME_LEGEND, type Position } from "@/lib/types";
-import { downloadMonth, parseImport, type ExportRow } from "@/lib/excel";
+import { downloadMonth, downloadTemplate, parseImport, type ExportRow } from "@/lib/excel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,14 +56,16 @@ export const Route = createFileRoute("/")({
 });
 
 function TimesheetPage() {
-  const { store, update, isWorkday, toggleDay, setCells, can } = useStore();
+  const { store, update, isWorkday, toggleDay, setCells, can, removeEmployee } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [filterDept, setFilterDept] = useState("all");
   const [filterProject, setFilterProject] = useState("all");
+  const [edit, setEdit] = useState<{ personId: string; day: number; value: string } | null>(null);
   const sel = useRowSelection();
   const editable = can("editTimesheet");
+  const canDelete = can("deleteEntities");
   const fileRef = useRef<HTMLInputElement>(null);
   const today = todayIso();
 
@@ -90,7 +94,7 @@ function TimesheetPage() {
     const manual = store.timesheet[personId]?.[date];
     if (manual !== undefined) return manual;
     const emp = store.employees.find((e) => e.id === personId);
-    if (emp?.fullTime && isWorkday(date) && date <= today) return "8";
+    if (emp?.fullTime && isWorkday(date) && date <= today && isEmployedOn(emp, date)) return "8";
     return "";
   };
 
@@ -110,7 +114,39 @@ function TimesheetPage() {
 
   const applyStatus = (personId: string, dayList: number[], value: string | null) => {
     setCells(personId, dayList.map((d) => iso(year, month, d)), value);
-    sel.clear();
+  };
+
+  const commitEdit = () => {
+    if (!edit) return;
+    const days = sel.targetDays(edit.personId, edit.day);
+    applyStatus(edit.personId, days, edit.value === "" ? null : edit.value);
+    setEdit(null);
+  };
+
+  const onCellKeyDown = (e: React.KeyboardEvent, personId: string, day: number) => {
+    if (!editable) return;
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      setEdit((prev) =>
+        prev && prev.personId === personId && prev.day === day
+          ? { personId, day, value: (prev.value + e.key).slice(0, 2) }
+          : { personId, day, value: e.key },
+      );
+      return;
+    }
+    if (e.key === "Enter" || e.key === "Tab") {
+      commitEdit();
+      return;
+    }
+    if (e.key === "Escape") {
+      setEdit(null);
+      return;
+    }
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+      setEdit(null);
+      applyStatus(personId, sel.targetDays(personId, day), null);
+    }
   };
 
   const exportRows = (y: number, m: number): ExportRow[] => {
@@ -123,7 +159,14 @@ function TimesheetPage() {
         const date = iso(y, m, d);
         const manual = store.timesheet[p.id]?.[date];
         let v = manual ?? "";
-        if (manual === undefined && p.fullTime && isWorkday(date) && date <= today) v = "8";
+        if (
+          manual === undefined &&
+          p.fullTime &&
+          isWorkday(date) &&
+          date <= today &&
+          isEmployedOn(p, date)
+        )
+          v = "8";
         values.push(v);
         const n = Number(v);
         if (v !== "" && !Number.isNaN(n)) {
@@ -160,7 +203,7 @@ function TimesheetPage() {
     <div onMouseUp={sel.onMouseUp}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold">Табель рабочего времени</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <ExportDialog
             year={year}
             month={month}
@@ -173,6 +216,15 @@ function TimesheetPage() {
               })
             }
           />
+          <Button
+            variant="outline"
+            onClick={() => {
+              downloadTemplate(year, month, people.map(fio), normDays);
+              toast.success("Шаблон скачан");
+            }}
+          >
+            <FileSpreadsheet className="size-4" /> Шаблон для импорта
+          </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
             <Upload className="size-4" /> Импорт
           </Button>
@@ -225,12 +277,18 @@ function TimesheetPage() {
             ))}
           </SelectContent>
         </Select>
-        {editable && <AddEmployeeDialog />}
+        {editable && <AddEmployeeDialog departments={departments} />}
       </div>
 
       <p className="mt-4 text-sm font-medium">
         Табель АРВ {MONTHS[month]} {year} (норма {normDays} р.д./{normDays * 8} ч)
       </p>
+      {editable && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. Часы можно вводить
+          прямо с клавиатуры, Enter — применить, Delete — очистить.
+        </p>
+      )}
 
       <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
         <table className="grid-table w-full">
@@ -278,44 +336,67 @@ function TimesheetPage() {
                   <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
                     <div className="flex items-center justify-between gap-2">
                       <span>
-                        {fio(p)}
+                        <PersonLink id={p.id} name={fio(p)} />
                         <span className="ml-1 text-muted-foreground">· {p.department}</span>
                       </span>
-                      {editable && (
-                        <button
-                          className="text-muted-foreground hover:text-destructive"
-                          title="Скрыть (уволить)"
-                          onClick={() =>
-                            update((d) => {
-                              const e = d.employees.find((x) => x.id === p.id);
-                              if (e) e.hidden = true;
-                            })
-                          }
-                        >
-                          <EyeOff className="size-3.5" />
-                        </button>
-                      )}
+                      <span className="flex items-center gap-1">
+                        {editable && (
+                          <button
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Скрыть (уволить)"
+                            onClick={() =>
+                              update((d) => {
+                                const e = d.employees.find((x) => x.id === p.id);
+                                if (e) e.hidden = true;
+                              })
+                            }
+                          >
+                            <EyeOff className="size-3.5" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Удалить сотрудника из системы"
+                            onClick={() => {
+                              if (!window.confirm(`Удалить ${fio(p)} из системы?`)) return;
+                              removeEmployee(p.id);
+                              toast.success("Сотрудник удалён");
+                            }}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </span>
                     </div>
                   </th>
                   {days.map((d) => {
                     const date = iso(year, month, d);
                     const work = isWorkday(date);
-                    const v = cellValue(p.id, d);
+                    const isEditing = edit?.personId === p.id && edit.day === d;
+                    const v = isEditing ? edit.value : cellValue(p.id, d);
                     const bg = CODE_COLORS[v] ?? (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
                         <ContextMenuTrigger asChild>
                           <td
-                            className="day-cell cursor-pointer"
+                            className="day-cell cursor-pointer outline-none"
+                            tabIndex={editable ? 0 : undefined}
                             style={{
                               background: bg,
-                              outline: selected ? "2px solid var(--primary)" : undefined,
+                              outline: isEditing
+                                ? "2px solid var(--destructive)"
+                                : selected
+                                  ? "2px solid var(--primary)"
+                                  : undefined,
                               outlineOffset: "-2px",
                             }}
-                            onMouseDown={() => editable && sel.onMouseDown(p.id, d)}
+                            onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
                             onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
+                            onKeyDown={(e) => onCellKeyDown(e, p.id, d)}
+                            onBlur={() => isEditing && commitEdit()}
                           >
                             {v}
                           </td>
@@ -325,9 +406,7 @@ function TimesheetPage() {
                             {TIME_CODES.map((c) => (
                               <ContextMenuItem
                                 key={c}
-                                onSelect={() =>
-                                  applyStatus(p.id, sel.sel?.days ?? [d], c)
-                                }
+                                onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), c)}
                               >
                                 {c} — {TIME_LEGEND.find((l) => l.code === c)?.label}
                               </ContextMenuItem>
@@ -336,7 +415,7 @@ function TimesheetPage() {
                             {["4", "8", "10", "12"].map((h) => (
                               <ContextMenuItem
                                 key={h}
-                                onSelect={() => applyStatus(p.id, sel.sel?.days ?? [d], h)}
+                                onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), h)}
                               >
                                 {h} ч
                               </ContextMenuItem>
@@ -344,14 +423,14 @@ function TimesheetPage() {
                             <ContextMenuItem
                               onSelect={() => {
                                 const val = window.prompt("Введите количество часов", v || "8");
-                                if (val !== null) applyStatus(p.id, sel.sel?.days ?? [d], val);
+                                if (val !== null) applyStatus(p.id, sel.targetDays(p.id, d), val);
                               }}
                             >
                               Ввести часы вручную…
                             </ContextMenuItem>
                             <ContextMenuSeparator />
                             <ContextMenuItem
-                              onSelect={() => applyStatus(p.id, sel.sel?.days ?? [d], null)}
+                              onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), null)}
                             >
                               Очистить
                             </ContextMenuItem>
@@ -434,7 +513,8 @@ function ExportDialog({
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Каждый месяц выгружается в отдельный файл «АРВ_Табель_Год_Месяц».
+          Каждый месяц выгружается в отдельный файл «АРВ_Табель_Год_Месяц» с форматированием и
+          границами таблицы.
         </p>
         <DialogFooter>
           <Button
@@ -460,10 +540,10 @@ function ExportDialog({
   );
 }
 
-function AddEmployeeDialog() {
+function AddEmployeeDialog({ departments }: { departments: string[] }) {
   const { update } = useStore();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({
+  const empty = {
     lastName: "",
     firstName: "",
     middleName: "",
@@ -471,7 +551,10 @@ function AddEmployeeDialog() {
     position: "Сотрудник" as Position,
     fullTime: true,
     birthDate: "",
-  });
+    startWork: "",
+    endWork: "",
+  };
+  const [f, setF] = useState(empty);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -508,7 +591,26 @@ function AddEmployeeDialog() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Отдел</Label>
+              {departments.length > 0 && (
+                <Select
+                  value={departments.includes(f.department) ? f.department : ""}
+                  onValueChange={(v) => setF({ ...f, department: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите из существующих" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input
+                className="mt-1"
+                placeholder="или введите новый отдел"
                 value={f.department}
                 onChange={(e) => setF({ ...f, department: e.target.value })}
               />
@@ -532,7 +634,7 @@ function AddEmployeeDialog() {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 items-end gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <Label>Дата рождения</Label>
               <Input
@@ -541,16 +643,32 @@ function AddEmployeeDialog() {
                 onChange={(e) => setF({ ...f, birthDate: e.target.value })}
               />
             </div>
-            <div className="flex items-center gap-2 pb-2">
-              <Switch
-                checked={f.fullTime}
-                onCheckedChange={(v) => setF({ ...f, fullTime: v })}
-                id="ft"
+            <div>
+              <Label>Дата начала работы</Label>
+              <Input
+                type="date"
+                value={f.startWork}
+                onChange={(e) => setF({ ...f, startWork: e.target.value })}
               />
-              <Label htmlFor="ft">
-                {f.fullTime ? "Полный рабочий день" : "Неполный рабочий день"}
-              </Label>
             </div>
+            <div>
+              <Label>Дата конца работы</Label>
+              <Input
+                type="date"
+                value={f.endWork}
+                onChange={(e) => setF({ ...f, endWork: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={f.fullTime}
+              onCheckedChange={(v) => setF({ ...f, fullTime: v })}
+              id="ft"
+            />
+            <Label htmlFor="ft">
+              {f.fullTime ? "Полный рабочий день" : "Неполный рабочий день"}
+            </Label>
           </div>
         </div>
         <DialogFooter>
@@ -560,20 +678,10 @@ function AddEmployeeDialog() {
                 toast.error("Укажите фамилию и имя");
                 return;
               }
-              update((d) =>
-                d.employees.push({ id: `e${Date.now()}`, ...f }),
-              );
+              update((d) => d.employees.push({ id: `e${Date.now()}`, ...f }));
               toast.success("Сотрудник добавлен");
               setOpen(false);
-              setF({
-                lastName: "",
-                firstName: "",
-                middleName: "",
-                department: "",
-                position: "Сотрудник",
-                fullTime: true,
-                birthDate: "",
-              });
+              setF(empty);
             }}
           >
             Добавить

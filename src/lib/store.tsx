@@ -115,6 +115,9 @@ type Ctx = {
   toggleDay: (dateIso: string) => void;
   setCells: (personId: string, dates: string[], value: string | null) => void;
   setPlanCells: (projectId: string, personId: string, dates: string[], value: string | null) => void;
+  removeEmployee: (id: string) => void;
+  removeContractor: (id: string) => void;
+  removeProject: (id: string) => void;
   currentUser: Employee;
   can: (action: Action) => boolean;
 };
@@ -124,7 +127,9 @@ export type Action =
   | "editContractors"
   | "createProject"
   | "editProject"
-  | "editDepartment";
+  | "editDepartment"
+  | "deleteEntities";
+
 
 const StoreContext = createContext<Ctx | null>(null);
 
@@ -169,7 +174,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const currentUser =
       store.employees.find((e) => e.id === store.currentUserId) ?? store.employees[0]!;
 
-    const can = (action: Action) => {
+    const can = (action: Action): boolean => {
       const p = currentUser?.position;
       const isGip = currentUser?.department === "ГИП";
       const chiefs = p === "Директор" || p === "Модератор" || p === "Руководитель отдела";
@@ -183,6 +188,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return chiefs || isGip;
         case "editDepartment":
           return chiefs || isGip;
+        case "deleteEntities":
+          return p === "Модератор";
+        default:
+          return false;
       }
     };
 
@@ -213,7 +222,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             else d.plan[projectId]![personId]![date] = val;
           }
         }),
+      removeEmployee: (id) =>
+        update((d) => {
+          d.employees = d.employees.filter((e) => e.id !== id);
+          delete d.timesheet[id];
+          delete d.personalEvents[id];
+          for (const pid of Object.keys(d.plan)) delete d.plan[pid]![id];
+          d.projects.forEach((p) => (p.members = p.members.filter((m) => m.personId !== id)));
+        }),
+      removeContractor: (id) =>
+        update((d) => {
+          d.contractors = d.contractors.filter((c) => c.id !== id);
+          delete d.timesheet[id];
+          for (const pid of Object.keys(d.plan)) delete d.plan[pid]![id];
+          d.projects.forEach((p) => (p.members = p.members.filter((m) => m.personId !== id)));
+        }),
+      removeProject: (id) =>
+        update((d) => {
+          d.projects = d.projects.filter((p) => p.id !== id);
+          delete d.plan[id];
+          d.contractors.forEach((c) => {
+            if (c.projectId === id) delete c.projectId;
+          });
+        }),
     };
+
   }, [store]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

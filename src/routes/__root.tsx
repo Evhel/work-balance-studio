@@ -154,8 +154,8 @@ function Chrome() {
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="text-sm font-semibold tracking-wide text-primary-foreground">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <div className="text-2xl font-bold tracking-wide text-primary-foreground sm:text-3xl">
             АРВ · Учёт и прогнозирование трудозатрат
           </div>
           <RoleSwitcher />
@@ -165,11 +165,13 @@ function Chrome() {
             <Link
               key={t.to}
               to={t.to}
-              className="rounded-t-md px-3 py-2 text-sm text-primary-foreground/75 transition-colors hover:bg-primary-foreground/10"
+              className="rounded-t-md px-3 py-2 text-sm transition-colors"
               activeOptions={{ exact: t.to === "/" }}
+              inactiveProps={{
+                className: "text-primary-foreground/75 hover:bg-primary-foreground/10",
+              }}
               activeProps={{
-                className:
-                  "rounded-t-md px-3 py-2 text-sm bg-background text-foreground font-medium",
+                className: "bg-background text-foreground font-semibold",
               }}
             >
               {t.label}
@@ -183,6 +185,7 @@ function Chrome() {
     </div>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

@@ -22,6 +22,11 @@ export type Employee = {
   position: Position;
   fullTime: boolean;
   birthDate: string; // YYYY-MM-DD
+  /** Дата начала работы */
+  startWork?: string;
+  /** Дата окончания работы */
+  endWork?: string;
+  comment?: string;
   hidden?: boolean;
   avatar?: string;
 };
@@ -33,8 +38,10 @@ export type Contractor = {
   middleName: string;
   department: string;
   projectId?: string;
+  comment?: string;
   hidden?: boolean;
 };
+
 
 export type ProjectStage = "Концепция" | "ПД" | "РД";
 
@@ -50,7 +57,10 @@ export type Project = {
   milestone?: string;
   description?: string;
   image?: string;
+  /** Проект на паузе */
+  paused?: boolean;
   members: ProjectMember[];
+
 };
 
 /** Коды табеля рабочего времени (стр. 1) */
