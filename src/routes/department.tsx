@@ -136,7 +136,7 @@ function DepartmentPage() {
               {rows.map((p) => (
                 <tr key={p.id}>
                   <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
-                    {p.name}
+                    <PersonLink id={p.id} name={p.name} />
                     <span className="ml-1 text-muted-foreground">· {p.department}</span>
                   </th>
                   {days.map((d) => {
@@ -145,41 +145,54 @@ function DepartmentPage() {
                     const active = store.projects.filter(
                       (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
                     );
+                    const conflict = !!absence && active.length > 0;
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
                         <ContextMenuTrigger asChild>
                           <td
                             className="day-cell cursor-pointer align-top"
+                            title={
+                              conflict
+                                ? `Конфликт: ${absence} и занятость (${active
+                                    .map((x) => x.name)
+                                    .join(", ")})`
+                                : undefined
+                            }
                             style={{
-                              background: absence
-                                ? "#e2e2e2"
-                                : isWorkday(date)
-                                  ? undefined
-                                  : "var(--weekend)",
+                              background: conflict
+                                ? "#ffd9d9"
+                                : absence
+                                  ? "#e2e2e2"
+                                  : isWorkday(date)
+                                    ? undefined
+                                    : "var(--weekend)",
+                              boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
                               outline: selected ? "2px solid var(--primary)" : undefined,
                               outlineOffset: "-2px",
                             }}
-                            onMouseDown={() => editable && sel.onMouseDown(p.id, d)}
+                            onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
                             onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                           >
-                            {absence ? (
-                              <span className="text-[10px]">{absence}</span>
-                            ) : (
-                              <div className="flex flex-col gap-[1px] px-[1px] py-[2px]">
-                                {active.map((pr) => (
-                                  <span
-                                    key={pr.id}
-                                    className="h-2 rounded-full"
-                                    style={{ background: pr.color }}
-                                    title={pr.name}
-                                  />
-                                ))}
-                              </div>
-                            )}
+                            <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                              {absence && (
+                                <span className="text-[10px] leading-none font-medium">
+                                  {absence}
+                                </span>
+                              )}
+                              {active.map((pr) => (
+                                <span
+                                  key={pr.id}
+                                  className="h-1.5 w-full rounded-full"
+                                  style={{ background: pr.color }}
+                                  title={pr.name}
+                                />
+                              ))}
+                            </div>
                           </td>
                         </ContextMenuTrigger>
+
                         {editable && (
                           <ContextMenuContent>
                             {store.projects.map((pr) => (
