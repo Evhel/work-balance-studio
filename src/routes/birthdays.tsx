@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { MonthPicker } from "@/components/MonthPicker";
+import { PersonLink } from "@/components/PersonLink";
 import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, daysInMonth, iso, weekdayIndex, WEEKDAYS_SHORT } from "@/lib/dates";
 
@@ -29,7 +30,7 @@ function BirthdaysPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Календарь дней рождений</h1>
+      <h1 className="text-2xl font-semibold">✨🎂 Календарь дней рождений ⭐🎊</h1>
       <div className="mt-4">
         <MonthPicker
           year={year}
@@ -41,7 +42,7 @@ function BirthdaysPage() {
         />
       </div>
       <p className="mt-4 text-sm font-medium">
-        {MONTHS[month]} {year}
+        ✨ {MONTHS[month]} {year} ✨
       </p>
 
       <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
@@ -73,7 +74,7 @@ function BirthdaysPage() {
               return (
                 <tr key={p.id}>
                   <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
-                    {fio(p)}
+                    <PersonLink id={p.id} name={fio(p)} />
                   </th>
                   {days.map((d) => {
                     const isBd = bm === month + 1 && bd === d;

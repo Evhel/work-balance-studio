@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { EyeOff, Eye, UserPlus } from "lucide-react";
+import { EyeOff, Eye, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { PersonLink } from "@/components/PersonLink";
 import { useRowSelection } from "@/components/useRowSelection";
 import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
@@ -51,13 +52,14 @@ export const Route = createFileRoute("/contractors")({
 const CODES = ["Б", "ОТ", "НН"];
 
 function ContractorsPage() {
-  const { store, update, isWorkday, setCells, can } = useStore();
+  const { store, update, isWorkday, setCells, can, removeContractor } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [filterProject, setFilterProject] = useState("all");
   const sel = useRowSelection();
   const editable = can("editContractors");
+  const canDelete = can("deleteEntities");
 
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
   const people = useMemo(() => {
@@ -65,6 +67,14 @@ function ContractorsPage() {
     if (filterProject !== "all") list = list.filter((c) => c.projectId === filterProject);
     return [...list].sort(byFio);
   }, [store.contractors, filterProject]);
+
+  const apply = (personId: string, day: number, value: string | null) => {
+    setCells(
+      personId,
+      sel.targetDays(personId, day).map((x) => iso(year, month, x)),
+      value,
+    );
+  };
 
   return (
     <div onMouseUp={sel.onMouseUp}>
@@ -98,6 +108,11 @@ function ContractorsPage() {
       <p className="mt-4 text-sm font-medium">
         Табель подрядчиков АРВ {MONTHS[month]} {year}
       </p>
+      {editable && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. ПКМ — статус.
+        </p>
+      )}
 
       <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
         <table className="grid-table w-full">
@@ -128,23 +143,38 @@ function ContractorsPage() {
                 <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
                   <div className="flex items-center justify-between gap-2">
                     <span>
-                      {fio(p)}
+                      <PersonLink id={p.id} name={fio(p)} />
                       <span className="ml-1 text-muted-foreground">· {p.department}</span>
                     </span>
-                    {editable && (
-                      <button
-                        title="Скрыть подрядчика"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() =>
-                          update((d) => {
-                            const c = d.contractors.find((x) => x.id === p.id);
-                            if (c) c.hidden = true;
-                          })
-                        }
-                      >
-                        <EyeOff className="size-3.5" />
-                      </button>
-                    )}
+                    <span className="flex items-center gap-1">
+                      {editable && (
+                        <button
+                          title="Скрыть подрядчика"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() =>
+                            update((d) => {
+                              const c = d.contractors.find((x) => x.id === p.id);
+                              if (c) c.hidden = true;
+                            })
+                          }
+                        >
+                          <EyeOff className="size-3.5" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          title="Удалить подрядчика из системы"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (!window.confirm(`Удалить ${fio(p)} из системы?`)) return;
+                            removeContractor(p.id);
+                            toast.success("Подрядчик удалён");
+                          }}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </span>
                   </div>
                 </th>
                 {days.map((d) => {
@@ -162,7 +192,7 @@ function ContractorsPage() {
                             outline: selected ? "2px solid var(--primary)" : undefined,
                             outlineOffset: "-2px",
                           }}
-                          onMouseDown={() => editable && sel.onMouseDown(p.id, d)}
+                          onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
                           onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                           onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                         >
@@ -172,31 +202,12 @@ function ContractorsPage() {
                       {editable && (
                         <ContextMenuContent>
                           {CODES.map((c) => (
-                            <ContextMenuItem
-                              key={c}
-                              onSelect={() => {
-                                setCells(
-                                  p.id,
-                                  (sel.sel?.days ?? [d]).map((x) => iso(year, month, x)),
-                                  c,
-                                );
-                                sel.clear();
-                              }}
-                            >
+                            <ContextMenuItem key={c} onSelect={() => apply(p.id, d, c)}>
                               {c} — {CONTRACTOR_LEGEND.find((l) => l.code === c)?.label}
                             </ContextMenuItem>
                           ))}
                           <ContextMenuSeparator />
-                          <ContextMenuItem
-                            onSelect={() => {
-                              setCells(
-                                p.id,
-                                (sel.sel?.days ?? [d]).map((x) => iso(year, month, x)),
-                                null,
-                              );
-                              sel.clear();
-                            }}
-                          >
+                          <ContextMenuItem onSelect={() => apply(p.id, d, null)}>
                             Очистить
                           </ContextMenuItem>
                         </ContextMenuContent>
@@ -250,6 +261,14 @@ function AddContractorDialog() {
     department: "",
     projectId: "",
   });
+  const departments = Array.from(
+    new Set([
+      ...store.employees.map((e) => e.department),
+      ...store.contractors.map((c) => c.department),
+    ]),
+  )
+    .filter(Boolean)
+    .sort();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -286,7 +305,26 @@ function AddContractorDialog() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Отдел</Label>
+              {departments.length > 0 && (
+                <Select
+                  value={departments.includes(f.department) ? f.department : ""}
+                  onValueChange={(v) => setF({ ...f, department: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите из существующих" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input
+                className="mt-1"
+                placeholder="или введите новый отдел"
                 value={f.department}
                 onChange={(e) => setF({ ...f, department: e.target.value })}
               />
