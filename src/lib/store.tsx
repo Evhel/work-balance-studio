@@ -115,6 +115,9 @@ type Ctx = {
   toggleDay: (dateIso: string) => void;
   setCells: (personId: string, dates: string[], value: string | null) => void;
   setPlanCells: (projectId: string, personId: string, dates: string[], value: string | null) => void;
+  removeEmployee: (id: string) => void;
+  removeContractor: (id: string) => void;
+  removeProject: (id: string) => void;
   currentUser: Employee;
   can: (action: Action) => boolean;
 };
@@ -124,7 +127,9 @@ export type Action =
   | "editContractors"
   | "createProject"
   | "editProject"
-  | "editDepartment";
+  | "editDepartment"
+  | "deleteEntities";
+
 
 const StoreContext = createContext<Ctx | null>(null);
 
