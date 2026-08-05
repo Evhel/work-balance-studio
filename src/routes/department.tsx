@@ -94,14 +94,29 @@ function DepartmentPage() {
             ))}
           </SelectContent>
         </Select>
-        <MonthPicker
-          year={year}
-          month={month}
-          onChange={(y, m) => {
-            setYear(y);
-            setMonth(m);
-          }}
-        />
+        {view === "month" ? (
+          <MonthPicker
+            year={year}
+            month={month}
+            onChange={(y, m) => {
+              setYear(y);
+              setMonth(m);
+            }}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setYear(year - 1)}>
+              ‹
+            </Button>
+            <span className="w-14 text-center text-sm font-medium">{year}</span>
+            <Button variant="outline" size="sm" onClick={() => setYear(year + 1)}>
+              ›
+            </Button>
+          </div>
+        )}
+        <Button variant="outline" onClick={() => setView(view === "month" ? "year" : "month")}>
+          {view === "month" ? "Вид по годам" : "Вид по месяцу"}
+        </Button>
       </div>
 
       <p className="mt-3 text-sm">
@@ -109,12 +124,14 @@ function DepartmentPage() {
         <span className="font-medium">{head ? fio(head) : "не назначен"}</span>
       </p>
       <p className="mt-1 text-sm font-medium">
-        Табель отдела · {MONTHS[month]} {year}
+        Табель отдела · {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
       <div className="mt-3 flex gap-4">
         <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
+          {view === "month" ? (
           <table className="grid-table w-full">
+
             <thead>
               <tr className="bg-muted">
                 <th className="sticky left-0 z-10 min-w-[220px] border-r border-b bg-muted px-3 py-2 text-left text-xs font-medium">
