@@ -16,11 +16,20 @@ import {
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { PersonLink } from "@/components/PersonLink";
+import { Button } from "@/components/ui/button";
 
 import { useRowSelection } from "@/components/useRowSelection";
 import { fio, useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
-import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
+import {
+  MONTHS,
+  MONTHS_SHORT,
+  daysInMonth,
+  iso,
+  WEEKDAYS_SHORT,
+  weekdayIndex,
+} from "@/lib/dates";
+
 
 export const Route = createFileRoute("/department")({
   head: () => ({
