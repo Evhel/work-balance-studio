@@ -49,6 +49,7 @@ function DepartmentPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [view, setView] = useState<"month" | "year">("month");
   const people = allPeople(store);
   const departments = Array.from(new Set(people.map((p) => p.department))).sort();
   const [dept, setDept] = useState(departments[0] ?? "all");
@@ -56,6 +57,7 @@ function DepartmentPage() {
   const editable = can("editDepartment");
 
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
+
   const rows = useMemo(
     () =>
       people
