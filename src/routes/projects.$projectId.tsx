@@ -414,6 +414,26 @@ function ProjectPage() {
 
       <Legend items={PROJECT_LEGEND} />
 
+      <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
+        <div className="mb-2 font-medium">Обозначения рамок ячеек</div>
+        <div className="flex flex-wrap gap-4">
+          {[
+            { color: "#dc2626", label: "красная — конфликт: отсутствие и работа в один день" },
+            { color: "#eab308", label: "жёлтая — человек занят ещё на другом проекте" },
+            { color: "#d4a017", label: "золотая — ближайшая цель проекта" },
+          ].map((b) => (
+            <span key={b.color} className="flex items-center gap-2">
+              <span
+                className="inline-block size-4 rounded-sm"
+                style={{ boxShadow: `inset 0 0 0 2px ${b.color}` }}
+              />
+              {b.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+
       <div className="mt-6">
         <Label>Краткая информация по проекту</Label>
         <Textarea
