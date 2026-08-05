@@ -120,22 +120,19 @@ function ProjectPage() {
 
   return (
     <div onMouseUp={sel.onMouseUp}>
-      <Link to="/projects" className="mb-2 inline-flex items-center gap-1 text-sm text-primary">
-        <ArrowLeft className="size-4" /> Все проекты
+      <Link
+        to="/projects"
+        className="mb-3 inline-flex items-center gap-2 text-xl font-semibold text-primary"
+      >
+        <ArrowLeft className="size-5" /> Все проекты
       </Link>
       <div className="flex flex-wrap items-center gap-3">
-        {project.image && (
-          <img
-            src={project.image}
-            alt={project.name}
-            className="size-16 rounded-lg border object-cover"
-          />
-        )}
         <h1 className="text-2xl font-semibold">{project.name}</h1>
         <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
           {project.stage}
         </span>
       </div>
+
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
