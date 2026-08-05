@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -22,7 +19,14 @@ import {
 import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { byFio, fio, useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
-import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
+import {
+  MONTHS,
+  MONTHS_SHORT,
+  daysInMonth,
+  iso,
+  WEEKDAYS_SHORT,
+  weekdayIndex,
+} from "@/lib/dates";
 
 export const Route = createFileRoute("/employee")({
   head: () => ({
@@ -44,6 +48,7 @@ const EMP_LEGEND = [
   { code: "ОТ", label: "отпуск оплачиваемый (серое)" },
   { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
   { code: "У", label: "учебный отпуск (серое)" },
+  { code: "🎂", label: "день рождения (розовое)" },
 ];
 
 function EmployeePage() {
@@ -51,6 +56,7 @@ function EmployeePage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [view, setView] = useState<"month" | "year">("month");
   const employees = [...store.employees.filter((e) => !e.hidden)].sort(byFio);
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
   const person = store.employees.find((e) => e.id === personId) ?? employees[0];
@@ -58,6 +64,9 @@ function EmployeePage() {
   const isSelf = person?.id === currentUser?.id;
 
   if (!person) return <p>Нет сотрудников</p>;
+
+  const birthMd = person.birthDate ? person.birthDate.slice(5) : "";
+  const isBirthday = (date: string) => !!birthMd && date.slice(5) === birthMd;
 
   const dim = daysInMonth(year, month);
   const firstWd = weekdayIndex(year, month, 1);
@@ -90,152 +99,200 @@ function EmployeePage() {
             ))}
           </SelectContent>
         </Select>
-        <MonthPicker
-          year={year}
-          month={month}
-          onChange={(y, m) => {
-            setYear(y);
-            setMonth(m);
-          }}
-        />
+        {view === "month" ? (
+          <MonthPicker
+            year={year}
+            month={month}
+            onChange={(y, m) => {
+              setYear(y);
+              setMonth(m);
+            }}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setYear(year - 1)}>
+              ‹
+            </Button>
+            <span className="w-14 text-center text-sm font-medium">{year}</span>
+            <Button variant="outline" size="sm" onClick={() => setYear(year + 1)}>
+              ›
+            </Button>
+          </div>
+        )}
+        <Button variant="outline" onClick={() => setView(view === "month" ? "year" : "month")}>
+          {view === "month" ? "Вид по годам" : "Вид по месяцу"}
+        </Button>
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <Avatar className="size-14">
-          <AvatarImage src={person.avatar} alt={fio(person)} />
-          <AvatarFallback>
-            {person.lastName[0]}
-            {person.firstName[0]}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h2 className="text-lg font-medium">{fio(person)}</h2>
-          <p className="text-sm text-muted-foreground">
-            {person.position} · {person.department} ·{" "}
-            {person.fullTime ? "полный день" : "неполный день"}
+      <div className="mt-4">
+        <h2 className="text-lg font-medium">{fio(person)}</h2>
+        <p className="text-sm text-muted-foreground">
+          {person.position} · {person.department} ·{" "}
+          {person.fullTime ? "полный день" : "неполный день"}
+        </p>
+        {person.birthDate && (
+          <p className="mt-1 inline-block rounded-md px-2 py-1 text-sm font-medium"
+            style={{ background: "#ffd9ec" }}>
+            🎂 День рождения: {person.birthDate.slice(8, 10)}.{person.birthDate.slice(5, 7)}.
+            {person.birthDate.slice(0, 4)}
           </p>
-        </div>
-        {isSelf && (
-          <div className="ml-4">
-            <Label className="text-xs">Аватар</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              className="w-56"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () =>
-                  update((d) => {
-                    const p = d.employees.find((x) => x.id === person.id);
-                    if (p) p.avatar = String(reader.result);
-                  });
-                reader.readAsDataURL(file);
-              }}
-            />
-          </div>
         )}
       </div>
 
       <p className="mt-5 text-sm font-medium">
-        {MONTHS[month]} {year}
+        {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
       <div className="mt-3 flex gap-4">
         <div className="min-w-0 flex-1 overflow-hidden rounded-lg border bg-card">
-          <div className="grid grid-cols-7 border-b bg-muted text-center text-xs font-medium">
-            {WEEKDAYS_SHORT.map((w) => (
-              <div key={w} className="border-r py-2 last:border-r-0">
-                {w}
+          {view === "month" ? (
+            <>
+              <div className="grid grid-cols-7 border-b bg-muted text-center text-xs font-medium">
+                {WEEKDAYS_SHORT.map((w) => (
+                  <div key={w} className="border-r py-2 last:border-r-0">
+                    {w}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7">
-            {cells.map((d, i) => {
-              if (d === null)
-                return <div key={i} className="min-h-24 border-r border-b bg-muted/40" />;
-              const date = iso(year, month, d);
-              const absence = absenceAt(store, person.id, date);
-              const active = store.projects.filter(
-                (pr) => store.plan[pr.id]?.[person.id]?.[date] === "Р",
-              );
-              const event = store.personalEvents[person.id]?.[date];
-              return (
-                <ContextMenu key={i}>
-                  <ContextMenuTrigger asChild>
-                    <div
-                      className="min-h-24 border-r border-b p-1 text-xs last:border-r-0"
-                      style={{
-                        background: absence
-                          ? "#e2e2e2"
-                          : isWorkday(date)
-                            ? undefined
-                            : "var(--weekend)",
-                      }}
-                    >
-                      <div className="mb-1 font-medium">{d}</div>
-                      {absence && <div className="mb-1 font-medium">{absence}</div>}
-                      {active.map((pr) => (
+              <div className="grid grid-cols-7">
+                {cells.map((d, i) => {
+                  if (d === null)
+                    return <div key={i} className="min-h-24 border-r border-b bg-muted/40" />;
+                  const date = iso(year, month, d);
+                  const absence = absenceAt(store, person.id, date);
+                  const bday = isBirthday(date);
+                  const active = store.projects.filter(
+                    (pr) => store.plan[pr.id]?.[person.id]?.[date] === "Р",
+                  );
+                  const event = store.personalEvents[person.id]?.[date];
+                  return (
+                    <ContextMenu key={i}>
+                      <ContextMenuTrigger asChild>
                         <div
-                          key={pr.id}
-                          className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] text-white"
-                          style={{ background: pr.color }}
-                          title={pr.name}
+                          className="min-h-24 border-r border-b p-1 text-xs last:border-r-0"
+                          style={{
+                            background: bday
+                              ? "#ffd9ec"
+                              : absence
+                                ? "#e2e2e2"
+                                : isWorkday(date)
+                                  ? undefined
+                                  : "var(--weekend)",
+                          }}
                         >
-                          {pr.name}
+                          <div className="mb-1 flex items-center justify-between font-medium">
+                            <span>{d}</span>
+                            {bday && <span title="День рождения">🎂</span>}
+                          </div>
+                          {absence && <div className="mb-1 font-medium">{absence}</div>}
+                          {active.map((pr) => (
+                            <div
+                              key={pr.id}
+                              className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] text-white"
+                              style={{ background: pr.color }}
+                              title={pr.name}
+                            >
+                              {pr.name}
+                            </div>
+                          ))}
+                          {event && (
+                            <div
+                              className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] font-medium text-white"
+                              style={{ background: "var(--primary)" }}
+                              title={event}
+                            >
+                              {event}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                      {event && (
-                        <div className="mb-0.5 truncate rounded border border-dashed px-1 py-0.5 text-[10px]">
-                          {event}
-                        </div>
-                      )}
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        {editable &&
+                          store.projects.map((pr) => (
+                            <ContextMenuItem
+                              key={pr.id}
+                              onSelect={() => setPlanCells(pr.id, person.id, [date], "Р")}
+                            >
+                              Занять: {pr.name}
+                            </ContextMenuItem>
+                          ))}
+                        {editable && (
+                          <>
+                            <ContextMenuItem
+                              onSelect={() =>
+                                store.projects.forEach((pr) =>
+                                  setPlanCells(pr.id, person.id, [date], null),
+                                )
+                              }
+                            >
+                              Снять занятость
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                          </>
+                        )}
+                        <ContextMenuItem
+                          onSelect={() => {
+                            const t = window.prompt("Задача или напоминание", event ?? "");
+                            if (t === null) return;
+                            update((dd) => {
+                              dd.personalEvents[person.id] = dd.personalEvents[person.id] ?? {};
+                              if (t) dd.personalEvents[person.id]![date] = t;
+                              else delete dd.personalEvents[person.id]![date];
+                            });
+                            toast.success("Сохранено");
+                          }}
+                        >
+                          Задача / напоминание…
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {MONTHS_SHORT.map((mn, m) => {
+                const dates = Array.from({ length: daysInMonth(year, m) }, (_, i) =>
+                  iso(year, m, i + 1),
+                );
+                const projs = store.projects.filter((pr) =>
+                  dates.some((date) => store.plan[pr.id]?.[person.id]?.[date] === "Р"),
+                );
+                const absDays = dates.filter((date) => absenceAt(store, person.id, date)).length;
+                const tasks = dates.filter((date) => store.personalEvents[person.id]?.[date]).length;
+                const bday = dates.some(isBirthday);
+                return (
+                  <button
+                    key={mn}
+                    className="rounded-lg border p-2 text-left text-xs hover:shadow-md"
+                    style={{ background: bday ? "#ffd9ec" : undefined }}
+                    onClick={() => {
+                      setMonth(m);
+                      setView("month");
+                    }}
+                  >
+                    <div className="mb-1 font-medium">
+                      {MONTHS[m]} {bday && "🎂"}
                     </div>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    {editable &&
-                      store.projects.map((pr) => (
-                        <ContextMenuItem
-                          key={pr.id}
-                          onSelect={() => setPlanCells(pr.id, person.id, [date], "Р")}
-                        >
-                          Занять: {pr.name}
-                        </ContextMenuItem>
-                      ))}
-                    {editable && (
-                      <>
-                        <ContextMenuItem
-                          onSelect={() =>
-                            store.projects.forEach((pr) =>
-                              setPlanCells(pr.id, person.id, [date], null),
-                            )
-                          }
-                        >
-                          Снять занятость
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                      </>
+                    {projs.map((pr) => (
+                      <div key={pr.id} className="mb-0.5 flex items-center gap-1">
+                        <span className="size-2 rounded-full" style={{ background: pr.color }} />
+                        <span className="truncate">{pr.name}</span>
+                      </div>
+                    ))}
+                    {absDays > 0 && (
+                      <div className="text-muted-foreground">отсутствия: {absDays} д.</div>
                     )}
-                    <ContextMenuItem
-                      onSelect={() => {
-                        const t = window.prompt("Задача или напоминание", event ?? "");
-                        if (t === null) return;
-                        update((dd) => {
-                          dd.personalEvents[person.id] = dd.personalEvents[person.id] ?? {};
-                          if (t) dd.personalEvents[person.id]![date] = t;
-                          else delete dd.personalEvents[person.id]![date];
-                        });
-                        toast.success("Сохранено");
-                      }}
-                    >
-                      Задача / напоминание…
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              );
-            })}
-          </div>
+                    {tasks > 0 && <div className="text-muted-foreground">задач: {tasks}</div>}
+                    {projs.length === 0 && absDays === 0 && tasks === 0 && (
+                      <div className="text-muted-foreground">—</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="w-52 shrink-0 rounded-lg border bg-card p-3 text-xs">
