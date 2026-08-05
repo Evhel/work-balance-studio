@@ -29,12 +29,23 @@ function monthIndex(dateIso: string, year: number) {
   return m! - 1;
 }
 
-function status(p: Project) {
+type Status = "done" | "current" | "paused" | "future";
+
+function status(p: Project): Status {
+  if (p.paused) return "paused";
   const today = new Date().toISOString().slice(0, 10);
   if (p.start > today) return "future";
   if (p.end < today) return "done";
   return "current";
 }
+
+const COLUMNS: { key: Status; title: string; bg: string }[] = [
+  { key: "done", title: "Завершён", bg: "#ececec" },
+  { key: "current", title: "Текущий", bg: "#e3f6e6" },
+  { key: "paused", title: "На паузе", bg: "#fdf3c8" },
+  { key: "future", title: "Будущий", bg: "#e6efff" },
+];
+
 
 function ProjectsPage() {
   const { store, update, can } = useStore();
@@ -176,32 +187,52 @@ function ProjectsPage() {
       )}
 
       <h2 className="mt-8 text-lg font-medium">Список проектов</h2>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {store.projects.map((p) => {
-          const st = status(p);
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {COLUMNS.map((col) => {
+          const list = store.projects.filter((p) => status(p) === col.key);
           return (
-            <Link
-              key={p.id}
-              to="/projects/$projectId"
-              params={{ projectId: p.id }}
-              className="rounded-lg border p-3 transition-shadow hover:shadow-md"
-              style={{
-                background:
-                  st === "future" ? "#e6efff" : st === "current" ? "#e3f6e6" : "var(--card)",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="size-3 rounded-full" style={{ background: p.color }} />
-                <span className="font-medium">{p.name}</span>
+            <div key={col.key} className="rounded-lg border bg-card p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <span className="size-3 rounded-sm" style={{ background: col.bg }} />
+                {col.title}
+                <span className="text-xs text-muted-foreground">({list.length})</span>
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {p.stage} · {p.start} — {p.end} ·{" "}
-                {st === "future" ? "будущий" : st === "current" ? "текущий" : "завершён"}
+              <div className="space-y-2">
+                {list.map((p) => (
+                  <div key={p.id} className="rounded-md border p-2" style={{ background: col.bg }}>
+                    <Link
+                      to="/projects/$projectId"
+                      params={{ projectId: p.id }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="size-3 shrink-0 rounded-full" style={{ background: p.color }} />
+                      <span className="truncate text-sm font-medium">{p.name}</span>
+                    </Link>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {p.stage} · {p.start} — {p.end}
+                    </div>
+                    {editable && (
+                      <button
+                        className="mt-1 text-xs text-primary underline"
+                        onClick={() =>
+                          update((d) => {
+                            const t = d.projects.find((x) => x.id === p.id);
+                            if (t) t.paused = !t.paused;
+                          })
+                        }
+                      >
+                        {p.paused ? "Снять паузу" : "Поставить на паузу"}
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {list.length === 0 && <p className="text-xs text-muted-foreground">Пусто</p>}
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
+
     </div>
   );
 }

@@ -120,22 +120,19 @@ function ProjectPage() {
 
   return (
     <div onMouseUp={sel.onMouseUp}>
-      <Link to="/projects" className="mb-2 inline-flex items-center gap-1 text-sm text-primary">
-        <ArrowLeft className="size-4" /> Все проекты
+      <Link
+        to="/projects"
+        className="mb-3 inline-flex items-center gap-2 text-xl font-semibold text-primary"
+      >
+        <ArrowLeft className="size-5" /> Все проекты
       </Link>
       <div className="flex flex-wrap items-center gap-3">
-        {project.image && (
-          <img
-            src={project.image}
-            alt={project.name}
-            className="size-16 rounded-lg border object-cover"
-          />
-        )}
         <h1 className="text-2xl font-semibold">{project.name}</h1>
         <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
           {project.stage}
         </span>
       </div>
+
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
@@ -185,20 +182,17 @@ function ProjectPage() {
           />
         </div>
         <div>
-          <Label>Картинка проекта</Label>
-          <Input
-            type="file"
-            accept="image/*"
+          <Label>Пауза</Label>
+          <Button
+            variant="outline"
+            className="mt-1 w-full"
             disabled={!editable}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const reader = new FileReader();
-              reader.onload = () => patch((p) => (p.image = String(reader.result)));
-              reader.readAsDataURL(file);
-            }}
-          />
+            onClick={() => patch((p) => (p.paused = !p.paused))}
+          >
+            {project.paused ? "Снять паузу" : "Поставить на паузу"}
+          </Button>
         </div>
+
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -420,6 +414,26 @@ function ProjectPage() {
 
       <Legend items={PROJECT_LEGEND} />
 
+      <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
+        <div className="mb-2 font-medium">Обозначения рамок ячеек</div>
+        <div className="flex flex-wrap gap-4">
+          {[
+            { color: "#dc2626", label: "красная — конфликт: отсутствие и работа в один день" },
+            { color: "#eab308", label: "жёлтая — человек занят ещё на другом проекте" },
+            { color: "#d4a017", label: "золотая — ближайшая цель проекта" },
+          ].map((b) => (
+            <span key={b.color} className="flex items-center gap-2">
+              <span
+                className="inline-block size-4 rounded-sm"
+                style={{ boxShadow: `inset 0 0 0 2px ${b.color}` }}
+              />
+              {b.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+
       <div className="mt-6">
         <Label>Краткая информация по проекту</Label>
         <Textarea
@@ -437,9 +451,15 @@ function ProjectPage() {
 function AddMemberDialog({ projectId }: { projectId: string }) {
   const { store, update } = useStore();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [dept, setDept] = useState("all");
   const project = store.projects.find((p) => p.id === projectId);
-  const people = allPeople(store).filter(
-    (p) => !project?.members.some((m) => m.personId === p.id),
+  const free = allPeople(store).filter((p) => !project?.members.some((m) => m.personId === p.id));
+  const allDepts = Array.from(new Set(free.map((p) => p.department))).sort();
+  const people = free.filter(
+    (p) =>
+      (dept === "all" || p.department === dept) &&
+      p.name.toLowerCase().includes(q.trim().toLowerCase()),
   );
 
   return (
@@ -453,7 +473,29 @@ function AddMemberDialog({ projectId }: { projectId: string }) {
         <DialogHeader>
           <DialogTitle>Участники проекта</DialogTitle>
         </DialogHeader>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Поиск по ФИО…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1"
+          />
+          <Select value={dept} onValueChange={setDept}>
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Раздел" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все разделы</SelectItem>
+              {allDepts.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="max-h-80 space-y-1 overflow-y-auto">
+
           {people.map((p) => (
             <button
               key={p.id}

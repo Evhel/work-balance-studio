@@ -16,11 +16,20 @@ import {
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { PersonLink } from "@/components/PersonLink";
+import { Button } from "@/components/ui/button";
 
 import { useRowSelection } from "@/components/useRowSelection";
 import { fio, useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
-import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
+import {
+  MONTHS,
+  MONTHS_SHORT,
+  daysInMonth,
+  iso,
+  WEEKDAYS_SHORT,
+  weekdayIndex,
+} from "@/lib/dates";
+
 
 export const Route = createFileRoute("/department")({
   head: () => ({
@@ -49,6 +58,7 @@ function DepartmentPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [view, setView] = useState<"month" | "year">("month");
   const people = allPeople(store);
   const departments = Array.from(new Set(people.map((p) => p.department))).sort();
   const [dept, setDept] = useState(departments[0] ?? "all");
@@ -56,6 +66,7 @@ function DepartmentPage() {
   const editable = can("editDepartment");
 
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
+
   const rows = useMemo(
     () =>
       people
@@ -92,14 +103,29 @@ function DepartmentPage() {
             ))}
           </SelectContent>
         </Select>
-        <MonthPicker
-          year={year}
-          month={month}
-          onChange={(y, m) => {
-            setYear(y);
-            setMonth(m);
-          }}
-        />
+        {view === "month" ? (
+          <MonthPicker
+            year={year}
+            month={month}
+            onChange={(y, m) => {
+              setYear(y);
+              setMonth(m);
+            }}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setYear(year - 1)}>
+              ‹
+            </Button>
+            <span className="w-14 text-center text-sm font-medium">{year}</span>
+            <Button variant="outline" size="sm" onClick={() => setYear(year + 1)}>
+              ›
+            </Button>
+          </div>
+        )}
+        <Button variant="outline" onClick={() => setView(view === "month" ? "year" : "month")}>
+          {view === "month" ? "Вид по годам" : "Вид по месяцу"}
+        </Button>
       </div>
 
       <p className="mt-3 text-sm">
@@ -107,12 +133,14 @@ function DepartmentPage() {
         <span className="font-medium">{head ? fio(head) : "не назначен"}</span>
       </p>
       <p className="mt-1 text-sm font-medium">
-        Табель отдела · {MONTHS[month]} {year}
+        Табель отдела · {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
       <div className="mt-3 flex gap-4">
         <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
+          {view === "month" ? (
           <table className="grid-table w-full">
+
             <thead>
               <tr className="bg-muted">
                 <th className="sticky left-0 z-10 min-w-[220px] border-r border-b bg-muted px-3 py-2 text-left text-xs font-medium">
@@ -236,7 +264,62 @@ function DepartmentPage() {
               ))}
             </tbody>
           </table>
+          ) : (
+            <table className="grid-table w-full">
+              <thead>
+                <tr className="bg-muted">
+                  <th className="min-w-[220px] border-r border-b px-3 py-2 text-left text-xs font-medium">
+                    ФИО
+                  </th>
+                  {MONTHS_SHORT.map((m) => (
+                    <th key={m} className="border-r border-b px-2 py-2 text-xs font-medium">
+                      {m}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((p) => (
+                  <tr key={p.id}>
+                    <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
+                      <PersonLink id={p.id} name={p.name} />
+                      <span className="ml-1 text-muted-foreground">· {p.department}</span>
+                    </th>
+                    {MONTHS_SHORT.map((_, m) => {
+                      const dates = Array.from({ length: daysInMonth(year, m) }, (_, i) =>
+                        iso(year, m, i + 1),
+                      );
+                      const projs = store.projects.filter((pr) =>
+                        dates.some((date) => store.plan[pr.id]?.[p.id]?.[date] === "Р"),
+                      );
+                      const absDays = dates.filter((date) => absenceAt(store, p.id, date)).length;
+                      return (
+                        <td key={m} className="h-9 border-r border-b px-1 align-middle">
+                          <div className="flex flex-col items-center gap-[2px]">
+                            {absDays > 0 && (
+                              <span className="text-[10px] leading-none text-muted-foreground">
+                                отс. {absDays} д.
+                              </span>
+                            )}
+                            {projs.map((pr) => (
+                              <span
+                                key={pr.id}
+                                className="h-1.5 w-full rounded-full"
+                                style={{ background: pr.color }}
+                                title={pr.name}
+                              />
+                            ))}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+
 
         <div className="w-52 shrink-0 rounded-lg border bg-card p-3 text-xs">
           <div className="mb-2 font-medium">Проекты</div>
