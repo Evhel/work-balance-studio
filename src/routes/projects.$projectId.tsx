@@ -182,20 +182,17 @@ function ProjectPage() {
           />
         </div>
         <div>
-          <Label>Картинка проекта</Label>
-          <Input
-            type="file"
-            accept="image/*"
+          <Label>Пауза</Label>
+          <Button
+            variant="outline"
+            className="mt-1 w-full"
             disabled={!editable}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const reader = new FileReader();
-              reader.onload = () => patch((p) => (p.image = String(reader.result)));
-              reader.readAsDataURL(file);
-            }}
-          />
+            onClick={() => patch((p) => (p.paused = !p.paused))}
+          >
+            {project.paused ? "Снять паузу" : "Поставить на паузу"}
+          </Button>
         </div>
+
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
