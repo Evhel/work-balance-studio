@@ -451,9 +451,15 @@ function ProjectPage() {
 function AddMemberDialog({ projectId }: { projectId: string }) {
   const { store, update } = useStore();
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [dept, setDept] = useState("all");
   const project = store.projects.find((p) => p.id === projectId);
-  const people = allPeople(store).filter(
-    (p) => !project?.members.some((m) => m.personId === p.id),
+  const free = allPeople(store).filter((p) => !project?.members.some((m) => m.personId === p.id));
+  const allDepts = Array.from(new Set(free.map((p) => p.department))).sort();
+  const people = free.filter(
+    (p) =>
+      (dept === "all" || p.department === dept) &&
+      p.name.toLowerCase().includes(q.trim().toLowerCase()),
   );
 
   return (
@@ -467,7 +473,29 @@ function AddMemberDialog({ projectId }: { projectId: string }) {
         <DialogHeader>
           <DialogTitle>Участники проекта</DialogTitle>
         </DialogHeader>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Поиск по ФИО…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1"
+          />
+          <Select value={dept} onValueChange={setDept}>
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Раздел" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все разделы</SelectItem>
+              {allDepts.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="max-h-80 space-y-1 overflow-y-auto">
+
           {people.map((p) => (
             <button
               key={p.id}
