@@ -29,12 +29,23 @@ function monthIndex(dateIso: string, year: number) {
   return m! - 1;
 }
 
-function status(p: Project) {
+type Status = "done" | "current" | "paused" | "future";
+
+function status(p: Project): Status {
+  if (p.paused) return "paused";
   const today = new Date().toISOString().slice(0, 10);
   if (p.start > today) return "future";
   if (p.end < today) return "done";
   return "current";
 }
+
+const COLUMNS: { key: Status; title: string; bg: string }[] = [
+  { key: "done", title: "Завершён", bg: "#ececec" },
+  { key: "current", title: "Текущий", bg: "#e3f6e6" },
+  { key: "paused", title: "На паузе", bg: "#fdf3c8" },
+  { key: "future", title: "Будущий", bg: "#e6efff" },
+];
+
 
 function ProjectsPage() {
   const { store, update, can } = useStore();
