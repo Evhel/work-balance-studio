@@ -207,15 +207,23 @@ function TimesheetPage() {
           <ExportDialog
             year={year}
             month={month}
-            onExport={(list) =>
-              list.forEach(({ y, m }) => {
-                const nd = Array.from({ length: daysInMonth(y, m) }, (_, i) => i + 1).filter((d) =>
+            onExport={(list) => {
+              list.forEach(({ y, m }, i) => {
+                const nd = Array.from({ length: daysInMonth(y, m) }, (_, k) => k + 1).filter((d) =>
                   isWorkday(iso(y, m, d)),
                 ).length;
-                downloadMonth(y, m, exportRows(y, m), nd);
-              })
-            }
+                // Каждый месяц — отдельный файл; небольшая задержка,
+                // чтобы браузер не блокировал серию скачиваний.
+                window.setTimeout(() => downloadMonth(y, m, exportRows(y, m), nd), i * 400);
+              });
+              toast.success(
+                list.length > 1
+                  ? `Скачивается файлов: ${list.length} (по одному на месяц)`
+                  : "Файл скачивается",
+              );
+            }}
           />
+
           <Button
             variant="outline"
             onClick={() => {
