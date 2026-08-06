@@ -577,7 +577,7 @@ function TimesheetPage() {
         </table>
       </div>
 
-      <Legend items={TIME_LEGEND} />
+      <Legend items={hideRemote ? TIME_LEGEND.filter((l) => l.code !== REMOTE_CODE) : TIME_LEGEND} />
 
       {editable && store.employees.some((e) => e.hidden) && (
         <div className="mt-4 rounded-lg border bg-card p-3 text-sm">
