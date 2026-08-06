@@ -627,18 +627,27 @@ function DashboardsPage() {
         <div className="flex min-w-0 flex-col">
           <h2 className="text-base font-medium">Трудозатраты по проектам</h2>
           <div className="mt-2 flex min-h-56 flex-1 gap-3 rounded-lg border bg-card p-3">
-            <div className="min-h-48 min-w-0 flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="80%">
-                    {donut.map((d) => (
-                      <Cell key={d.name} fill={soft(d.color)} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="relative min-h-48 min-w-0 flex-1">
+              <div className="absolute inset-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donut}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius="45%"
+                      outerRadius="80%"
+                    >
+                      {donut.map((d) => (
+                        <Cell key={d.name} fill={soft(d.color)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
+
             <div className="w-40 shrink-0 overflow-y-auto text-[11px]">
               {donut.map((d) => (
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
