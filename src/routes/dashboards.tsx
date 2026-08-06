@@ -627,7 +627,11 @@ function DashboardsPage() {
       )}
 
       {/* Таблица 3 + пончик в одну строку */}
-      <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <div
+        ref={secTop}
+        className="mt-6 grid gap-3 bg-background lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
+      >
+
         <div className="min-w-0">
           <h2 className="text-base font-medium">
             Фактические трудозатраты: проект × раздел ({unitLabel})
