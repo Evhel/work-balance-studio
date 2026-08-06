@@ -553,8 +553,7 @@ function DashboardsPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      </div>
     </div>
-
   );
+
 }
