@@ -653,8 +653,7 @@ function DashboardsPage() {
           </div>
         </div>
 
-          </div>
-        </div>
+
       </div>
 
       {/* Гистограмма с группировкой к таблице 3 */}
