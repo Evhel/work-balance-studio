@@ -52,6 +52,8 @@ export function defaultAccess(
       return chiefs || isGip;
     case "editEffort":
       return chiefs;
+    case "editEmployeeCard":
+      return position === "Офис-менеджер";
     case "deleteEntities":
     case "manageRoles":
       return position === "Модератор";
