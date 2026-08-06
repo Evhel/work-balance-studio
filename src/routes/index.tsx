@@ -214,24 +214,25 @@ function TimesheetPage() {
       let wd = 0;
       for (let d = 1; d <= dm; d++) {
         const date = iso(y, m, d);
+        const employed = isWorkday(date) && isEmployedOn(p, date);
         const manual = store.timesheet[p.id]?.[date];
-        let v = manual ?? "";
-        if (manual === undefined && isWorkday(date) && isEmployedOn(p, date)) {
-          if (remoteByPattern(p, date)) v = REMOTE_CODE;
-          else if (p.fullTime && date <= today) v = "8";
-        }
-        if (v === REMOTE_CODE) {
-          if (p.fullTime) hours += 8;
+        let v = manual !== undefined && manual !== REMOTE_CODE ? manual : "";
+        if (manual === undefined && employed && p.fullTime && date <= today) v = "8";
+        const ov = store.remoteOverride?.[p.id]?.[date];
+        const remote =
+          employed &&
+          (typeof ov === "boolean" ? ov : manual === REMOTE_CODE || remoteByPattern(p, date));
+        const n = Number(v);
+        if (v !== "" && !Number.isNaN(n)) {
+          hours += n;
+          if (n > 0) wd += 1;
+        } else if (v === "" && remote) {
           wd += 1;
-        } else {
-          const n = Number(v);
-          if (v !== "" && !Number.isNaN(n)) {
-            hours += n;
-            if (n > 0) wd += 1;
-          }
         }
-        values.push(shown(v));
+        const cell = [shown(v), remote ? shown(REMOTE_CODE) : ""].filter(Boolean).join(" ");
+        values.push(cell);
       }
+
       return { fio: fio(p), values, hours, days: wd };
     });
   };
