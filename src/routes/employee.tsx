@@ -125,8 +125,14 @@ function EmployeePage() {
 
 
   return (
-    <div>
+    <div onMouseUp={() => (dragging.current = false)}>
       <h1 className="text-2xl font-semibold">Сотрудник</h1>
+      {editable && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Выделяйте несколько дней протяжкой мыши, Shift или Ctrl, затем ПКМ — задать занятость сразу
+          для всех выбранных дней{selDays.length > 1 ? ` (выбрано: ${selDays.length})` : ""}.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Select value={person.id} onValueChange={setPersonId}>
