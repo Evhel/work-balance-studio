@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
-import { byFio, fio, useStore } from "@/lib/store";
+import { birthDayMonth, byFio, fio, useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
 import {
   MONTHS,
