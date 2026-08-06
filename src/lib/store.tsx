@@ -1,115 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Contractor, Employee, Project, Store } from "./types";
+import type { AccessAction, Employee, Store } from "./types";
 import { isWeekendDate } from "./dates";
+import { seedStore, PALETTE, projectColor } from "./seed";
 
-const KEY = "arv-workload-store-v1";
+const KEY = "arv-workload-store-v2";
 
-const PALETTE = [
-  "#520099",
-  "#0e7490",
-  "#b45309",
-  "#be123c",
-  "#15803d",
-  "#7c3aed",
-  "#0369a1",
-  "#a16207",
-];
-
-export function projectColor(index: number) {
-  return PALETTE[index % PALETTE.length]!;
-}
+export { PALETTE, projectColor };
 
 function seed(): Store {
-  const employees: Employee[] = [
-    ["Иванов", "Иван", "Иванович", "ГИП", "Директор", true, "1978-04-12"],
-    ["Петрова", "Анна", "Сергеевна", "Офис", "Офис-менеджер", true, "1990-08-03"],
-    ["Сидоров", "Пётр", "Алексеевич", "АР", "Руководитель отдела", true, "1985-11-21"],
-    ["Кузнецова", "Мария", "Ивановна", "КР", "Сотрудник", true, "1993-02-17"],
-    ["Смирнов", "Олег", "Дмитриевич", "ОВ", "Сотрудник", false, "1996-06-30"],
-    ["Волкова", "Елена", "Павловна", "ГИП", "Сотрудник", true, "1988-09-09"],
-    ["Морозов", "Артём", "Юрьевич", "ЭОМ", "Модератор", true, "1991-12-25"],
-  ].map((r, i) => ({
-    id: `e${i + 1}`,
-    lastName: r[0] as string,
-    firstName: r[1] as string,
-    middleName: r[2] as string,
-    department: r[3] as string,
-    position: r[4] as Employee["position"],
-    fullTime: r[5] as boolean,
-    birthDate: r[6] as string,
-  }));
-
-  const contractors: Contractor[] = [
-    ["Абрамов", "Игорь", "Львович", "АР"],
-    ["Гончарова", "Ольга", "Ивановна", "КР"],
-    ["Дубов", "Сергей", "Петрович", "ВК"],
-  ].map((r, i) => ({
-    id: `c${i + 1}`,
-    lastName: r[0]!,
-    firstName: r[1]!,
-    middleName: r[2]!,
-    department: r[3]!,
-    projectId: i === 0 ? "p1" : "p2",
-  }));
-
-  const y = new Date().getFullYear();
-  const projects: Project[] = [
-    {
-      id: "p1",
-      name: "ЖК «Северный»",
-      color: PALETTE[0]!,
-      stage: "ПД",
-      start: `${y}-01-15`,
-      end: `${y}-08-30`,
-      milestone: `${y}-05-20`,
-      description: "",
-      members: [
-        { personId: "e3", kind: "employee" },
-        { personId: "e4", kind: "employee" },
-        { personId: "c1", kind: "contractor" },
-      ],
-    },
-    {
-      id: "p2",
-      name: "Технопарк «Восток»",
-      color: PALETTE[1]!,
-      stage: "Концепция",
-      start: `${y}-04-01`,
-      end: `${y}-12-15`,
-      milestone: `${y}-09-10`,
-      description: "",
-      members: [
-        { personId: "e6", kind: "employee" },
-        { personId: "e5", kind: "employee" },
-        { personId: "c2", kind: "contractor" },
-      ],
-    },
-    {
-      id: "p3",
-      name: "Школа №42",
-      color: PALETTE[2]!,
-      stage: "РД",
-      start: `${y - 1}-09-01`,
-      end: `${y}-03-01`,
-      description: "",
-      members: [{ personId: "e7", kind: "employee" }],
-    },
-  ];
-
-  return {
-    employees,
-    contractors,
-    projects,
-    timesheet: {},
-    dayOverrides: {},
-    plan: {},
-    personalEvents: {},
-    effort: {},
-    effortDone: {},
-    filterSets: [],
-    currentUserId: "e2",
-  };
+  return seedStore();
 }
+
 
 type Ctx = {
   store: Store;
