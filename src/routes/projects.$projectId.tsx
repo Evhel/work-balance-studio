@@ -10,6 +10,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
@@ -38,7 +39,7 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-import { CODE_COLORS, type ProjectStage } from "@/lib/types";
+import { type ProjectGoal, type ProjectStage } from "@/lib/types";
 
 export const Route = createFileRoute("/projects/$projectId")({
   head: () => ({
@@ -60,12 +61,15 @@ const PROJECT_LEGEND = [
   { code: "ОТ", label: "отпуск оплачиваемый (серое)" },
   { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
   { code: "У", label: "учебный отпуск (серое)" },
-  { code: "Р", label: "в работе (зелёное)" },
+  { code: "НН", label: "неявка" },
+  { code: "▬", label: "цветная полоса — занятость на проекте (цвет проекта)" },
 ];
+
+const STATUS_CODES = ["Б", "ОТ", "ДО", "У", "НН"];
 
 function ProjectPage() {
   const { projectId } = Route.useParams();
-  const { store, update, isWorkday, setPlanCells, can } = useStore();
+  const { store, update, isWorkday, setPlanCells, setCells, can } = useStore();
   const project = store.projects.find((p) => p.id === projectId);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -99,6 +103,24 @@ function ProjectPage() {
 
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
   const depts = Array.from(new Set(members.map((m) => m.department))).sort();
+
+  const goals: ProjectGoal[] = project.goals ?? (
+    project.milestone ? [{ id: "m0", date: project.milestone, name: "Ближайшая цель" }] : []
+  );
+  const goalsAt = (date: string) => goals.filter((g) => g.date === date);
+  const addGoal = (date: string) => {
+    const name = window.prompt("Название цели проекта", "");
+    if (name === null) return;
+    patch((p) => {
+      p.goals = [...(p.goals ?? goals), { id: `g${Date.now()}`, date, name: name || "Цель" }];
+      p.milestone = date;
+    });
+    toast.success("Цель добавлена");
+  };
+  const removeGoal = (id: string) =>
+    patch((p) => {
+      p.goals = (p.goals ?? goals).filter((g) => g.id !== id);
+    });
 
   const patch = (fn: (p: NonNullable<typeof project>) => void) =>
     update((d) => {
@@ -173,12 +195,12 @@ function ProjectPage() {
           />
         </div>
         <div>
-          <Label>Ближайшая цель</Label>
+          <Label>Новая цель</Label>
           <Input
             type="date"
-            value={project.milestone ?? ""}
+            value=""
             disabled={!editable}
-            onChange={(e) => patch((p) => (p.milestone = e.target.value))}
+            onChange={(e) => e.target.value && addGoal(e.target.value)}
           />
         </div>
         <div>
@@ -241,21 +263,43 @@ function ProjectPage() {
                 <th className="min-w-[80px] border-r border-b px-2 text-xs">Раздел</th>
                 {days.map((d) => {
                   const date = iso(year, month, d);
-                  const isMilestone = project.milestone === date;
+                  const dayGoals = goalsAt(date);
                   return (
-                    <th
-                      key={d}
-                      className="day-cell font-medium"
-                      style={{
-                        background: isWorkday(date) ? undefined : "var(--weekend)",
-                        boxShadow: isMilestone ? "inset 0 0 0 2px #d4a017" : undefined,
-                      }}
-                    >
-                      <div>{d}</div>
-                      <div className="text-[9px] text-muted-foreground">
-                        {WEEKDAYS_SHORT[weekdayIndex(year, month, d)]}
-                      </div>
-                    </th>
+                    <ContextMenu key={d}>
+                      <ContextMenuTrigger asChild>
+                        <th
+                          className="day-cell font-medium"
+                          title={
+                            dayGoals.length
+                              ? `Цель: ${dayGoals.map((g) => g.name).join(", ")}`
+                              : editable
+                                ? "ПКМ — создать цель проекта"
+                                : undefined
+                          }
+                          style={{
+                            background: isWorkday(date) ? undefined : "var(--weekend)",
+                            boxShadow: dayGoals.length ? "inset 0 0 0 2px #d4a017" : undefined,
+                          }}
+                        >
+                          <div>{d}</div>
+                          <div className="text-[9px] text-muted-foreground">
+                            {WEEKDAYS_SHORT[weekdayIndex(year, month, d)]}
+                          </div>
+                        </th>
+                      </ContextMenuTrigger>
+                      {editable && (
+                        <ContextMenuContent>
+                          <ContextMenuItem onSelect={() => addGoal(date)}>
+                            + Новая цель проекта на {d}.{String(month + 1).padStart(2, "0")}
+                          </ContextMenuItem>
+                          {dayGoals.map((g) => (
+                            <ContextMenuItem key={g.id} onSelect={() => removeGoal(g.id)}>
+                              Удалить цель «{g.name}»
+                            </ContextMenuItem>
+                          ))}
+                        </ContextMenuContent>
+                      )}
+                    </ContextMenu>
                   );
                 })}
               </tr>
@@ -270,20 +314,21 @@ function ProjectPage() {
                   {days.map((d) => {
                     const date = iso(year, month, d);
                     const absence = absenceAt(store, p.id, date);
-                    const work = store.plan[projectId]?.[p.id]?.[date] === "Р";
-                    const otherBusy = store.projects.some(
-                      (op) => op.id !== projectId && store.plan[op.id]?.[p.id]?.[date] === "Р",
+                    const status = store.timesheet[p.id]?.[date] ?? "";
+                    const active = store.projects.filter(
+                      (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
                     );
-                    const isMilestone = project.milestone === date;
+                    const here = active.some((pr) => pr.id === projectId);
+                    const dayGoals = goalsAt(date);
+                    const conflict = !!absence && active.length > 0;
                     let bg: string | undefined = isWorkday(date) ? undefined : "var(--weekend)";
                     if (absence) bg = "#e2e2e2";
-                    if (work) bg = CODE_COLORS["Р"];
-                    const conflict = work && absence;
+                    if (conflict) bg = "#ffd9d9";
                     const border = conflict
                       ? "inset 0 0 0 2px #dc2626"
-                      : work && otherBusy
+                      : here && active.length > 1
                         ? "inset 0 0 0 2px #eab308"
-                        : isMilestone
+                        : dayGoals.length
                           ? "inset 0 0 0 2px #d4a017"
                           : undefined;
                     const selected = sel.isSelected(p.id, d);
@@ -291,18 +336,45 @@ function ProjectPage() {
                       <ContextMenu key={d}>
                         <ContextMenuTrigger asChild>
                           <td
-                            className="day-cell cursor-pointer"
+                            className="day-cell cursor-pointer align-top"
+                            title={
+                              [
+                                conflict ? `Конфликт: ${absence} и занятость` : "",
+                                active.map((x) => x.name).join(", "),
+                                dayGoals.map((g) => `Цель: ${g.name}`).join(", "),
+                              ]
+                                .filter(Boolean)
+                                .join(" · ") || undefined
+                            }
                             style={{
                               background: bg,
                               boxShadow: border,
                               outline: selected ? "2px solid var(--primary)" : undefined,
                               outlineOffset: "-2px",
                             }}
-                            onMouseDown={() => editable && sel.onMouseDown(p.id, d)}
+                            onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
                             onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                           >
-                            {work ? "Р" : absence}
+                            <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                              {status && (
+                                <span className="text-[10px] leading-none font-medium">
+                                  {status}
+                                </span>
+                              )}
+                              {active.map((pr) => (
+                                <span
+                                  key={pr.id}
+                                  className="w-full rounded-full"
+                                  style={{
+                                    background: pr.color,
+                                    height: pr.id === projectId ? 6 : 4,
+                                    opacity: pr.id === projectId ? 1 : 0.55,
+                                  }}
+                                  title={pr.name}
+                                />
+                              ))}
+                            </div>
                           </td>
                         </ContextMenuTrigger>
                         {editable && (
@@ -312,26 +384,54 @@ function ProjectPage() {
                                 setPlanCells(
                                   projectId,
                                   p.id,
-                                  (sel.sel?.days ?? [d]).map((x) => iso(year, month, x)),
+                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
                                   "Р",
                                 );
                                 sel.clear();
                               }}
                             >
-                              Р — в работе
+                              Занять на «{project.name}»
                             </ContextMenuItem>
                             <ContextMenuItem
                               onSelect={() => {
                                 setPlanCells(
                                   projectId,
                                   p.id,
-                                  (sel.sel?.days ?? [d]).map((x) => iso(year, month, x)),
+                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
                                   null,
                                 );
                                 sel.clear();
                               }}
                             >
-                              Очистить
+                              Снять занятость на этом проекте
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            {STATUS_CODES.map((c) => (
+                              <ContextMenuItem
+                                key={c}
+                                onSelect={() => {
+                                  setCells(
+                                    p.id,
+                                    sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
+                                    c,
+                                  );
+                                  sel.clear();
+                                }}
+                              >
+                                Статус: {c}
+                              </ContextMenuItem>
+                            ))}
+                            <ContextMenuItem
+                              onSelect={() => {
+                                setCells(
+                                  p.id,
+                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
+                                  null,
+                                );
+                                sel.clear();
+                              }}
+                            >
+                              Очистить статус
                             </ContextMenuItem>
                           </ContextMenuContent>
                         )}
@@ -373,7 +473,6 @@ function ProjectPage() {
                           <td
                             className="h-8 cursor-pointer border-r border-b text-center text-xs"
                             style={{
-                              background: busy ? CODE_COLORS["Р"] : undefined,
                               outline: selected ? "2px solid var(--primary)" : undefined,
                               outlineOffset: "-2px",
                             }}
@@ -381,7 +480,13 @@ function ProjectPage() {
                             onMouseEnter={() => editable && yearSel.onMouseEnter(p.id, m)}
                             onContextMenu={() => editable && yearSel.ensureSelected(p.id, m)}
                           >
-                            {busy ? "Р" : ""}
+                            {busy && (
+                              <span
+                                className="mx-auto block h-2 w-4/5 rounded-full"
+                                style={{ background: project.color }}
+                                title={project.name}
+                              />
+                            )}
                           </td>
                         </ContextMenuTrigger>
                         {editable && (
@@ -391,7 +496,7 @@ function ProjectPage() {
                                 setYearMonthWork(p.id, yearSel.sel?.days ?? [m], "Р")
                               }
                             >
-                              Р — все будни месяца
+                              Занять все будни месяца
                             </ContextMenuItem>
                             <ContextMenuItem
                               onSelect={() =>
@@ -412,6 +517,32 @@ function ProjectPage() {
         )}
       </div>
 
+      <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
+        <div className="mb-2 font-medium">Цели проекта</div>
+        {goals.length === 0 && <p className="text-muted-foreground">Целей пока нет. ПКМ по номеру дня в шапке табеля — создать цель.</p>}
+        <div className="flex flex-wrap gap-2">
+          {[...goals]
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map((g) => (
+              <span
+                key={g.id}
+                className="flex items-center gap-2 rounded-md border px-2 py-1"
+                style={{ boxShadow: "inset 0 0 0 2px #d4a017" }}
+              >
+                <b>{g.name}</b>
+                <span className="text-muted-foreground">
+                  {g.date.slice(8, 10)}.{g.date.slice(5, 7)}.{g.date.slice(0, 4)}
+                </span>
+                {editable && (
+                  <button className="text-muted-foreground hover:text-destructive" onClick={() => removeGoal(g.id)}>
+                    ✕
+                  </button>
+                )}
+              </span>
+            ))}
+        </div>
+      </div>
+
       <Legend items={PROJECT_LEGEND} />
 
       <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
@@ -420,7 +551,7 @@ function ProjectPage() {
           {[
             { color: "#dc2626", label: "красная — конфликт: отсутствие и работа в один день" },
             { color: "#eab308", label: "жёлтая — человек занят ещё на другом проекте" },
-            { color: "#d4a017", label: "золотая — ближайшая цель проекта" },
+            { color: "#d4a017", label: "золотая — цель проекта (название во всплывающей подсказке)" },
           ].map((b) => (
             <span key={b.color} className="flex items-center gap-2">
               <span

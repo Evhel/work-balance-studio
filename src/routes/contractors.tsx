@@ -52,7 +52,7 @@ export const Route = createFileRoute("/contractors")({
 const CODES = ["Б", "ОТ", "НН"];
 
 function ContractorsPage() {
-  const { store, update, isWorkday, setCells, can, removeContractor } = useStore();
+  const { store, update, isWorkday, setCells, setPlanCells, can, removeContractor } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -110,11 +110,12 @@ function ContractorsPage() {
       </p>
       {editable && (
         <p className="mt-1 text-xs text-muted-foreground">
-          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. ПКМ — статус.
+          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. ПКМ — статус и занятость на проекте.
         </p>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div className="mt-3 flex gap-4">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
         <table className="grid-table w-full">
           <thead>
             <tr className="bg-muted">
@@ -180,15 +181,23 @@ function ContractorsPage() {
                 {days.map((d) => {
                   const date = iso(year, month, d);
                   const v = store.timesheet[p.id]?.[date] ?? "";
-                  const bg = CODE_COLORS[v] ?? (isWorkday(date) ? undefined : "var(--weekend)");
+                  const active = store.projects.filter(
+                    (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
+                  );
+                  const conflict = !!v && v !== "НН" && active.length > 0;
+                  const bg = conflict
+                    ? "#ffd9d9"
+                    : (CODE_COLORS[v] ?? (isWorkday(date) ? undefined : "var(--weekend)"));
                   const selected = sel.isSelected(p.id, d);
                   return (
                     <ContextMenu key={d}>
                       <ContextMenuTrigger asChild>
                         <td
-                          className="day-cell cursor-pointer"
+                          className="day-cell cursor-pointer align-top"
+                          title={active.map((x) => x.name).join(", ") || undefined}
                           style={{
                             background: bg,
+                            boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
                             outline: selected ? "2px solid var(--primary)" : undefined,
                             outlineOffset: "-2px",
                           }}
@@ -196,11 +205,47 @@ function ContractorsPage() {
                           onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                           onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                         >
-                          {v}
+                          <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                            {v && <span className="text-[10px] leading-none font-medium">{v}</span>}
+                            {active.map((pr) => (
+                              <span
+                                key={pr.id}
+                                className="h-1.5 w-full rounded-full"
+                                style={{ background: pr.color }}
+                                title={pr.name}
+                              />
+                            ))}
+                          </div>
                         </td>
                       </ContextMenuTrigger>
                       {editable && (
                         <ContextMenuContent>
+                          {store.projects.map((pr) => (
+                            <ContextMenuItem
+                              key={pr.id}
+                              onSelect={() => {
+                                setPlanCells(
+                                  pr.id,
+                                  p.id,
+                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
+                                  "Р",
+                                );
+                                sel.clear();
+                              }}
+                            >
+                              Занять: {pr.name}
+                            </ContextMenuItem>
+                          ))}
+                          <ContextMenuItem
+                            onSelect={() => {
+                              const dates = sel.targetDays(p.id, d).map((x) => iso(year, month, x));
+                              store.projects.forEach((pr) => setPlanCells(pr.id, p.id, dates, null));
+                              sel.clear();
+                            }}
+                          >
+                            Снять занятость
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
                           {CODES.map((c) => (
                             <ContextMenuItem key={c} onSelect={() => apply(p.id, d, c)}>
                               {c} — {CONTRACTOR_LEGEND.find((l) => l.code === c)?.label}
@@ -208,17 +253,28 @@ function ContractorsPage() {
                           ))}
                           <ContextMenuSeparator />
                           <ContextMenuItem onSelect={() => apply(p.id, d, null)}>
-                            Очистить
+                            Очистить статус
                           </ContextMenuItem>
                         </ContextMenuContent>
                       )}
                     </ContextMenu>
                   );
                 })}
+
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="w-52 shrink-0 rounded-lg border bg-card p-3 text-xs">
+          <div className="mb-2 font-medium">Проекты</div>
+          {store.projects.map((p) => (
+            <div key={p.id} className="mb-1 flex items-center gap-2">
+              <span className="size-3 shrink-0 rounded-full" style={{ background: p.color }} />
+              <span className="truncate">{p.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <Legend items={CONTRACTOR_LEGEND} />

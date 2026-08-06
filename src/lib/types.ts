@@ -47,6 +47,9 @@ export type ProjectStage = "Концепция" | "ПД" | "РД";
 
 export type ProjectMember = { personId: string; kind: "employee" | "contractor" };
 
+/** Цель (веха) проекта с датой и названием */
+export type ProjectGoal = { id: string; date: string; name: string };
+
 export type Project = {
   id: string;
   name: string;
@@ -55,6 +58,8 @@ export type Project = {
   start: string; // YYYY-MM-DD
   end: string;
   milestone?: string;
+  /** Несколько именованных целей */
+  goals?: ProjectGoal[];
   description?: string;
   image?: string;
   /** Проект на паузе */
@@ -62,6 +67,7 @@ export type Project = {
   members: ProjectMember[];
 
 };
+
 
 /** Коды табеля рабочего времени (стр. 1) */
 export const TIME_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"] as const;
@@ -95,6 +101,28 @@ export const CODE_COLORS: Record<string, string> = {
 
 export const ABSENCE_CODES = ["Б", "ОТ", "ДО", "У"];
 
+/** Строка табеля трудозатрат */
+export type EffortRow = {
+  id: string;
+  projectId: string;
+  /** Вид работ (свободный текст) */
+  workType: string;
+  /** день месяца (1..31) -> часы */
+  hours: Record<string, number>;
+};
+
+/** Сохранённый набор фильтров дашбордов */
+export type FilterSet = {
+  id: string;
+  name: string;
+  unit: "hours" | "days";
+  depts: string[];
+  projects: string[];
+  people: string[];
+  from: string; // YYYY-MM
+  to: string; // YYYY-MM
+};
+
 export type Store = {
   employees: Employee[];
   contractors: Contractor[];
@@ -107,5 +135,12 @@ export type Store = {
   plan: Record<string, Record<string, Record<string, string>>>;
   /** personId -> дата -> личное событие */
   personalEvents: Record<string, Record<string, string>>;
+  /** personId -> 'YYYY-MM' -> строки трудозатрат */
+  effort: Record<string, Record<string, EffortRow[]>>;
+  /** personId -> 'YYYY-MM' -> «трудозатраты заполнены» */
+  effortDone: Record<string, Record<string, boolean>>;
+  /** Сохранённые наборы фильтров дашбордов */
+  filterSets: FilterSet[];
   currentUserId: string;
 };
+
