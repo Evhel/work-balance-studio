@@ -150,6 +150,7 @@ export const ACCESS_ACTIONS: { id: AccessAction; label: string }[] = [
   { id: "viewEffort", label: "Просмотр трудозатрат" },
   { id: "editEffort", label: "Редактирование трудозатрат всех сотрудников" },
   { id: "viewDashboards", label: "Просмотр дашбордов" },
+  { id: "editEmployeeCard", label: "Карточка сотрудника: дата рождения, должность, отдел, занятость, даты работы" },
   { id: "deleteEntities", label: "Удаление сотрудников, подрядчиков и проектов" },
   { id: "manageRoles", label: "Управление ролями и доступами" },
 ];
