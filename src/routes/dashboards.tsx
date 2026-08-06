@@ -499,7 +499,15 @@ function DashboardsPage() {
           <tbody>
             {table3.map((r) => (
               <tr key={r.pid}>
-                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">{r.project}</th>
+                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
+                  <Link
+                    to="/projects/$projectId"
+                    params={{ projectId: r.pid }}
+                    className="text-primary hover:underline"
+                  >
+                    {r.project}
+                  </Link>
+                </th>
                 {r.cells.map((c, i) => (
                   <td key={i} className="border-r border-b px-3 py-1 text-center text-xs">{c || ""}</td>
                 ))}
