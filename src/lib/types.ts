@@ -47,6 +47,9 @@ export type ProjectStage = "Концепция" | "ПД" | "РД";
 
 export type ProjectMember = { personId: string; kind: "employee" | "contractor" };
 
+/** Цель (веха) проекта с датой и названием */
+export type ProjectGoal = { id: string; date: string; name: string };
+
 export type Project = {
   id: string;
   name: string;
@@ -55,6 +58,8 @@ export type Project = {
   start: string; // YYYY-MM-DD
   end: string;
   milestone?: string;
+  /** Несколько именованных целей */
+  goals?: ProjectGoal[];
   description?: string;
   image?: string;
   /** Проект на паузе */
@@ -62,6 +67,7 @@ export type Project = {
   members: ProjectMember[];
 
 };
+
 
 /** Коды табеля рабочего времени (стр. 1) */
 export const TIME_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"] as const;
