@@ -227,7 +227,9 @@ function TimesheetPage() {
         const ov = store.remoteOverride?.[p.id]?.[date];
         const remote =
           employed &&
+          !(manual && NON_REMOTE_CODES.includes(manual)) &&
           (typeof ov === "boolean" ? ov : manual === REMOTE_CODE || remoteByPattern(p, date));
+
         const n = Number(v);
         if (v !== "" && !Number.isNaN(n)) {
           hours += n;
