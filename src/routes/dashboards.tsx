@@ -432,14 +432,17 @@ function DashboardsPage() {
         ctx.fillRect(0, 0, slice.width, slice.height);
         ctx.drawImage(canvas, 0, i * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
         if (i > 0) pdf.addPage();
-        pdf.setFontSize(12);
-        pdf.setTextColor(82, 0, 153);
-        pdf.text("АРВ · Дашборды трудозатрат", margin, margin + 12);
-        pdf.setFontSize(9);
-        pdf.setTextColor(120);
-        pdf.text(new Date().toLocaleDateString("ru-RU"), pw - margin, margin + 12, {
-          align: "right",
-        });
+        // Кириллица во встроенных шрифтах jsPDF ломается — рисуем текст картинкой
+        drawText(pdf, "АРВ · Дашборды трудозатрат", margin, margin, 13, "#520099", "left");
+        drawText(
+          pdf,
+          new Date().toLocaleDateString("ru-RU"),
+          pw - margin,
+          margin + 2,
+          10,
+          "#6b7280",
+          "right",
+        );
         pdf.addImage(
           slice.toDataURL("image/jpeg", 0.92),
           "JPEG",
@@ -448,7 +451,8 @@ function DashboardsPage() {
           w,
           (sh * w) / canvas.width,
         );
-        pdf.text(`${i + 1} / ${pages}`, pw / 2, ph - margin + 6, { align: "center" });
+        drawText(pdf, `${i + 1} / ${pages}`, pw / 2, ph - margin, 9, "#6b7280", "center");
+
       }
       pdf.save("АРВ_Дашборды.pdf");
       toast.success("PDF готов");
