@@ -112,15 +112,21 @@ function TimesheetPage() {
     return wd < 5 && emp.remoteDays.includes(wd + 1);
   };
 
+  /** Статусы, при которых «УД» не ставится */
+  const NON_REMOTE_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"];
+
   /** Удалёнка на дату: ручное переопределение важнее регулярного паттерна */
   const remoteAt = (personId: string, date: string) => {
     const emp = store.employees.find((e) => e.id === personId);
     if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return false;
+    const manual = store.timesheet[personId]?.[date];
+    if (manual && NON_REMOTE_CODES.includes(manual)) return false;
     const ov = store.remoteOverride?.[personId]?.[date];
     if (typeof ov === "boolean") return ov;
-    if (store.timesheet[personId]?.[date] === REMOTE_CODE) return true;
+    if (manual === REMOTE_CODE) return true;
     return remoteByPattern(emp, date);
   };
+
 
   const setRemote = (personId: string, dayList: number[], value: boolean | null) =>
     update((d) => {
