@@ -39,6 +39,8 @@ export function PlanBar({
       style={{
         background: soft(color),
         minHeight: height,
+        opacity,
+
 
         width: `calc(100% + ${l + r}px)`,
         marginLeft: -l,
