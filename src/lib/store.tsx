@@ -81,8 +81,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...parsed,
           effort: parsed.effort ?? base.effort,
           effortDone: parsed.effortDone ?? base.effortDone,
+          remoteOverride: parsed.remoteOverride ?? {},
           filterSets: parsed.filterSets ?? [],
           access: parsed.access ?? {},
+
 
         });
       }

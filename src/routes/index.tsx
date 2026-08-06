@@ -112,13 +112,35 @@ function TimesheetPage() {
     return wd < 5 && emp.remoteDays.includes(wd + 1);
   };
 
+  /** Удалёнка на дату: ручное переопределение важнее регулярного паттерна */
+  const remoteAt = (personId: string, date: string) => {
+    const emp = store.employees.find((e) => e.id === personId);
+    if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return false;
+    const ov = store.remoteOverride?.[personId]?.[date];
+    if (typeof ov === "boolean") return ov;
+    if (store.timesheet[personId]?.[date] === REMOTE_CODE) return true;
+    return remoteByPattern(emp, date);
+  };
+
+  const setRemote = (personId: string, dayList: number[], value: boolean | null) =>
+    update((d) => {
+      d.remoteOverride[personId] = d.remoteOverride[personId] ?? {};
+      for (const day of dayList) {
+        const date = iso(year, month, day);
+        // «УД», сохранённая как значение ячейки, больше не используется
+        if (d.timesheet[personId]?.[date] === REMOTE_CODE) delete d.timesheet[personId]![date];
+        if (value === null) delete d.remoteOverride[personId]![date];
+        else d.remoteOverride[personId]![date] = value;
+      }
+    });
+
+  /** Часы или буквенный статус ячейки (без «УД») */
   const cellValue = (personId: string, day: number) => {
     const date = iso(year, month, day);
     const manual = store.timesheet[personId]?.[date];
-    if (manual !== undefined) return manual;
+    if (manual !== undefined && manual !== REMOTE_CODE) return manual;
     const emp = store.employees.find((e) => e.id === personId);
     if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return "";
-    if (remoteByPattern(emp, date)) return REMOTE_CODE;
     if (emp.fullTime && date <= today) return "8";
     return "";
   };
@@ -135,20 +157,17 @@ function TimesheetPage() {
     let workdays = 0;
     for (const d of days) {
       const v = cellValue(personId, d);
-      if (v === REMOTE_CODE) {
-        const emp = store.employees.find((e) => e.id === personId);
-        if (emp?.fullTime) hours += 8;
-        workdays += 1;
-        continue;
-      }
       const n = Number(v);
       if (v !== "" && !Number.isNaN(n)) {
         hours += n;
         if (n > 0) workdays += 1;
+      } else if (v === "" && remoteAt(personId, iso(year, month, d))) {
+        workdays += 1;
       }
     }
     return { hours, workdays };
   };
+
 
   const applyStatus = (personId: string, dayList: number[], value: string | null) => {
     setCells(personId, dayList.map((d) => iso(year, month, d)), value);
@@ -195,24 +214,25 @@ function TimesheetPage() {
       let wd = 0;
       for (let d = 1; d <= dm; d++) {
         const date = iso(y, m, d);
+        const employed = isWorkday(date) && isEmployedOn(p, date);
         const manual = store.timesheet[p.id]?.[date];
-        let v = manual ?? "";
-        if (manual === undefined && isWorkday(date) && isEmployedOn(p, date)) {
-          if (remoteByPattern(p, date)) v = REMOTE_CODE;
-          else if (p.fullTime && date <= today) v = "8";
-        }
-        if (v === REMOTE_CODE) {
-          if (p.fullTime) hours += 8;
+        let v = manual !== undefined && manual !== REMOTE_CODE ? manual : "";
+        if (manual === undefined && employed && p.fullTime && date <= today) v = "8";
+        const ov = store.remoteOverride?.[p.id]?.[date];
+        const remote =
+          employed &&
+          (typeof ov === "boolean" ? ov : manual === REMOTE_CODE || remoteByPattern(p, date));
+        const n = Number(v);
+        if (v !== "" && !Number.isNaN(n)) {
+          hours += n;
+          if (n > 0) wd += 1;
+        } else if (v === "" && remote) {
           wd += 1;
-        } else {
-          const n = Number(v);
-          if (v !== "" && !Number.isNaN(n)) {
-            hours += n;
-            if (n > 0) wd += 1;
-          }
         }
-        values.push(shown(v));
+        const cell = [shown(v), remote ? shown(REMOTE_CODE) : ""].filter(Boolean).join(" ");
+        values.push(cell);
       }
+
       return { fio: fio(p), values, hours, days: wd };
     });
   };
@@ -447,7 +467,11 @@ function TimesheetPage() {
                     const isEditing = edit?.personId === p.id && edit.day === d;
                     const raw = isEditing ? edit.value : cellValue(p.id, d);
                     const v = isEditing ? raw : shown(raw);
-                    const bg = CODE_COLORS[v] ?? (work ? undefined : "var(--weekend)");
+                    const remote = !hideRemote && remoteAt(p.id, date);
+                    const bg =
+                      CODE_COLORS[v] ??
+                      (remote ? CODE_COLORS[REMOTE_CODE] : undefined) ??
+                      (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
@@ -469,13 +493,21 @@ function TimesheetPage() {
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                             onKeyDown={(e) => onCellKeyDown(e, p.id, d)}
                             onBlur={() => isEditing && commitEdit()}
+                            title={remote ? "Удалённая работа" : undefined}
                           >
-                            {v}
+                            <span className="flex flex-col items-center leading-none">
+                              <span>{v}</span>
+                              {remote && (
+                                <span className="text-[8px] font-medium text-primary">
+                                  {REMOTE_CODE}
+                                </span>
+                              )}
+                            </span>
                           </td>
                         </ContextMenuTrigger>
                         {editable && (
                           <ContextMenuContent>
-                            {TIME_CODES.map((c) => (
+                            {TIME_CODES.filter((c) => c !== REMOTE_CODE).map((c) => (
                               <ContextMenuItem
                                 key={c}
                                 onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), c)}
@@ -483,6 +515,22 @@ function TimesheetPage() {
                                 {c} — {TIME_LEGEND.find((l) => l.code === c)?.label}
                               </ContextMenuItem>
                             ))}
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), true)}
+                            >
+                              Поставить «УД» (удалёнка)
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), false)}
+                            >
+                              Убрать «УД» (в т.ч. регулярную)
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), null)}
+                            >
+                              «УД» по профилю сотрудника
+                            </ContextMenuItem>
                             <ContextMenuSeparator />
                             {["4", "8", "10", "12"].map((h) => (
                               <ContextMenuItem
@@ -504,10 +552,11 @@ function TimesheetPage() {
                             <ContextMenuItem
                               onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), null)}
                             >
-                              Очистить
+                              Очистить часы
                             </ContextMenuItem>
                           </ContextMenuContent>
                         )}
+
                       </ContextMenu>
                     );
                   })}

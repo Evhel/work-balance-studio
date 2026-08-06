@@ -1,4 +1,6 @@
 import type { Store } from "@/lib/types";
+import { soft } from "@/lib/colors";
+
 
 /** Занят ли человек на проекте в этот день */
 export const isPlanned = (store: Store, projectId: string, personId: string, date: string) =>
@@ -35,9 +37,11 @@ export function PlanBar({
       title={name}
       className="block overflow-hidden"
       style={{
-        background: color,
+        background: soft(color),
         minHeight: height,
         opacity,
+
+
         width: `calc(100% + ${l + r}px)`,
         marginLeft: -l,
         borderTopLeftRadius: first ? 999 : 0,

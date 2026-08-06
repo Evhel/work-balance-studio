@@ -168,6 +168,9 @@ export type Store = {
   projects: Project[];
   /** personId -> 'YYYY-MM-DD' -> код или число часов */
   timesheet: Record<string, Record<string, string>>;
+  /** personId -> 'YYYY-MM-DD' -> ручное включение/выключение удалёнки «УД» */
+  remoteOverride: Record<string, Record<string, boolean>>;
+
   /** 'YYYY-MM-DD' -> ручной статус дня */
   dayOverrides: Record<string, "work" | "off">;
   /** projectId -> personId -> дата -> 'Р' */

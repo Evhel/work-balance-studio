@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { soft, SOFT_CHART_COLORS } from "@/lib/colors";
 import { useMemo, useRef, useState } from "react";
 import { Calendar as CalendarIcon, Download, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -305,7 +306,7 @@ function DashboardsPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
 
-  const DEPT_COLORS = ["#520099", "#0e7490", "#b45309", "#be123c", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
+  const DEPT_COLORS = SOFT_CHART_COLORS;
 
   /* Наборы фильтров */
   const applySet = (s: FilterSet) => {
@@ -325,21 +326,21 @@ function DashboardsPage() {
       return `${MONTHS_SHORT[month]}${String(year).slice(2)}`;
     };
     const parts: string[] = [];
-    if (depts.length) parts.push(depts.length <= 2 ? depts.join("+") : `${depts.length} разд.`);
-    if (projects.length)
-      parts.push(
-        projects.length === 1 ? projName(projects[0]!) : `${projects.length} проект.`,
-      );
-    if (people.length)
-      parts.push(
-        people.length === 1
-          ? (peopleOptions.find((p) => p.id === people[0])?.name ?? "1 сотр.")
-          : `${people.length} сотр.`,
-      );
-    if (!parts.length) parts.push("Все данные");
+    parts.push(depts.length ? `Разделы: ${depts.join(", ")}` : "Все разделы");
+    parts.push(
+      projects.length ? `Проекты: ${projects.map((p) => projName(p)).join(", ")}` : "Все проекты",
+    );
+    parts.push(
+      people.length
+        ? `Сотрудники: ${people
+            .map((id) => peopleOptions.find((p) => p.id === id)?.name ?? id)
+            .join(", ")}`
+        : "Все сотрудники",
+    );
     parts.push(from === to ? short(from) : `${short(from)}–${short(to)}`);
     parts.push(unit === "hours" ? "ч" : "дн");
-    return parts.join(" · ").slice(0, 60);
+    return parts.join(" · ").slice(0, 160);
+
   };
 
   const saveSet = () => {
@@ -394,7 +395,35 @@ function DashboardsPage() {
     toast.success("Файл скачивается");
   };
 
+  /** Текст кириллицей растеризуем — встроенные шрифты jsPDF её не поддерживают */
+  const drawText = (
+    pdf: import("jspdf").jsPDF,
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    color: string,
+    align: "left" | "center" | "right",
+  ) => {
+    const scale = 4;
+    const c = document.createElement("canvas");
+    const cx = c.getContext("2d")!;
+    const font = `600 ${size * scale}px "Helvetica Neue", Arial, sans-serif`;
+    cx.font = font;
+    const wpt = cx.measureText(text).width / scale;
+    const hpt = size * 1.35;
+    c.width = Math.ceil(wpt * scale);
+    c.height = Math.ceil(hpt * scale);
+    cx.font = font;
+    cx.fillStyle = color;
+    cx.textBaseline = "middle";
+    cx.fillText(text, 0, c.height / 2);
+    const left = align === "left" ? x : align === "center" ? x - wpt / 2 : x - wpt;
+    pdf.addImage(c.toDataURL("image/png"), "PNG", left, y, wpt, hpt);
+  };
+
   const pageRef = useRef<HTMLDivElement>(null);
+
   const [pdfBusy, setPdfBusy] = useState(false);
 
   const exportPdf = async () => {
@@ -432,14 +461,17 @@ function DashboardsPage() {
         ctx.fillRect(0, 0, slice.width, slice.height);
         ctx.drawImage(canvas, 0, i * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
         if (i > 0) pdf.addPage();
-        pdf.setFontSize(12);
-        pdf.setTextColor(82, 0, 153);
-        pdf.text("АРВ · Дашборды трудозатрат", margin, margin + 12);
-        pdf.setFontSize(9);
-        pdf.setTextColor(120);
-        pdf.text(new Date().toLocaleDateString("ru-RU"), pw - margin, margin + 12, {
-          align: "right",
-        });
+        // Кириллица во встроенных шрифтах jsPDF ломается — рисуем текст картинкой
+        drawText(pdf, "АРВ · Дашборды трудозатрат", margin, margin, 13, "#520099", "left");
+        drawText(
+          pdf,
+          new Date().toLocaleDateString("ru-RU"),
+          pw - margin,
+          margin + 2,
+          10,
+          "#6b7280",
+          "right",
+        );
         pdf.addImage(
           slice.toDataURL("image/jpeg", 0.92),
           "JPEG",
@@ -448,7 +480,8 @@ function DashboardsPage() {
           w,
           (sh * w) / canvas.width,
         );
-        pdf.text(`${i + 1} / ${pages}`, pw / 2, ph - margin + 6, { align: "center" });
+        drawText(pdf, `${i + 1} / ${pages}`, pw / 2, ph - margin, 9, "#6b7280", "center");
+
       }
       pdf.save("АРВ_Дашборды.pdf");
       toast.success("PDF готов");
@@ -591,25 +624,37 @@ function DashboardsPage() {
           </div>
         </div>
 
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col">
           <h2 className="text-base font-medium">Трудозатраты по проектам</h2>
-          <div className="mt-2 flex gap-3 rounded-lg border bg-card p-3">
-            <div className="h-56 min-w-0 flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius={45} outerRadius={82}>
-                    {donut.map((d) => (
-                      <Cell key={d.name} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                </PieChart>
-              </ResponsiveContainer>
+          <div className="mt-2 flex min-h-56 flex-1 gap-3 rounded-lg border bg-card p-3">
+            <div className="relative min-h-48 min-w-0 flex-1">
+              <div className="absolute inset-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donut}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius="45%"
+                      outerRadius="80%"
+                    >
+                      {donut.map((d) => (
+                        <Cell key={d.name} fill={soft(d.color)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="max-h-56 w-40 shrink-0 overflow-y-auto text-[11px]">
+
+            <div className="w-40 shrink-0 overflow-y-auto text-[11px]">
               {donut.map((d) => (
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
-                  <span className="size-2.5 shrink-0 rounded-sm" style={{ background: d.color }} />
+                  <span
+                    className="size-2.5 shrink-0 rounded-sm"
+                    style={{ background: soft(d.color) }}
+                  />
                   <span className="truncate">{d.name}</span>
                   <b className="ml-auto">{d.value}</b>
                 </div>
@@ -617,6 +662,8 @@ function DashboardsPage() {
             </div>
           </div>
         </div>
+
+
       </div>
 
       {/* Гистограмма с группировкой к таблице 3 */}
@@ -714,7 +761,7 @@ function DashboardsPage() {
                 key={pid}
                 type="monotone"
                 dataKey={projName(pid)}
-                stroke={projColor(pid)}
+                stroke={soft(projColor(pid))}
                 strokeWidth={2}
                 dot={false}
               />
