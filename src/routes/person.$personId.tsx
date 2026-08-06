@@ -50,6 +50,7 @@ function PersonPage() {
   }
 
   const editable = employee ? can("editDepartment") : can("editContractors");
+  const cardEditable = can("editEmployeeCard");
   const person = employee ?? contractor!;
   const comment = person.comment ?? "";
 
