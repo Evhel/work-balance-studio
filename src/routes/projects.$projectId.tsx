@@ -405,34 +405,6 @@ function ProjectPage() {
                             >
                               Снять занятость на этом проекте
                             </ContextMenuItem>
-                            <ContextMenuSeparator />
-                            {STATUS_CODES.map((c) => (
-                              <ContextMenuItem
-                                key={c}
-                                onSelect={() => {
-                                  setCells(
-                                    p.id,
-                                    sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
-                                    c,
-                                  );
-                                  sel.clear();
-                                }}
-                              >
-                                Статус: {c}
-                              </ContextMenuItem>
-                            ))}
-                            <ContextMenuItem
-                              onSelect={() => {
-                                setCells(
-                                  p.id,
-                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
-                                  null,
-                                );
-                                sel.clear();
-                              }}
-                            >
-                              Очистить статус
-                            </ContextMenuItem>
                           </ContextMenuContent>
                         )}
                       </ContextMenu>
