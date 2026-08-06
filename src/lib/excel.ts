@@ -365,7 +365,7 @@ export function downloadTables(
         cell(v, {
           bold: ri === 0,
           center: ri === 0 || typeof v === "number",
-          fill: ri === 0 ? "E7DCF5" : undefined,
+          ...(ri === 0 ? { fill: "E7DCF5" } : {}),
         }),
       ),
     );
