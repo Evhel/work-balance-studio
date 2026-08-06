@@ -560,6 +560,9 @@ function DashboardsPage() {
         <MultiSelect label="Сотрудник" options={peopleOptions} value={people} onChange={setPeople} />
         <MonthField label="с" value={from} onChange={setFrom} />
         <MonthField label="по" value={to} onChange={setTo} />
+        <Button variant="ghost" onClick={resetFilters} className="text-muted-foreground">
+          <RotateCcw className="size-4" /> Сбросить фильтры
+        </Button>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
@@ -572,31 +575,50 @@ function DashboardsPage() {
         <Button variant="outline" onClick={saveSet}>
           <Save className="size-4" /> {editingId ? "Обновить набор" : "Закрепить набор"}
         </Button>
-        {store.filterSets.map((s) => (
-          <span key={s.id} className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm">
-            <button className="font-medium text-primary" onClick={() => applySet(s)}>
-              {s.name}
-            </button>
-            <button
-              className="text-muted-foreground hover:text-foreground"
-              title="Изменить (загрузить и сохранить поверх)"
-              onClick={() => applySet(s)}
+        {store.filterSets.map((s) => {
+          const active = activeSetId === s.id;
+          return (
+            <span
+              key={s.id}
+              className={`flex items-center gap-1 rounded-md border px-2 py-1 text-sm ${
+                active ? "border-primary bg-primary/10 ring-1 ring-primary" : ""
+              }`}
             >
-              <Pencil className="size-3.5" />
-            </button>
-            <button
-              className="text-muted-foreground hover:text-destructive"
-              title="Удалить набор"
-              onClick={() => {
-                update((d) => (d.filterSets = d.filterSets.filter((x) => x.id !== s.id)));
-                if (editingId === s.id) setEditingId(null);
-              }}
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+              {active && <Check className="size-3.5 text-primary" />}
+              <button
+                className={`font-medium ${active ? "text-primary" : "text-foreground"}`}
+                onClick={() => applySet(s)}
+              >
+                {s.name}
+              </button>
+              <button
+                className="text-muted-foreground hover:text-foreground"
+                title="Изменить (загрузить и сохранить поверх)"
+                onClick={() => applySet(s)}
+              >
+                <Pencil className="size-3.5" />
+              </button>
+              <button
+                className="text-muted-foreground hover:text-destructive"
+                title="Удалить набор"
+                onClick={() => {
+                  update((d) => (d.filterSets = d.filterSets.filter((x) => x.id !== s.id)));
+                  if (editingId === s.id) setEditingId(null);
+                  if (activeSetId === s.id) setActiveSetId(null);
+                }}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </span>
+          );
+        })}
+        {activeSetId && (
+          <span className="text-xs text-muted-foreground">
+            Активный набор: «{store.filterSets.find((s) => s.id === activeSetId)?.name}»
           </span>
-        ))}
+        )}
       </div>
+
 
       {filtered.length === 0 && (
         <p className="mt-6 text-sm text-muted-foreground">
