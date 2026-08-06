@@ -399,6 +399,64 @@ function EffortPage() {
       >
         <Plus className="size-4" /> Добавить строку
       </Button>
+
+      {/* Сводка заполненности по месяцам */}
+      <div className="mt-8 flex items-center gap-2">
+        <span className="text-sm font-medium">Заполненность по месяцам</span>
+        <Button variant="outline" size="sm" onClick={() => setGridYear(gridYear - 1)}>
+          ‹
+        </Button>
+        <span className="w-12 text-center text-sm font-medium">{gridYear}</span>
+        <Button variant="outline" size="sm" onClick={() => setGridYear(gridYear + 1)}>
+          ›
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          зелёная ячейка — «Трудозатраты заполнены»
+        </span>
+      </div>
+
+      <div className="mt-2 inline-block max-w-full overflow-x-auto rounded-lg border bg-card">
+        <table className="grid-table text-[11px]">
+          <thead>
+            <tr className="bg-muted">
+              <th className="min-w-[180px] border-r border-b px-2 py-1 text-left font-medium">
+                ФИО
+              </th>
+              {MONTHS_SHORT.map((m) => (
+                <th key={m} className="w-8 border-r border-b px-1 py-1 font-medium">
+                  {m}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {employees.map((e) => (
+              <tr key={e.id}>
+                <th className="border-r border-b px-2 py-0.5 text-left font-normal">
+                  <PersonLink id={e.id} name={fio(e)} />
+                </th>
+                {MONTHS_SHORT.map((_, m) => {
+                  const k = ymKey(gridYear, m);
+                  const ok = isEffortDone(store, e.id, k);
+                  return (
+                    <td
+                      key={m}
+                      className="h-5 w-8 cursor-pointer border-r border-b"
+                      style={{ background: ok ? "#c9f2cf" : undefined }}
+                      title={ok ? "Заполнено" : "Не отмечено"}
+                      onClick={() => {
+                        setPersonId(e.id);
+                        setYear(gridYear);
+                        setMonth(m);
+                      }}
+                    />
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
