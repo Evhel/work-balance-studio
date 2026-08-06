@@ -135,6 +135,7 @@ export type AccessAction =
   | "viewEffort"
   | "editEffort"
   | "viewDashboards"
+  | "editEmployeeCard"
   | "deleteEntities"
   | "manageRoles";
 
