@@ -208,11 +208,12 @@ function EmployeePage() {
                   );
                   const event = store.personalEvents[person.id]?.[date];
                   const conflict = !!absence && active.length > 0;
+                  const selected = selDays.includes(d);
                   return (
                     <ContextMenu key={i}>
                       <ContextMenuTrigger asChild>
                         <div
-                          className="min-h-24 border-r border-b p-1 text-xs last:border-r-0"
+                          className="min-h-24 border-r border-b p-1 text-xs select-none last:border-r-0"
                           title={
                             conflict
                               ? `Конфликт: ${absence} и занятость на проектах (${active
@@ -220,6 +221,14 @@ function EmployeePage() {
                                   .join(", ")})`
                               : undefined
                           }
+                          onMouseDown={(e) => startSelect(d, e)}
+                          onMouseEnter={() => overSelect(d)}
+                          onContextMenu={() => {
+                            if (editable && !selDays.includes(d)) {
+                              anchor.current = d;
+                              setSelDays([d]);
+                            }
+                          }}
                           style={{
                             background: conflict
                               ? "#ffd9d9"
@@ -231,6 +240,8 @@ function EmployeePage() {
                                     ? undefined
                                     : "var(--weekend)",
                             boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
+                            outline: selected ? "2px solid var(--primary)" : undefined,
+                            outlineOffset: "-2px",
                           }}
                         >
                           <div className="mb-1 flex items-center justify-between font-medium">
@@ -264,7 +275,13 @@ function EmployeePage() {
                           store.projects.map((pr) => (
                             <ContextMenuItem
                               key={pr.id}
-                              onSelect={() => setPlanCells(pr.id, person.id, [date], "Р")}
+                              onSelect={() => {
+                                setPlanCells(pr.id, person.id, targetDates(d), "Р");
+                                toast.success(
+                                  `Занятость задана: ${targetDates(d).length} дн.`,
+                                );
+                                setSelDays([]);
+                              }}
                             >
                               Занять: {pr.name}
                             </ContextMenuItem>
@@ -272,11 +289,13 @@ function EmployeePage() {
                         {editable && (
                           <>
                             <ContextMenuItem
-                              onSelect={() =>
+                              onSelect={() => {
+                                const dates = targetDates(d);
                                 store.projects.forEach((pr) =>
-                                  setPlanCells(pr.id, person.id, [date], null),
-                                )
-                              }
+                                  setPlanCells(pr.id, person.id, dates, null),
+                                );
+                                setSelDays([]);
+                              }}
                             >
                               Снять занятость
                             </ContextMenuItem>
@@ -289,8 +308,10 @@ function EmployeePage() {
                             if (t === null) return;
                             update((dd) => {
                               dd.personalEvents[person.id] = dd.personalEvents[person.id] ?? {};
-                              if (t) dd.personalEvents[person.id]![date] = t;
-                              else delete dd.personalEvents[person.id]![date];
+                              for (const dt of targetDates(d)) {
+                                if (t) dd.personalEvents[person.id]![dt] = t;
+                                else delete dd.personalEvents[person.id]![dt];
+                              }
                             });
                             toast.success("Сохранено");
                           }}
