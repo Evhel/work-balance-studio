@@ -467,7 +467,7 @@ function TimesheetPage() {
                     const isEditing = edit?.personId === p.id && edit.day === d;
                     const raw = isEditing ? edit.value : cellValue(p.id, d);
                     const v = isEditing ? raw : shown(raw);
-                    const remote = !hideRemote && remoteAt(p.id, d ? date : date);
+                    const remote = !hideRemote && remoteAt(p.id, date);
                     const bg =
                       CODE_COLORS[v] ??
                       (remote ? CODE_COLORS[REMOTE_CODE] : undefined) ??
