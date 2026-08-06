@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { soft, SOFT_CHART_COLORS } from "@/lib/colors";
 import { useMemo, useRef, useState } from "react";
 import { Calendar as CalendarIcon, Download, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -305,7 +306,7 @@ function DashboardsPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
 
-  const DEPT_COLORS = ["#520099", "#0e7490", "#b45309", "#be123c", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
+  const DEPT_COLORS = SOFT_CHART_COLORS;
 
   /* Наборы фильтров */
   const applySet = (s: FilterSet) => {
@@ -751,7 +752,7 @@ function DashboardsPage() {
                 key={pid}
                 type="monotone"
                 dataKey={projName(pid)}
-                stroke={projColor(pid)}
+                stroke={soft(projColor(pid))}
                 strokeWidth={2}
                 dot={false}
               />
