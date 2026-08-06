@@ -187,6 +187,9 @@ function BirthdaysPage() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </div>
+
   );
 }
