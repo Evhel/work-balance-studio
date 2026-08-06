@@ -147,6 +147,12 @@ export async function parseImport(file: File): Promise<ImportedCell[]> {
     if (!ws) continue;
     const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, raw: false });
 
+    const byRows = parseRowImport(aoa);
+    if (byRows.length) {
+      out.push(...byRows);
+      continue;
+    }
+
     let year = 0;
     let month = -1;
     for (const row of aoa) {
