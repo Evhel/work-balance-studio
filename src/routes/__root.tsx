@@ -130,6 +130,7 @@ const TABS = [
   { to: "/employee", label: "Сотрудник" },
   { to: "/effort", label: "Трудозатраты" },
   { to: "/dashboards", label: "Дашборды" },
+  { to: "/roles", label: "Роли и доступы" },
 ] as const;
 
 function RoleSwitcher() {
