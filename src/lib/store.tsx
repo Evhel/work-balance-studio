@@ -76,9 +76,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<Store>;
         const base = seed();
+        // цвета проектов всегда берём из единой палитры
+        const projects = (parsed.projects ?? base.projects).map((p, i) =>
+          p.name === "Без объекта" ? p : { ...p, color: projectColor(i) },
+        );
         setStore({
           ...base,
           ...parsed,
+          projects,
           effort: parsed.effort ?? base.effort,
           effortDone: parsed.effortDone ?? base.effortDone,
           remoteOverride: parsed.remoteOverride ?? {},
@@ -87,6 +92,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
 
         });
+
       }
     } catch {
       /* ignore */
