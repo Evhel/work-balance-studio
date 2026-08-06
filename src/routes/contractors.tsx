@@ -52,7 +52,7 @@ export const Route = createFileRoute("/contractors")({
 const CODES = ["Б", "ОТ", "НН"];
 
 function ContractorsPage() {
-  const { store, update, isWorkday, setCells, can, removeContractor } = useStore();
+  const { store, update, isWorkday, setCells, setPlanCells, can, removeContractor } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -110,11 +110,12 @@ function ContractorsPage() {
       </p>
       {editable && (
         <p className="mt-1 text-xs text-muted-foreground">
-          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. ПКМ — статус.
+          Выделение: протяжка мышью, Shift — диапазон, Ctrl — отдельные ячейки. ПКМ — статус и занятость на проекте.
         </p>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div className="mt-3 flex gap-4">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
         <table className="grid-table w-full">
           <thead>
             <tr className="bg-muted">
@@ -264,6 +265,16 @@ function ContractorsPage() {
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="w-52 shrink-0 rounded-lg border bg-card p-3 text-xs">
+          <div className="mb-2 font-medium">Проекты</div>
+          {store.projects.map((p) => (
+            <div key={p.id} className="mb-1 flex items-center gap-2">
+              <span className="size-3 shrink-0 rounded-full" style={{ background: p.color }} />
+              <span className="truncate">{p.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <Legend items={CONTRACTOR_LEGEND} />
