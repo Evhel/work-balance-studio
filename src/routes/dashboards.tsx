@@ -700,7 +700,7 @@ function DashboardsPage() {
                       outerRadius="80%"
                     >
                       {donut.map((d) => (
-                        <Cell key={d.name} fill={soft(d.color)} />
+                        <Cell key={d.name} fill={d.color} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
@@ -714,7 +714,7 @@ function DashboardsPage() {
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
                   <span
                     className="size-2.5 shrink-0 rounded-sm"
-                    style={{ background: soft(d.color) }}
+                    style={{ background: d.color }}
                   />
                   <span className="truncate">{d.name}</span>
                   <b className="ml-auto">{d.value}</b>
@@ -728,21 +728,24 @@ function DashboardsPage() {
       </div>
 
       {/* Гистограмма с группировкой к таблице 3 */}
-      <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
-      <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={barData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="project" fontSize={11} />
-            <YAxis fontSize={11} />
-            <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-            <RLegend />
-            {usedDepts.map((d, i) => (
-              <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
+      <div ref={secBar} className="bg-background">
+        <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
+        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="project" fontSize={11} />
+              <YAxis fontSize={11} />
+              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+              <RLegend />
+              {usedDepts.map((d, i) => (
+                <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
+
 
       {/* Таблица 5 */}
       <h2 className="mt-6 text-lg font-medium">Трудозатраты по месяцам ({unitLabel})</h2>
