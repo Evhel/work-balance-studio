@@ -553,38 +553,8 @@ function DashboardsPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      {/* Доп. графики */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div>
-          <h2 className="text-lg font-medium">Загрузка сотрудников</h2>
-          <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byPerson} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" width={140} fontSize={10} />
-                <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                <Bar dataKey="value" fill="#520099" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div>
-          <h2 className="text-lg font-medium">Топ видов работ</h2>
-          <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byWorkType} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" width={140} fontSize={10} />
-                <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                <Bar dataKey="value" fill="#0e7490" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
     </div>
+
   );
 }
