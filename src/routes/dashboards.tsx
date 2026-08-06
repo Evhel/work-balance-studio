@@ -811,6 +811,8 @@ function DashboardsPage() {
           </tbody>
         </table>
       </div>
+      </div>
+
 
       {/* Линейный график с накоплением */}
       <div ref={secCum} className="bg-background">
