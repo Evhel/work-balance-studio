@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,14 +44,19 @@ export const Route = createFileRoute("/employee")({
 });
 
 const EMP_LEGEND = [
-  { code: "Б", label: "больничный лист (серое)" },
-  { code: "ОТ", label: "отпуск оплачиваемый (серое)" },
-  { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
-  { code: "У", label: "учебный отпуск (серое)" },
-  { code: "🎂", label: "день рождения (розовое)" },
-  { code: "🟡", label: "личное напоминание (ярко-жёлтая плашка)" },
-  { code: "🟥", label: "красная рамка — отсутствие совпало с занятостью на проекте" },
+  { code: "Б", label: "больничный лист" },
+  { code: "ОТ", label: "отпуск оплачиваемый" },
+  { code: "ДО", label: 'отпуск "за свой счет"' },
+  { code: "У", label: "учебный отпуск" },
+  { code: "🎂", label: "день рождения" },
+  { code: "🟡", label: "личное напоминание" },
+  { code: "🟥", label: "конфликт: отсутствие и занятость" },
 ];
+
+const dayRange = (a: number, b: number) => {
+  const [s, e] = a <= b ? [a, b] : [b, a];
+  return Array.from({ length: e - s + 1 }, (_, i) => s + i);
+};
 
 function EmployeePage() {
   const { store, update, isWorkday, setPlanCells, currentUser, can } = useStore();
@@ -64,6 +69,40 @@ function EmployeePage() {
   const person = store.employees.find((e) => e.id === personId) ?? employees[0];
   const editable = can("editDepartment");
   const isSelf = person?.id === currentUser?.id;
+
+  const [selDays, setSelDays] = useState<number[]>([]);
+  const anchor = useRef<number | null>(null);
+  const dragging = useRef(false);
+
+  const startSelect = (
+    d: number,
+    e: { button?: number; shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean },
+  ) => {
+    if (!editable) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.shiftKey && anchor.current !== null) {
+      setSelDays(dayRange(anchor.current, d));
+      dragging.current = false;
+      return;
+    }
+    if (e.ctrlKey || e.metaKey) {
+      setSelDays((prev) =>
+        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b),
+      );
+      anchor.current = d;
+      dragging.current = false;
+      return;
+    }
+    anchor.current = d;
+    dragging.current = true;
+    setSelDays([d]);
+  };
+  const overSelect = (d: number) => {
+    if (!dragging.current || anchor.current === null) return;
+    setSelDays(dayRange(anchor.current, d));
+  };
+  const targetDates = (d: number) =>
+    (selDays.includes(d) ? selDays : [d]).map((x) => iso(year, month, x));
 
   if (!person) return <p>Нет сотрудников</p>;
 
@@ -84,9 +123,16 @@ function EmployeePage() {
     ),
   );
 
+
   return (
-    <div>
+    <div onMouseUp={() => (dragging.current = false)}>
       <h1 className="text-2xl font-semibold">Сотрудник</h1>
+      {editable && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Выделяйте несколько дней протяжкой мыши, Shift или Ctrl, затем ПКМ — задать занятость сразу
+          для всех выбранных дней{selDays.length > 1 ? ` (выбрано: ${selDays.length})` : ""}.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Select value={person.id} onValueChange={setPersonId}>
@@ -168,11 +214,12 @@ function EmployeePage() {
                   );
                   const event = store.personalEvents[person.id]?.[date];
                   const conflict = !!absence && active.length > 0;
+                  const selected = selDays.includes(d);
                   return (
                     <ContextMenu key={i}>
                       <ContextMenuTrigger asChild>
                         <div
-                          className="min-h-24 border-r border-b p-1 text-xs last:border-r-0"
+                          className="min-h-24 border-r border-b p-1 text-xs select-none last:border-r-0"
                           title={
                             conflict
                               ? `Конфликт: ${absence} и занятость на проектах (${active
@@ -180,6 +227,14 @@ function EmployeePage() {
                                   .join(", ")})`
                               : undefined
                           }
+                          onMouseDown={(e) => startSelect(d, e)}
+                          onMouseEnter={() => overSelect(d)}
+                          onContextMenu={() => {
+                            if (editable && !selDays.includes(d)) {
+                              anchor.current = d;
+                              setSelDays([d]);
+                            }
+                          }}
                           style={{
                             background: conflict
                               ? "#ffd9d9"
@@ -191,6 +246,8 @@ function EmployeePage() {
                                     ? undefined
                                     : "var(--weekend)",
                             boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
+                            outline: selected ? "2px solid var(--primary)" : undefined,
+                            outlineOffset: "-2px",
                           }}
                         >
                           <div className="mb-1 flex items-center justify-between font-medium">
@@ -224,7 +281,13 @@ function EmployeePage() {
                           store.projects.map((pr) => (
                             <ContextMenuItem
                               key={pr.id}
-                              onSelect={() => setPlanCells(pr.id, person.id, [date], "Р")}
+                              onSelect={() => {
+                                setPlanCells(pr.id, person.id, targetDates(d), "Р");
+                                toast.success(
+                                  `Занятость задана: ${targetDates(d).length} дн.`,
+                                );
+                                setSelDays([]);
+                              }}
                             >
                               Занять: {pr.name}
                             </ContextMenuItem>
@@ -232,11 +295,13 @@ function EmployeePage() {
                         {editable && (
                           <>
                             <ContextMenuItem
-                              onSelect={() =>
+                              onSelect={() => {
+                                const dates = targetDates(d);
                                 store.projects.forEach((pr) =>
-                                  setPlanCells(pr.id, person.id, [date], null),
-                                )
-                              }
+                                  setPlanCells(pr.id, person.id, dates, null),
+                                );
+                                setSelDays([]);
+                              }}
                             >
                               Снять занятость
                             </ContextMenuItem>
@@ -249,8 +314,10 @@ function EmployeePage() {
                             if (t === null) return;
                             update((dd) => {
                               dd.personalEvents[person.id] = dd.personalEvents[person.id] ?? {};
-                              if (t) dd.personalEvents[person.id]![date] = t;
-                              else delete dd.personalEvents[person.id]![date];
+                              for (const dt of targetDates(d)) {
+                                if (t) dd.personalEvents[person.id]![dt] = t;
+                                else delete dd.personalEvents[person.id]![dt];
+                              }
                             });
                             toast.success("Сохранено");
                           }}

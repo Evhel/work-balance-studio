@@ -314,12 +314,69 @@ function makeEffort(employees: Employee[], projects: Project[]) {
   return { effort, effortDone };
 }
 
+/** Демо-план занятости: у каждого участника проекта занятость по будням внутри срока проекта */
+function makePlan(projects: Project[], contractors: Contractor[], year: number) {
+  const rand = rng(777);
+  const plan: Store["plan"] = {};
+  const yStart = `${year}-01-01`;
+  const yEnd = `${year}-12-31`;
+
+  for (const p of projects) {
+    if (p.id === NO_OBJECT_ID) continue;
+    const from = p.start > yStart ? p.start : yStart;
+    const to = p.end < yEnd ? p.end : yEnd;
+    if (from > to) continue;
+    plan[p.id] = plan[p.id] ?? {};
+
+    for (const m of p.members) {
+      // у каждого участника свой отрезок работы внутри срока проекта
+      const skipStart = rand() < 0.35;
+      const skipEnd = rand() < 0.35;
+      const cells: Record<string, string> = {};
+      const [fy, fm, fd] = from.split("-").map(Number);
+      const [ty, tm, td] = to.split("-").map(Number);
+      const cur = new Date(fy!, fm! - 1, fd!);
+      const last = new Date(ty!, tm! - 1, td!);
+      const days: { y: number; m: number; d: number }[] = [];
+      while (cur <= last) {
+        if (!isWeekendDate(cur.getFullYear(), cur.getMonth(), cur.getDate()))
+          days.push({ y: cur.getFullYear(), m: cur.getMonth(), d: cur.getDate() });
+        cur.setDate(cur.getDate() + 1);
+      }
+      const startIdx = skipStart ? Math.floor(days.length * 0.2) : 0;
+      const endIdx = skipEnd ? Math.floor(days.length * 0.8) : days.length;
+      for (let i = startIdx; i < endIdx; i++) {
+        const dd = days[i]!;
+        cells[`${dd.y}-${pad(dd.m + 1)}-${pad(dd.d)}`] = "Р";
+      }
+      if (Object.keys(cells).length) plan[p.id]![m.personId] = cells;
+    }
+  }
+
+  // подрядчики видны в плане своего проекта
+  for (const c of contractors) {
+    if (!c.projectId) continue;
+    const p = projects.find((x) => x.id === c.projectId);
+    if (!p) continue;
+    if (!p.members.some((m) => m.personId === c.id))
+      p.members.push({ personId: c.id, kind: "contractor" });
+    plan[p.id] = plan[p.id] ?? {};
+    if (!plan[p.id]![c.id]) {
+      const src = Object.values(plan[p.id]!)[0] ?? {};
+      plan[p.id]![c.id] = { ...src };
+    }
+  }
+
+  return plan;
+}
+
 export function seedStore(): Store {
   const employees = makeEmployees();
   const contractors = makeContractors();
   const y = new Date().getFullYear();
   const projects = makeProjects(y);
   const { effort, effortDone } = makeEffort(employees, projects);
+  const plan = makePlan(projects, contractors, y);
 
   return {
     employees,
@@ -327,7 +384,7 @@ export function seedStore(): Store {
     projects,
     timesheet: {},
     dayOverrides: {},
-    plan: {},
+    plan,
     personalEvents: {},
     effort,
     effortDone,

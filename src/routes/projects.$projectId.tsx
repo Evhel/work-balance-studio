@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { MonthPicker } from "@/components/MonthPicker";
 import { useRowSelection } from "@/components/useRowSelection";
 import { useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
@@ -56,12 +56,12 @@ export const Route = createFileRoute("/projects/$projectId")({
 });
 
 const PROJECT_LEGEND = [
-  { code: "Б", label: "больничный лист (серое)" },
-  { code: "ОТ", label: "отпуск оплачиваемый (серое)" },
-  { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
-  { code: "У", label: "учебный отпуск (серое)" },
+  { code: "Б", label: "больничный лист" },
+  { code: "ОТ", label: "отпуск оплачиваемый" },
+  { code: "ДО", label: 'отпуск "за свой счет"' },
+  { code: "У", label: "учебный отпуск" },
   { code: "НН", label: "неявка" },
-  { code: "▬", label: "цветная полоса — занятость на проекте (цвет проекта)" },
+  { code: "▬", label: "занятость на проекте" },
 ];
 
 
@@ -250,7 +250,8 @@ function ProjectPage() {
         {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div className="mt-3 flex items-start gap-3">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
         {view === "month" ? (
           <table className="grid-table w-full">
             <thead>
@@ -485,54 +486,68 @@ function ProjectPage() {
             </tbody>
           </table>
         )}
-      </div>
+        </div>
 
-      <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
-        <div className="mb-2 font-medium">Цели проекта</div>
-        {goals.length === 0 && <p className="text-muted-foreground">Целей пока нет. ПКМ по номеру дня в шапке табеля — создать цель.</p>}
-        <div className="flex flex-wrap gap-2">
-          {[...goals]
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .map((g) => (
-              <span
-                key={g.id}
-                className="flex items-center gap-2 rounded-md border px-2 py-1"
-                style={{ boxShadow: "inset 0 0 0 2px #d4a017" }}
-              >
-                <b>{g.name}</b>
-                <span className="text-muted-foreground">
-                  {g.date.slice(8, 10)}.{g.date.slice(5, 7)}.{g.date.slice(0, 4)}
-                </span>
-                {editable && (
-                  <button className="text-muted-foreground hover:text-destructive" onClick={() => removeGoal(g.id)}>
-                    ✕
-                  </button>
-                )}
-              </span>
-            ))}
+        <div className="w-60 shrink-0 rounded-lg border bg-card p-3 text-xs">
+          <div className="mb-2 font-medium">Цели проекта</div>
+          {goals.length === 0 && (
+            <p className="text-muted-foreground">
+              Целей пока нет. ПКМ по номеру дня в шапке табеля — создать цель.
+            </p>
+          )}
+          <div className="flex flex-col gap-2">
+            {[...goals]
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((g) => (
+                <div
+                  key={g.id}
+                  className="flex items-start justify-between gap-2 rounded-md border px-2 py-1"
+                  style={{ boxShadow: "inset 0 0 0 2px #d4a017" }}
+                >
+                  <div className="min-w-0">
+                    <b className="block truncate" title={g.name}>
+                      {g.name}
+                    </b>
+                    <span className="text-muted-foreground">
+                      {g.date.slice(8, 10)}.{g.date.slice(5, 7)}.{g.date.slice(0, 4)}
+                    </span>
+                  </div>
+                  {editable && (
+                    <button
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => removeGoal(g.id)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+          </div>
         </div>
       </div>
 
-      <Legend items={PROJECT_LEGEND} />
-
-      <div className="mt-3 rounded-lg border bg-card p-3 text-xs">
-        <div className="mb-2 font-medium">Обозначения рамок ячеек</div>
-        <div className="flex flex-wrap gap-4">
-          {[
-            { color: "#dc2626", label: "красная — конфликт: отсутствие и работа в один день" },
-            { color: "#eab308", label: "жёлтая — человек занят ещё на другом проекте" },
-            { color: "#d4a017", label: "золотая — цель проекта (название во всплывающей подсказке)" },
-          ].map((b) => (
-            <span key={b.color} className="flex items-center gap-2">
-              <span
-                className="inline-block size-4 rounded-sm"
-                style={{ boxShadow: `inset 0 0 0 2px ${b.color}` }}
-              />
-              {b.label}
-            </span>
-          ))}
-        </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border bg-card px-3 py-2 text-xs">
+        <span className="font-medium">Обозначения:</span>
+        {PROJECT_LEGEND.map((i) => (
+          <span key={i.code} className="text-muted-foreground">
+            <b className="text-foreground">{i.code}</b> — {i.label}
+          </span>
+        ))}
+        {[
+          { color: "#dc2626", label: "конфликт: отсутствие и работа в один день" },
+          { color: "#eab308", label: "занят ещё на другом проекте" },
+          { color: "#d4a017", label: "цель проекта" },
+        ].map((b) => (
+          <span key={b.color} className="flex items-center gap-1.5 text-muted-foreground">
+            <span
+              className="inline-block size-3.5 rounded-sm"
+              style={{ boxShadow: `inset 0 0 0 2px ${b.color}` }}
+            />
+            {b.label}
+          </span>
+        ))}
       </div>
+
 
 
       <div className="mt-6">

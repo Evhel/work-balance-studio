@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { Download, Save, Trash2, Pencil } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   Bar,
@@ -98,8 +98,9 @@ function MonthField({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { year, month } = parseYm(value);
+  const years = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
   const shift = (delta: number) => {
-    const { year, month } = parseYm(value);
     const t = year * 12 + month + delta;
     onChange(`${Math.floor(t / 12)}-${pad((t % 12) + 1)}`);
   };
@@ -109,12 +110,48 @@ function MonthField({
       <Button variant="outline" size="sm" onClick={() => shift(-1)}>
         ‹
       </Button>
-      <Input
-        type="month"
-        className="w-[140px]"
-        value={value}
-        onChange={(e) => e.target.value && onChange(e.target.value)}
-      />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="w-[150px] justify-start gap-2 pl-2">
+            <CalendarIcon className="size-4 shrink-0" />
+            {MONTHS_SHORT[month]} {year}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64">
+          <div className="mb-2 flex items-center justify-between">
+            <button className="px-2 text-sm" onClick={() => onChange(`${year - 1}-${pad(month + 1)}`)}>
+              ‹
+            </button>
+            <select
+              className="rounded-md border bg-background px-2 py-1 text-sm"
+              value={year}
+              onChange={(e) => onChange(`${Number(e.target.value)}-${pad(month + 1)}`)}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            <button className="px-2 text-sm" onClick={() => onChange(`${year + 1}-${pad(month + 1)}`)}>
+              ›
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {MONTHS_SHORT.map((m, i) => (
+              <button
+                key={m}
+                className={`rounded-md border px-2 py-1 text-xs ${
+                  i === month ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                }`}
+                onClick={() => onChange(`${year}-${pad(i + 1)}`)}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
       <Button variant="outline" size="sm" onClick={() => shift(1)}>
         ›
       </Button>
@@ -157,7 +194,7 @@ function DashboardsPage() {
     .map((e) => ({ id: e.id, name: fio(e) }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
-  const conv = (h: number) => (unit === "hours" ? h : h / 8);
+  const conv = (h: number) => (unit === "hours" ? h : Math.round(h / 8));
   const unitLabel = unit === "hours" ? "ч" : "дн";
 
   const filtered = facts.filter((f) => {
@@ -462,7 +499,15 @@ function DashboardsPage() {
           <tbody>
             {table3.map((r) => (
               <tr key={r.pid}>
-                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">{r.project}</th>
+                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
+                  <Link
+                    to="/projects/$projectId"
+                    params={{ projectId: r.pid }}
+                    className="text-primary hover:underline"
+                  >
+                    {r.project}
+                  </Link>
+                </th>
                 {r.cells.map((c, i) => (
                   <td key={i} className="border-r border-b px-3 py-1 text-center text-xs">{c || ""}</td>
                 ))}
@@ -553,7 +598,15 @@ function DashboardsPage() {
           <tbody>
             {table5.map((r) => (
               <tr key={r.pid}>
-                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">{r.project}</th>
+                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
+                  <Link
+                    to="/projects/$projectId"
+                    params={{ projectId: r.pid }}
+                    className="text-primary hover:underline"
+                  >
+                    {r.project}
+                  </Link>
+                </th>
                 {r.cells.map((c, i) => (
                   <td
                     key={i}

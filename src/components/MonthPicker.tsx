@@ -90,15 +90,13 @@ export function MonthPicker({
 
 export function Legend({ items }: { items: { code: string; label: string }[] }) {
   return (
-    <div className="mt-4 rounded-lg border bg-card p-3 text-sm">
-      <div className="mb-2 font-medium">Условные обозначения:</div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1">
-        {items.map((i) => (
-          <span key={i.code} className="text-muted-foreground">
-            <b className="text-foreground">{i.code}</b> — {i.label}
-          </span>
-        ))}
-      </div>
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border bg-card px-3 py-2 text-xs">
+      <span className="font-medium">Обозначения:</span>
+      {items.map((i) => (
+        <span key={i.code} className="text-muted-foreground">
+          <b className="text-foreground">{i.code}</b> — {i.label}
+        </span>
+      ))}
     </div>
   );
 }
