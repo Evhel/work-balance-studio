@@ -194,7 +194,7 @@ function DashboardsPage() {
     .map((e) => ({ id: e.id, name: fio(e) }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
-  const conv = (h: number) => (unit === "hours" ? h : h / 8);
+  const conv = (h: number) => (unit === "hours" ? h : Math.round(h / 8));
   const unitLabel = unit === "hours" ? "ч" : "дн";
 
   const filtered = facts.filter((f) => {
