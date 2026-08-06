@@ -318,12 +318,33 @@ function DashboardsPage() {
     setEditingId(s.id);
     setSetName(s.name);
   };
+  /** Краткое имя набора по выбранным фильтрам */
+  const autoName = () => {
+    const short = (ym: string) => {
+      const { year, month } = parseYm(ym);
+      return `${MONTHS_SHORT[month]}${String(year).slice(2)}`;
+    };
+    const parts: string[] = [];
+    if (depts.length) parts.push(depts.length <= 2 ? depts.join("+") : `${depts.length} разд.`);
+    if (projects.length)
+      parts.push(
+        projects.length === 1 ? projName(projects[0]!) : `${projects.length} проект.`,
+      );
+    if (people.length)
+      parts.push(
+        people.length === 1
+          ? (peopleOptions.find((p) => p.id === people[0])?.name ?? "1 сотр.")
+          : `${people.length} сотр.`,
+      );
+    if (!parts.length) parts.push("Все данные");
+    parts.push(from === to ? short(from) : `${short(from)}–${short(to)}`);
+    parts.push(unit === "hours" ? "ч" : "дн");
+    return parts.join(" · ").slice(0, 60);
+  };
+
   const saveSet = () => {
-    const name = setName.trim();
-    if (!name) {
-      toast.error("Введите название набора фильтров");
-      return;
-    }
+    const name = setName.trim() || autoName();
+    setSetName(name);
     update((d) => {
       const payload: FilterSet = {
         id: editingId ?? `fs${Date.now()}`,
