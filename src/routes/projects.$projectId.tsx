@@ -363,22 +363,25 @@ function ProjectPage() {
                                   {status}
                                 </span>
                               )}
-                              {active.map((pr) => (
-                                <PlanBar
-                                  key={pr.id}
-                                  color={pr.color}
-                                  name={pr.name}
-                                  height={pr.id === projectId ? 6 : 4}
-                                  opacity={pr.id === projectId ? 1 : 0.55}
-                                  first={
-                                    d === 1 || !isPlanned(store, pr.id, p.id, iso(year, month, d - 1))
-                                  }
-                                  last={
-                                    d === days.length ||
-                                    !isPlanned(store, pr.id, p.id, iso(year, month, d + 1))
-                                  }
-                                />
-                              ))}
+                              {active
+                                .filter((pr) => pr.id === projectId)
+                                .map((pr) => (
+                                  <PlanBar
+                                    key={pr.id}
+                                    color={pr.color}
+                                    name={pr.name}
+                                    height={6}
+                                    first={
+                                      d === 1 ||
+                                      !isPlanned(store, pr.id, p.id, iso(year, month, d - 1))
+                                    }
+                                    last={
+                                      d === days.length ||
+                                      !isPlanned(store, pr.id, p.id, iso(year, month, d + 1))
+                                    }
+                                  />
+                                ))}
+
                             </div>
                           </td>
                         </ContextMenuTrigger>
