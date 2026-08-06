@@ -117,24 +117,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const can = (action: Action): boolean => {
       const p = currentUser?.position;
-      const isGip = currentUser?.department === "ГИП";
-      const chiefs = p === "Директор" || p === "Модератор" || p === "Руководитель отдела";
-      switch (action) {
-        case "editTimesheet":
-          return p === "Офис-менеджер";
-        case "editContractors":
-          return chiefs || isGip;
-        case "createProject":
-        case "editProject":
-          return chiefs || isGip;
-        case "editDepartment":
-          return chiefs || isGip;
-        case "deleteEntities":
-          return p === "Модератор";
-        default:
-          return false;
-      }
+      if (!p) return false;
+      const override = store.access?.[p]?.[action];
+      if (typeof override === "boolean") return override;
+      return defaultAccess(p, currentUser.department, action);
     };
+
 
     return {
       store,
