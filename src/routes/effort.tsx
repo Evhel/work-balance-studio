@@ -114,6 +114,55 @@ function EffortPage() {
     }
   };
 
+  /** Массовый построчный импорт: сразу много сотрудников и месяцев */
+  const handleBulkImport = async (file: File) => {
+    try {
+      const recs = await parseEffortRowImport(file);
+      if (!recs.length) {
+        toast.error("В файле не найдено строк (нужны колонки ФИО, Дата, Проект, Вид работ, Часы)");
+        return;
+      }
+      const byName = new Map(employees.map((e) => [fio(e).toLowerCase(), e.id]));
+      const byProject = new Map(store.projects.map((p) => [p.name.toLowerCase(), p.id]));
+      let ok = 0;
+      const skipped = new Set<string>();
+      update((d) => {
+        for (const r of recs) {
+          const pid = byName.get(r.fio.trim().toLowerCase());
+          const projectId = byProject.get(r.project.trim().toLowerCase());
+          if (!pid || !projectId) {
+            skipped.add(!pid ? r.fio : r.project);
+            continue;
+          }
+          const key = r.date.slice(0, 7);
+          const day = String(Number(r.date.slice(8, 10)));
+          d.effort[pid] = d.effort[pid] ?? {};
+          const rows = (d.effort[pid]![key] = d.effort[pid]![key] ?? []);
+          let row = rows.find(
+            (x) => x.projectId === projectId && (x.workType || "") === (r.workType || ""),
+          );
+          if (!row) {
+            row = {
+              id: `b${Date.now()}_${rows.length}_${Math.random().toString(36).slice(2, 7)}`,
+              projectId,
+              workType: r.workType,
+              hours: {},
+            };
+            rows.push(row);
+          }
+          row.hours[day] = (Number(row.hours[day]) || 0) + r.hours;
+          ok++;
+        }
+      });
+      toast.success(
+        `Загружено строк: ${ok}${skipped.size ? `, не распознано: ${[...skipped].slice(0, 3).join(", ")}` : ""}`,
+      );
+    } catch {
+      toast.error("Не удалось прочитать файл");
+    }
+  };
+
+
   return (
     <div>
       <h1 className="text-2xl font-semibold">Трудозатраты</h1>
