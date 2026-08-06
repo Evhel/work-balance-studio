@@ -341,12 +341,13 @@ function ProjectPage() {
                             title={
                               [
                                 conflict ? `Конфликт: ${absence} и занятость` : "",
-                                active.map((x) => x.name).join(", "),
+                                here ? project.name : "",
                                 dayGoals.map((g) => `Цель: ${g.name}`).join(", "),
                               ]
                                 .filter(Boolean)
                                 .join(" · ") || undefined
                             }
+
                             style={{
                               background: bg,
                               boxShadow: border,
