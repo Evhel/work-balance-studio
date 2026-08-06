@@ -439,23 +439,24 @@ function DashboardsPage() {
   };
 
   const pageRef = useRef<HTMLDivElement>(null);
+  const secTop = useRef<HTMLDivElement>(null);
+  const secBar = useRef<HTMLDivElement>(null);
+  const secTable5 = useRef<HTMLDivElement>(null);
+  const secCum = useRef<HTMLDivElement>(null);
+  const secDept = useRef<HTMLDivElement>(null);
 
   const [pdfBusy, setPdfBusy] = useState(false);
 
   const exportPdf = async () => {
-    const node = pageRef.current;
-    if (!node) return;
     setPdfBusy(true);
     try {
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
         import("html2canvas-pro"),
         import("jspdf"),
       ]);
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      const shoot = async (el: HTMLElement | null) =>
+        el ? await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true }) : null;
+
       const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
@@ -463,21 +464,20 @@ function DashboardsPage() {
       const headH = 26;
       const footH = 18;
       const w = pw - margin * 2;
-      const h = ph - margin * 2 - headH - footH;
-      // Высота куска исходного холста, помещающегося на страницу А4
-      const sliceH = Math.floor((canvas.width * h) / w);
-      const pages = Math.max(1, Math.ceil(canvas.height / sliceH));
-      const slice = document.createElement("canvas");
-      const ctx = slice.getContext("2d")!;
-      for (let i = 0; i < pages; i++) {
-        const sh = Math.min(sliceH, canvas.height - i * sliceH);
-        slice.width = canvas.width;
-        slice.height = sh;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, i * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+
+      const short = (ym: string) => {
+        const { year, month } = parseYm(ym);
+        return `${MONTHS_SHORT[month]} ${year}`;
+      };
+
+      const pages: HTMLElement[][] = [
+        [secTop.current!].filter(Boolean),
+        [secBar.current!, secTable5.current!].filter(Boolean),
+        [secCum.current!, secDept.current!].filter(Boolean),
+      ];
+
+      for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
-        // Кириллица во встроенных шрифтах jsPDF ломается — рисуем текст картинкой
         drawText(pdf, "АРВ · Дашборды трудозатрат", margin, margin, 13, "#520099", "left");
         drawText(
           pdf,
@@ -488,16 +488,34 @@ function DashboardsPage() {
           "#6b7280",
           "right",
         );
-        pdf.addImage(
-          slice.toDataURL("image/jpeg", 0.92),
-          "JPEG",
-          margin,
-          margin + headH,
-          w,
-          (sh * w) / canvas.width,
-        );
-        drawText(pdf, `${i + 1} / ${pages}`, pw / 2, ph - margin, 9, "#6b7280", "center");
 
+        let y = margin + headH;
+        if (i === 0) {
+          drawText(
+            pdf,
+            `Период: ${short(from)} — ${short(to)} · Единицы: ${unit === "hours" ? "часы" : "дни"}`,
+            margin,
+            y,
+            10,
+            "#374151",
+            "left",
+          );
+          y += 18;
+        }
+
+        const avail = ph - margin - footH - y;
+        const shots = (await Promise.all(pages[i]!.map(shoot))).filter(Boolean) as HTMLCanvasElement[];
+        const gap = 10;
+        // масштаб, при котором все блоки страницы влезают по высоте и ширине
+        const totalNatH = shots.reduce((a, c) => a + (c.height * w) / c.width, 0) + gap * (shots.length - 1);
+        const k = Math.min(1, (avail) / totalNatH);
+        for (const c of shots) {
+          const iw = w * k;
+          const ih = (c.height * iw) / c.width;
+          pdf.addImage(c.toDataURL("image/jpeg", 0.92), "JPEG", margin, y, iw, ih);
+          y += ih + gap;
+        }
+        drawText(pdf, `${i + 1} / ${pages.length}`, pw / 2, ph - margin, 9, "#6b7280", "center");
       }
       pdf.save("АРВ_Дашборды.pdf");
       toast.success("PDF готов");
@@ -507,6 +525,7 @@ function DashboardsPage() {
       setPdfBusy(false);
     }
   };
+
 
   return (
     <div ref={pageRef} className="bg-background">
