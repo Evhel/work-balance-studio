@@ -331,8 +331,10 @@ function DashboardsPage() {
     setFrom(s.from);
     setTo(s.to);
     setEditingId(s.id);
+    setActiveSetId(s.id);
     setSetName(s.name);
   };
+
   /** Краткое имя набора по выбранным фильтрам */
   const autoName = () => {
     const short = (ym: string) => {
