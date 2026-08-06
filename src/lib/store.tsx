@@ -26,13 +26,40 @@ type Ctx = {
   can: (action: Action) => boolean;
 };
 
-export type Action =
-  | "editTimesheet"
-  | "editContractors"
-  | "createProject"
-  | "editProject"
-  | "editDepartment"
-  | "deleteEntities";
+export type Action = AccessAction;
+
+/** Права по умолчанию для должности */
+export function defaultAccess(
+  position: Employee["position"],
+  department: string,
+  action: AccessAction,
+): boolean {
+  const isGip = department === "ГИП";
+  const chiefs =
+    position === "Директор" || position === "Модератор" || position === "Руководитель отдела";
+  switch (action) {
+    case "viewTimesheet":
+    case "viewContractors":
+    case "viewEffort":
+    case "viewDashboards":
+      return true;
+    case "editTimesheet":
+      return position === "Офис-менеджер";
+    case "editContractors":
+    case "createProject":
+    case "editProject":
+    case "editDepartment":
+      return chiefs || isGip;
+    case "editEffort":
+      return chiefs;
+    case "deleteEntities":
+    case "manageRoles":
+      return position === "Модератор";
+    default:
+      return false;
+  }
+}
+
 
 
 const StoreContext = createContext<Ctx | null>(null);
