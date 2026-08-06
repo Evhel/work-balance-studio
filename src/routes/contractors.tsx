@@ -180,15 +180,23 @@ function ContractorsPage() {
                 {days.map((d) => {
                   const date = iso(year, month, d);
                   const v = store.timesheet[p.id]?.[date] ?? "";
-                  const bg = CODE_COLORS[v] ?? (isWorkday(date) ? undefined : "var(--weekend)");
+                  const active = store.projects.filter(
+                    (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
+                  );
+                  const conflict = !!v && v !== "НН" && active.length > 0;
+                  const bg = conflict
+                    ? "#ffd9d9"
+                    : (CODE_COLORS[v] ?? (isWorkday(date) ? undefined : "var(--weekend)"));
                   const selected = sel.isSelected(p.id, d);
                   return (
                     <ContextMenu key={d}>
                       <ContextMenuTrigger asChild>
                         <td
-                          className="day-cell cursor-pointer"
+                          className="day-cell cursor-pointer align-top"
+                          title={active.map((x) => x.name).join(", ") || undefined}
                           style={{
                             background: bg,
+                            boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
                             outline: selected ? "2px solid var(--primary)" : undefined,
                             outlineOffset: "-2px",
                           }}
@@ -196,11 +204,47 @@ function ContractorsPage() {
                           onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                           onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                         >
-                          {v}
+                          <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                            {v && <span className="text-[10px] leading-none font-medium">{v}</span>}
+                            {active.map((pr) => (
+                              <span
+                                key={pr.id}
+                                className="h-1.5 w-full rounded-full"
+                                style={{ background: pr.color }}
+                                title={pr.name}
+                              />
+                            ))}
+                          </div>
                         </td>
                       </ContextMenuTrigger>
                       {editable && (
                         <ContextMenuContent>
+                          {store.projects.map((pr) => (
+                            <ContextMenuItem
+                              key={pr.id}
+                              onSelect={() => {
+                                setPlanCells(
+                                  pr.id,
+                                  p.id,
+                                  sel.targetDays(p.id, d).map((x) => iso(year, month, x)),
+                                  "Р",
+                                );
+                                sel.clear();
+                              }}
+                            >
+                              Занять: {pr.name}
+                            </ContextMenuItem>
+                          ))}
+                          <ContextMenuItem
+                            onSelect={() => {
+                              const dates = sel.targetDays(p.id, d).map((x) => iso(year, month, x));
+                              store.projects.forEach((pr) => setPlanCells(pr.id, p.id, dates, null));
+                              sel.clear();
+                            }}
+                          >
+                            Снять занятость
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
                           {CODES.map((c) => (
                             <ContextMenuItem key={c} onSelect={() => apply(p.id, d, c)}>
                               {c} — {CONTRACTOR_LEGEND.find((l) => l.code === c)?.label}
@@ -208,13 +252,14 @@ function ContractorsPage() {
                           ))}
                           <ContextMenuSeparator />
                           <ContextMenuItem onSelect={() => apply(p.id, d, null)}>
-                            Очистить
+                            Очистить статус
                           </ContextMenuItem>
                         </ContextMenuContent>
                       )}
                     </ContextMenu>
                   );
                 })}
+
               </tr>
             ))}
           </tbody>
