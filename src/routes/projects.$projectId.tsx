@@ -65,11 +65,10 @@ const PROJECT_LEGEND = [
   { code: "▬", label: "цветная полоса — занятость на проекте (цвет проекта)" },
 ];
 
-const STATUS_CODES = ["Б", "ОТ", "ДО", "У", "НН"];
 
 function ProjectPage() {
   const { projectId } = Route.useParams();
-  const { store, update, isWorkday, setPlanCells, setCells, can } = useStore();
+  const { store, update, isWorkday, setPlanCells, can } = useStore();
   const project = store.projects.find((p) => p.id === projectId);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
