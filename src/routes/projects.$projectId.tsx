@@ -250,7 +250,8 @@ function ProjectPage() {
         {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div className="mt-3 flex items-start gap-3">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border bg-card">
         {view === "month" ? (
           <table className="grid-table w-full">
             <thead>
