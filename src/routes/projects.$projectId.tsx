@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { MonthPicker } from "@/components/MonthPicker";
 import { useRowSelection } from "@/components/useRowSelection";
+import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
 import {
@@ -38,7 +39,7 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-import { type ProjectGoal, type ProjectStage } from "@/lib/types";
+import { REMOTE_CODE, type ProjectGoal, type ProjectStage } from "@/lib/types";
 
 export const Route = createFileRoute("/projects/$projectId")({
   head: () => ({
@@ -313,7 +314,8 @@ function ProjectPage() {
                   {days.map((d) => {
                     const date = iso(year, month, d);
                     const absence = absenceAt(store, p.id, date);
-                    const status = store.timesheet[p.id]?.[date] ?? "";
+                    const rawStatus = store.timesheet[p.id]?.[date] ?? "";
+                    const status = rawStatus === REMOTE_CODE ? "" : rawStatus;
                     const active = store.projects.filter(
                       (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
                     );
@@ -355,22 +357,26 @@ function ProjectPage() {
                             onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                           >
-                            <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                            <div className="flex flex-col items-center gap-[1px] py-[1px]">
                               {status && (
                                 <span className="text-[10px] leading-none font-medium">
                                   {status}
                                 </span>
                               )}
                               {active.map((pr) => (
-                                <span
+                                <PlanBar
                                   key={pr.id}
-                                  className="w-full rounded-full"
-                                  style={{
-                                    background: pr.color,
-                                    height: pr.id === projectId ? 6 : 4,
-                                    opacity: pr.id === projectId ? 1 : 0.55,
-                                  }}
-                                  title={pr.name}
+                                  color={pr.color}
+                                  name={pr.name}
+                                  height={pr.id === projectId ? 6 : 4}
+                                  opacity={pr.id === projectId ? 1 : 0.55}
+                                  first={
+                                    d === 1 || !isPlanned(store, pr.id, p.id, iso(year, month, d - 1))
+                                  }
+                                  last={
+                                    d === days.length ||
+                                    !isPlanned(store, pr.id, p.id, iso(year, month, d + 1))
+                                  }
                                 />
                               ))}
                             </div>

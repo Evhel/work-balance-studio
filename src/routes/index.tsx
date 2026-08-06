@@ -34,7 +34,14 @@ import { useRowSelection } from "@/components/useRowSelection";
 import { byFio, fio, useStore } from "@/lib/store";
 import { isEmployedOn } from "@/lib/people";
 import { MONTHS, daysInMonth, iso, todayIso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
-import { CODE_COLORS, POSITIONS, TIME_CODES, TIME_LEGEND, type Position } from "@/lib/types";
+import {
+  CODE_COLORS,
+  POSITIONS,
+  REMOTE_CODE,
+  TIME_CODES,
+  TIME_LEGEND,
+  type Position,
+} from "@/lib/types";
 import {
   downloadMonth,
   downloadTemplate,
@@ -68,6 +75,8 @@ function TimesheetPage() {
   const [month, setMonth] = useState(now.getMonth());
   const [filterDept, setFilterDept] = useState("all");
   const [filterProject, setFilterProject] = useState("all");
+  const [hideRemote, setHideRemote] = useState(false);
+  const [hideHours, setHideHours] = useState(false);
   const [edit, setEdit] = useState<{ personId: string; day: number; value: string } | null>(null);
   const sel = useRowSelection();
   const editable = can("editTimesheet");
@@ -95,13 +104,30 @@ function TimesheetPage() {
     return [...list].sort(byFio);
   }, [store.employees, store.projects, filterDept, filterProject]);
 
+  /** Регулярная удалёнка сотрудника на эту дату */
+  const remoteByPattern = (emp: { remoteDays?: number[] } | undefined, date: string) => {
+    if (!emp?.remoteDays?.length) return false;
+    const [yy, mm, dd] = date.split("-").map(Number);
+    const wd = weekdayIndex(yy!, mm! - 1, dd!); // 0 — Пн
+    return wd < 5 && emp.remoteDays.includes(wd + 1);
+  };
+
   const cellValue = (personId: string, day: number) => {
     const date = iso(year, month, day);
     const manual = store.timesheet[personId]?.[date];
     if (manual !== undefined) return manual;
     const emp = store.employees.find((e) => e.id === personId);
-    if (emp?.fullTime && isWorkday(date) && date <= today && isEmployedOn(emp, date)) return "8";
+    if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return "";
+    if (remoteByPattern(emp, date)) return REMOTE_CODE;
+    if (emp.fullTime && date <= today) return "8";
     return "";
+  };
+
+  /** Значение с учётом кнопок «Скрыть удалёнку» / «Скрыть часы» */
+  const shown = (v: string) => {
+    if (hideRemote && v === REMOTE_CODE) return "";
+    if (hideHours && v !== "" && !Number.isNaN(Number(v))) return "";
+    return v;
   };
 
   const rowTotals = (personId: string) => {
@@ -109,6 +135,12 @@ function TimesheetPage() {
     let workdays = 0;
     for (const d of days) {
       const v = cellValue(personId, d);
+      if (v === REMOTE_CODE) {
+        const emp = store.employees.find((e) => e.id === personId);
+        if (emp?.fullTime) hours += 8;
+        workdays += 1;
+        continue;
+      }
       const n = Number(v);
       if (v !== "" && !Number.isNaN(n)) {
         hours += n;
@@ -165,20 +197,21 @@ function TimesheetPage() {
         const date = iso(y, m, d);
         const manual = store.timesheet[p.id]?.[date];
         let v = manual ?? "";
-        if (
-          manual === undefined &&
-          p.fullTime &&
-          isWorkday(date) &&
-          date <= today &&
-          isEmployedOn(p, date)
-        )
-          v = "8";
-        values.push(v);
-        const n = Number(v);
-        if (v !== "" && !Number.isNaN(n)) {
-          hours += n;
-          if (n > 0) wd += 1;
+        if (manual === undefined && isWorkday(date) && isEmployedOn(p, date)) {
+          if (remoteByPattern(p, date)) v = REMOTE_CODE;
+          else if (p.fullTime && date <= today) v = "8";
         }
+        if (v === REMOTE_CODE) {
+          if (p.fullTime) hours += 8;
+          wd += 1;
+        } else {
+          const n = Number(v);
+          if (v !== "" && !Number.isNaN(n)) {
+            hours += n;
+            if (n > 0) wd += 1;
+          }
+        }
+        values.push(shown(v));
       }
       return { fio: fio(p), values, hours, days: wd };
     });
@@ -302,6 +335,20 @@ function TimesheetPage() {
           </SelectContent>
         </Select>
         {editable && <AddEmployeeDialog departments={departments} />}
+        <Button
+          variant={hideRemote ? "default" : "outline"}
+          onClick={() => setHideRemote((v) => !v)}
+          title="Скрывает статус «УД» в таблице и при экспорте"
+        >
+          {hideRemote ? "Показать удалёнку" : "Скрыть удалёнку"}
+        </Button>
+        <Button
+          variant={hideHours ? "default" : "outline"}
+          onClick={() => setHideHours((v) => !v)}
+          title="Скрывает часы в таблице и при экспорте"
+        >
+          {hideHours ? "Показать часы" : "Скрыть часы"}
+        </Button>
       </div>
 
       <p className="mt-4 text-sm font-medium">
@@ -398,7 +445,8 @@ function TimesheetPage() {
                     const date = iso(year, month, d);
                     const work = isWorkday(date);
                     const isEditing = edit?.personId === p.id && edit.day === d;
-                    const v = isEditing ? edit.value : cellValue(p.id, d);
+                    const raw = isEditing ? edit.value : cellValue(p.id, d);
+                    const v = isEditing ? raw : shown(raw);
                     const bg = CODE_COLORS[v] ?? (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
                     return (

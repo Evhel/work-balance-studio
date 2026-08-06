@@ -19,6 +19,7 @@ import { PersonLink } from "@/components/PersonLink";
 import { Button } from "@/components/ui/button";
 
 import { useRowSelection } from "@/components/useRowSelection";
+import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { fio, useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
 import {
@@ -207,18 +208,24 @@ function DepartmentPage() {
                             onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                           >
-                            <div className="flex flex-col items-center gap-[1px] px-[1px] py-[1px]">
+                            <div className="flex flex-col items-center gap-[1px] py-[1px]">
                               {absence && (
                                 <span className="text-[10px] leading-none font-medium">
                                   {absence}
                                 </span>
                               )}
                               {active.map((pr) => (
-                                <span
+                                <PlanBar
                                   key={pr.id}
-                                  className="h-1.5 w-full rounded-full"
-                                  style={{ background: pr.color }}
-                                  title={pr.name}
+                                  color={pr.color}
+                                  name={pr.name}
+                                  first={
+                                    d === 1 || !isPlanned(store, pr.id, p.id, iso(year, month, d - 1))
+                                  }
+                                  last={
+                                    d === days.length ||
+                                    !isPlanned(store, pr.id, p.id, iso(year, month, d + 1))
+                                  }
                                 />
                               ))}
                             </div>

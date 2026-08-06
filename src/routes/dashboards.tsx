@@ -277,6 +277,14 @@ function DashboardsPage() {
     return out;
   });
 
+  const deptLineData = usedYms.map((k) => {
+    const row: Record<string, string | number> = {
+      label: `${MONTHS_SHORT[parseYm(k).month]} ${parseYm(k).year}`,
+    };
+    for (const d of usedDepts) row[d] = num(sum((f) => f.department === d && f.ym === k));
+    return row;
+  });
+
   const barData = usedProjects.map((pid) => {
     const row: Record<string, string | number> = { project: projName(pid) };
     for (const d of usedDepts) row[d] = num(sum((f) => f.projectId === pid && f.department === d));
@@ -483,70 +491,86 @@ function DashboardsPage() {
         </p>
       )}
 
-      {/* Таблица 3 */}
-      <h2 className="mt-6 text-lg font-medium">Фактические трудозатраты: проект × раздел ({unitLabel})</h2>
-      <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
-        <table className="grid-table w-full text-sm">
-          <thead>
-            <tr className="bg-muted">
-              <th className="min-w-[220px] border-r border-b px-3 py-2 text-left text-xs font-medium">Проект</th>
-              {usedDepts.map((d) => (
-                <th key={d} className="border-r border-b px-3 py-2 text-xs font-medium">{d}</th>
-              ))}
-              <th className="border-b px-3 py-2 text-xs font-medium">Общий итог</th>
-            </tr>
-          </thead>
-          <tbody>
-            {table3.map((r) => (
-              <tr key={r.pid}>
-                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
-                  <Link
-                    to="/projects/$projectId"
-                    params={{ projectId: r.pid }}
-                    className="text-primary hover:underline"
-                  >
-                    {r.project}
-                  </Link>
-                </th>
-                {r.cells.map((c, i) => (
-                  <td key={i} className="border-r border-b px-3 py-1 text-center text-xs">{c || ""}</td>
+      {/* Таблица 3 + пончик в одну строку */}
+      <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
+          <h2 className="text-base font-medium">
+            Фактические трудозатраты: проект × раздел ({unitLabel})
+          </h2>
+          <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
+            <table className="grid-table w-full text-xs">
+              <thead>
+                <tr className="bg-muted">
+                  <th className="min-w-[170px] border-r border-b px-2 py-1.5 text-left text-xs font-medium">
+                    Проект
+                  </th>
+                  {usedDepts.map((d) => (
+                    <th key={d} className="border-r border-b px-2 py-1.5 text-xs font-medium">
+                      {d}
+                    </th>
+                  ))}
+                  <th className="border-b px-2 py-1.5 text-xs font-medium">Итог</th>
+                </tr>
+              </thead>
+              <tbody>
+                {table3.map((r) => (
+                  <tr key={r.pid}>
+                    <th className="border-r border-b px-2 py-0.5 text-left text-xs font-normal">
+                      <Link
+                        to="/projects/$projectId"
+                        params={{ projectId: r.pid }}
+                        className="text-primary hover:underline"
+                      >
+                        {r.project}
+                      </Link>
+                    </th>
+                    {r.cells.map((c, i) => (
+                      <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                        {c || ""}
+                      </td>
+                    ))}
+                    <td className="border-b px-2 py-0.5 text-center font-medium">{r.total}</td>
+                  </tr>
                 ))}
-                <td className="border-b px-3 py-1 text-center text-xs font-medium">{r.total}</td>
-              </tr>
-            ))}
-            <tr className="bg-muted/60 font-medium">
-              <th className="border-r border-b px-3 py-1 text-left text-xs">Общий итог</th>
-              {table3Totals.map((c, i) => (
-                <td key={i} className="border-r border-b px-3 py-1 text-center text-xs">{c || ""}</td>
-              ))}
-              <td className="border-b px-3 py-1 text-center text-xs">{grand}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Пончик */}
-      <h2 className="mt-6 text-lg font-medium">Трудозатраты по проектам</h2>
-      <div className="mt-2 flex flex-wrap items-center gap-6 rounded-lg border bg-card p-4">
-        <div className="h-72 w-full max-w-md">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={donut} dataKey="value" nameKey="name" innerRadius={60} outerRadius={110}>
-                {donut.map((d) => (
-                  <Cell key={d.name} fill={d.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-            </PieChart>
-          </ResponsiveContainer>
+                <tr className="bg-muted/60 font-medium">
+                  <th className="border-r border-b px-2 py-0.5 text-left text-xs">Общий итог</th>
+                  {table3Totals.map((c, i) => (
+                    <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                      {c || ""}
+                    </td>
+                  ))}
+                  <td className="border-b px-2 py-0.5 text-center">{grand}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="text-sm">
-          {donut.map((d) => (
-            <div key={d.name} className="mb-1 flex items-center gap-2">
-              <span className="size-3 rounded-sm" style={{ background: d.color }} />
-              {d.name} — <b>{d.value}</b> {unitLabel}
+
+        <div className="min-w-0">
+          <h2 className="text-base font-medium">Трудозатраты по проектам</h2>
+          <div className="mt-2 flex gap-3 rounded-lg border bg-card p-3">
+            <div className="h-56 min-w-0 flex-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius={45} outerRadius={82}>
+                    {donut.map((d) => (
+                      <Cell key={d.name} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          ))}
+            <div className="max-h-56 w-40 shrink-0 overflow-y-auto text-[11px]">
+              {donut.map((d) => (
+                <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
+                  <span className="size-2.5 shrink-0 rounded-sm" style={{ background: d.color }} />
+                  <span className="truncate">{d.name}</span>
+                  <b className="ml-auto">{d.value}</b>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -646,6 +670,30 @@ function DashboardsPage() {
                 type="monotone"
                 dataKey={projName(pid)}
                 stroke={projColor(pid)}
+                strokeWidth={2}
+                dot={false}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Линейный график по разделам без накопления */}
+      <h2 className="mt-6 text-lg font-medium">Трудозатраты по разделам, по месяцам ({unitLabel})</h2>
+      <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={deptLineData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="label" fontSize={11} />
+            <YAxis fontSize={11} />
+            <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+            <RLegend />
+            {usedDepts.map((d, i) => (
+              <Line
+                key={d}
+                type="monotone"
+                dataKey={d}
+                stroke={DEPT_COLORS[i % DEPT_COLORS.length]}
                 strokeWidth={2}
                 dot={false}
               />
