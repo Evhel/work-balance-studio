@@ -47,10 +47,12 @@ export const Route = createFileRoute("/department")({
 });
 
 const DEPT_LEGEND = [
-  { code: "Б", label: "больничный лист (серое)" },
-  { code: "ОТ", label: "отпуск оплачиваемый (серое)" },
-  { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
-  { code: "У", label: "учебный отпуск (серое)" },
+  { code: "Б", label: "больничный лист" },
+  { code: "ОТ", label: "отпуск оплачиваемый" },
+  { code: "ДО", label: 'отпуск "за свой счет"' },
+  { code: "У", label: "учебный отпуск" },
+  { code: "▬", label: "занятость на проекте" },
+  { code: "🟥", label: "конфликт: отсутствие и занятость" },
 ];
 
 function DepartmentPage() {
