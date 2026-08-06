@@ -288,7 +288,34 @@ function EffortPage() {
             e.target.value = "";
           }}
         />
+        <Button
+          variant="outline"
+          onClick={() => {
+            downloadEffortRowTemplate(
+              employees.map((e) => fio(e)),
+              store.projects.map((p) => p.name),
+            );
+            toast.success("Шаблон скачивается");
+          }}
+        >
+          <Download className="size-4" /> Шаблон (построчный)
+        </Button>
+        <Button variant="outline" onClick={() => bulkRef.current?.click()}>
+          <Upload className="size-4" /> Массовый импорт
+        </Button>
+        <input
+          ref={bulkRef}
+          type="file"
+          accept=".xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleBulkImport(f);
+            e.target.value = "";
+          }}
+        />
       </div>
+
 
       <p className="mt-4 text-sm font-medium">
         Табель трудозатрат · {fio(person)} · {MONTHS[month]} {year}
