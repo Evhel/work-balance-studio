@@ -29,6 +29,8 @@ export type Employee = {
   comment?: string;
   hidden?: boolean;
   avatar?: string;
+  /** Дни регулярной удалёнки: 1 — Пн … 5 — Пт */
+  remoteDays?: number[];
 };
 
 export type Contractor = {
@@ -70,14 +72,18 @@ export type Project = {
 
 
 /** Коды табеля рабочего времени (стр. 1) */
-export const TIME_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"] as const;
+export const TIME_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У", "УД"] as const;
 export type TimeCode = (typeof TIME_CODES)[number];
+
+/** Код удалённой работы. Показывается только в табеле рабочего времени */
+export const REMOTE_CODE = "УД";
 
 export const TIME_LEGEND: { code: string; label: string }[] = [
   { code: "Б", label: "больничный лист" },
   { code: "ОТ", label: 'отпуск оплачиваемый' },
   { code: "ДО", label: 'отпуск "за свой счет"' },
   { code: "8", label: "отработанное время, час" },
+  { code: "УД", label: "удалённая работа" },
   { code: "НН", label: "неявка" },
   { code: "ОЖ", label: "отпуск по уходу за ребенком" },
   { code: "У", label: "учебный отпуск" },
@@ -96,6 +102,7 @@ export const CODE_COLORS: Record<string, string> = {
   "НН": "#ffe0b2",
   "ОЖ": "#ffd9ef",
   "У": "#d7ecff",
+  "УД": "#e8e3f7",
   "Р": "#c9f2cf",
 };
 

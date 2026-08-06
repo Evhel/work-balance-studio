@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { birthDayMonth, byFio, fio, useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
 import {
@@ -255,16 +256,32 @@ function EmployeePage() {
                             {bday && <span title="День рождения">🎂</span>}
                           </div>
                           {absence && <div className="mb-1 font-medium">{absence}</div>}
-                          {active.map((pr) => (
-                            <div
-                              key={pr.id}
-                              className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] text-white"
-                              style={{ background: pr.color }}
-                              title={pr.name}
-                            >
-                              {pr.name}
-                            </div>
-                          ))}
+                          {active.map((pr) => {
+                            const wd = weekdayIndex(year, month, d);
+                            const first =
+                              d === 1 ||
+                              wd === 0 ||
+                              !isPlanned(store, pr.id, person.id, iso(year, month, d - 1));
+                            const last =
+                              d === dim ||
+                              wd === 6 ||
+                              !isPlanned(store, pr.id, person.id, iso(year, month, d + 1));
+                            return (
+                              <PlanBar
+                                key={pr.id}
+                                color={pr.color}
+                                name={pr.name}
+                                first={first}
+                                last={last}
+                                extendPx={5}
+                                height={16}
+                              >
+                                <span className="block truncate px-1 py-0.5 text-[10px] text-white">
+                                  {first ? pr.name : "\u00A0"}
+                                </span>
+                              </PlanBar>
+                            );
+                          })}
                           {event && (
                             <div
                               className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] font-semibold"

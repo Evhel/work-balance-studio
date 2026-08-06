@@ -216,6 +216,43 @@ function PersonPage() {
           </>
         )}
       </div>
+      {employee && (
+        <div className="mt-4 inline-block rounded-lg border bg-card p-4">
+          <div className="text-sm font-medium">Рег. удалёнка</div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Дни недели, в которые в табеле автоматически ставится «УД»
+          </p>
+          <div className="mt-2 flex gap-1">
+            {["Пн", "Вт", "Ср", "Чт", "Пт"].map((w, i) => {
+              const day = i + 1;
+              const on = employee.remoteDays?.includes(day) ?? false;
+              return (
+                <button
+                  key={w}
+                  disabled={!cardEditable}
+                  className="size-11 rounded-md border text-xs font-medium disabled:opacity-60"
+                  style={{
+                    background: on ? "var(--primary)" : undefined,
+                    color: on ? "var(--primary-foreground)" : undefined,
+                  }}
+                  onClick={() =>
+                    update((d) => {
+                      const x = d.employees.find((z) => z.id === personId);
+                      if (!x) return;
+                      const cur = new Set(x.remoteDays ?? []);
+                      if (cur.has(day)) cur.delete(day);
+                      else cur.add(day);
+                      x.remoteDays = [...cur].sort((a, b) => a - b);
+                    })
+                  }
+                >
+                  {w}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {employee && !cardEditable && (
         <p className="mt-2 text-xs text-muted-foreground">
           Изменять эти данные может только офис-менеджер.
