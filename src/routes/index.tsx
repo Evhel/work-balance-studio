@@ -653,13 +653,26 @@ function AddEmployeeDialog({ departments }: { departments: string[] }) {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label>Дата рождения</Label>
+              <Label>Дата рождения (ДД.ММ)</Label>
               <Input
-                type="date"
-                value={f.birthDate}
-                onChange={(e) => setF({ ...f, birthDate: e.target.value })}
+                placeholder="дд.мм"
+                value={
+                  f.birthDate ? `${f.birthDate.slice(8, 10)}.${f.birthDate.slice(5, 7)}` : ""
+                }
+                onChange={(e) => {
+                  const m = e.target.value.match(/^(\d{1,2})[.\/-](\d{1,2})$/);
+                  if (!m) {
+                    setF({ ...f, birthDate: "" });
+                    return;
+                  }
+                  setF({
+                    ...f,
+                    birthDate: `2000-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`,
+                  });
+                }}
               />
             </div>
+
             <div>
               <Label>Дата начала работы</Label>
               <Input
