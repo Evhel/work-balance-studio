@@ -623,30 +623,36 @@ function DashboardsPage() {
           </div>
         </div>
 
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col">
           <h2 className="text-base font-medium">Трудозатраты по проектам</h2>
-          <div className="mt-2 flex gap-3 rounded-lg border bg-card p-3">
-            <div className="h-56 min-w-0 flex-1">
+          <div className="mt-2 flex min-h-56 flex-1 gap-3 rounded-lg border bg-card p-3">
+            <div className="min-h-48 min-w-0 flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius={45} outerRadius={82}>
+                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="80%">
                     {donut.map((d) => (
-                      <Cell key={d.name} fill={d.color} />
+                      <Cell key={d.name} fill={soft(d.color)} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="max-h-56 w-40 shrink-0 overflow-y-auto text-[11px]">
+            <div className="w-40 shrink-0 overflow-y-auto text-[11px]">
               {donut.map((d) => (
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
-                  <span className="size-2.5 shrink-0 rounded-sm" style={{ background: d.color }} />
+                  <span
+                    className="size-2.5 shrink-0 rounded-sm"
+                    style={{ background: soft(d.color) }}
+                  />
                   <span className="truncate">{d.name}</span>
                   <b className="ml-auto">{d.value}</b>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
           </div>
         </div>
       </div>
