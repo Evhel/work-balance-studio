@@ -350,13 +350,6 @@ function AddContractorDialog() {
                 onChange={(e) => setF({ ...f, firstName: e.target.value })}
               />
             </div>
-            <div>
-              <Label>Отчество</Label>
-              <Input
-                value={f.middleName}
-                onChange={(e) => setF({ ...f, middleName: e.target.value })}
-              />
-            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
