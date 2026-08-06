@@ -104,6 +104,9 @@ function seed(): Store {
     dayOverrides: {},
     plan: {},
     personalEvents: {},
+    effort: {},
+    effortDone: {},
+    filterSets: [],
     currentUserId: "e2",
   };
 }
@@ -140,7 +143,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setStore({ ...seed(), ...JSON.parse(raw) });
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Store>;
+        const base = seed();
+        setStore({
+          ...base,
+          ...parsed,
+          effort: parsed.effort ?? {},
+          effortDone: parsed.effortDone ?? {},
+          filterSets: parsed.filterSets ?? [],
+        });
+      }
     } catch {
       /* ignore */
     }
