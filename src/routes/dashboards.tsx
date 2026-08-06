@@ -320,7 +320,7 @@ function DashboardsPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
 
-  const DEPT_COLORS = SOFT_CHART_COLORS;
+  const DEPT_COLORS = CHART_COLORS;
 
   /* Наборы фильтров */
   const applySet = (s: FilterSet) => {
