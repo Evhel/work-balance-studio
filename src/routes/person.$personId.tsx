@@ -94,19 +94,28 @@ function PersonPage() {
               value={employee.fullTime ? "Полный рабочий день" : "Неполный рабочий день"}
             />
             <div>
-              <Label>Дата рождения</Label>
+              <Label>Дата рождения (ДД.ММ)</Label>
               <Input
-                type="date"
-                value={employee.birthDate ?? ""}
+                placeholder="дд.мм"
+                value={
+                  employee.birthDate
+                    ? `${employee.birthDate.slice(8, 10)}.${employee.birthDate.slice(5, 7)}`
+                    : ""
+                }
                 disabled={!editable}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const m = e.target.value.match(/^(\d{1,2})[.\/-](\d{1,2})$/);
+                  if (!m) return;
+                  const dd = String(m[1]).padStart(2, "0");
+                  const mm = String(m[2]).padStart(2, "0");
                   update((d) => {
                     const x = d.employees.find((z) => z.id === personId);
-                    if (x) x.birthDate = e.target.value;
-                  })
-                }
+                    if (x) x.birthDate = `${(x.birthDate || "2000-01-01").slice(0, 4)}-${mm}-${dd}`;
+                  });
+                }}
               />
             </div>
+
             <div>
               <Label>Дата начала работы</Label>
               <Input
