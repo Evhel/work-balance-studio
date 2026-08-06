@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { soft, SOFT_CHART_COLORS } from "@/lib/colors";
+import { CHART_COLORS } from "@/lib/colors";
 import { useMemo, useRef, useState } from "react";
 import { Calendar as CalendarIcon, Check, Download, RotateCcw, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
