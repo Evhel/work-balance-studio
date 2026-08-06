@@ -473,7 +473,7 @@ function DashboardsPage() {
       <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
         <Input
           className="w-[220px]"
-          placeholder="Название набора фильтров"
+          placeholder="Название набора (создастся автоматически)"
           value={setName}
           onChange={(e) => setSetName(e.target.value)}
         />
