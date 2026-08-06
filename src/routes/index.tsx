@@ -112,13 +112,35 @@ function TimesheetPage() {
     return wd < 5 && emp.remoteDays.includes(wd + 1);
   };
 
+  /** Удалёнка на дату: ручное переопределение важнее регулярного паттерна */
+  const remoteAt = (personId: string, date: string) => {
+    const emp = store.employees.find((e) => e.id === personId);
+    if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return false;
+    const ov = store.remoteOverride?.[personId]?.[date];
+    if (typeof ov === "boolean") return ov;
+    if (store.timesheet[personId]?.[date] === REMOTE_CODE) return true;
+    return remoteByPattern(emp, date);
+  };
+
+  const setRemote = (personId: string, dayList: number[], value: boolean | null) =>
+    update((d) => {
+      d.remoteOverride[personId] = d.remoteOverride[personId] ?? {};
+      for (const day of dayList) {
+        const date = iso(year, month, day);
+        // «УД», сохранённая как значение ячейки, больше не используется
+        if (d.timesheet[personId]?.[date] === REMOTE_CODE) delete d.timesheet[personId]![date];
+        if (value === null) delete d.remoteOverride[personId]![date];
+        else d.remoteOverride[personId]![date] = value;
+      }
+    });
+
+  /** Часы или буквенный статус ячейки (без «УД») */
   const cellValue = (personId: string, day: number) => {
     const date = iso(year, month, day);
     const manual = store.timesheet[personId]?.[date];
-    if (manual !== undefined) return manual;
+    if (manual !== undefined && manual !== REMOTE_CODE) return manual;
     const emp = store.employees.find((e) => e.id === personId);
     if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return "";
-    if (remoteByPattern(emp, date)) return REMOTE_CODE;
     if (emp.fullTime && date <= today) return "8";
     return "";
   };
@@ -135,20 +157,17 @@ function TimesheetPage() {
     let workdays = 0;
     for (const d of days) {
       const v = cellValue(personId, d);
-      if (v === REMOTE_CODE) {
-        const emp = store.employees.find((e) => e.id === personId);
-        if (emp?.fullTime) hours += 8;
-        workdays += 1;
-        continue;
-      }
       const n = Number(v);
       if (v !== "" && !Number.isNaN(n)) {
         hours += n;
         if (n > 0) workdays += 1;
+      } else if (v === "" && remoteAt(personId, iso(year, month, d))) {
+        workdays += 1;
       }
     }
     return { hours, workdays };
   };
+
 
   const applyStatus = (personId: string, dayList: number[], value: string | null) => {
     setCells(personId, dayList.map((d) => iso(year, month, d)), value);
