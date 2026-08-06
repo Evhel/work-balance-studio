@@ -168,7 +168,7 @@ function DashboardsPage() {
   const now = new Date();
   const thisYm = `${now.getFullYear()}-${pad(1)}`;
 
-  const [unit, setUnit] = useState<"hours" | "days">("hours");
+  const [unit, setUnit] = useState<"hours" | "days">("days");
   const [depts, setDepts] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
@@ -176,6 +176,20 @@ function DashboardsPage() {
   const [to, setTo] = useState(`${now.getFullYear()}-${pad(12)}`);
   const [setName, setSetName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeSetId, setActiveSetId] = useState<string | null>(null);
+
+  const resetFilters = () => {
+    setUnit("days");
+    setDepts([]);
+    setProjects([]);
+    setPeople([]);
+    setFrom(thisYm);
+    setTo(`${now.getFullYear()}-${pad(12)}`);
+    setSetName("");
+    setEditingId(null);
+    setActiveSetId(null);
+  };
+
 
   const deptOptions = useMemo(
     () =>
