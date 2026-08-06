@@ -394,7 +394,35 @@ function DashboardsPage() {
     toast.success("Файл скачивается");
   };
 
+  /** Текст кириллицей растеризуем — встроенные шрифты jsPDF её не поддерживают */
+  const drawText = (
+    pdf: import("jspdf").jsPDF,
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    color: string,
+    align: "left" | "center" | "right",
+  ) => {
+    const scale = 4;
+    const c = document.createElement("canvas");
+    const cx = c.getContext("2d")!;
+    const font = `600 ${size * scale}px "Helvetica Neue", Arial, sans-serif`;
+    cx.font = font;
+    const wpt = cx.measureText(text).width / scale;
+    const hpt = size * 1.35;
+    c.width = Math.ceil(wpt * scale);
+    c.height = Math.ceil(hpt * scale);
+    cx.font = font;
+    cx.fillStyle = color;
+    cx.textBaseline = "middle";
+    cx.fillText(text, 0, c.height / 2);
+    const left = align === "left" ? x : align === "center" ? x - wpt / 2 : x - wpt;
+    pdf.addImage(c.toDataURL("image/png"), "PNG", left, y, wpt, hpt);
+  };
+
   const pageRef = useRef<HTMLDivElement>(null);
+
   const [pdfBusy, setPdfBusy] = useState(false);
 
   const exportPdf = async () => {
