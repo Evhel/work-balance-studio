@@ -325,21 +325,21 @@ function DashboardsPage() {
       return `${MONTHS_SHORT[month]}${String(year).slice(2)}`;
     };
     const parts: string[] = [];
-    if (depts.length) parts.push(depts.length <= 2 ? depts.join("+") : `${depts.length} разд.`);
-    if (projects.length)
-      parts.push(
-        projects.length === 1 ? projName(projects[0]!) : `${projects.length} проект.`,
-      );
-    if (people.length)
-      parts.push(
-        people.length === 1
-          ? (peopleOptions.find((p) => p.id === people[0])?.name ?? "1 сотр.")
-          : `${people.length} сотр.`,
-      );
-    if (!parts.length) parts.push("Все данные");
+    parts.push(depts.length ? `Разделы: ${depts.join(", ")}` : "Все разделы");
+    parts.push(
+      projects.length ? `Проекты: ${projects.map((p) => projName(p)).join(", ")}` : "Все проекты",
+    );
+    parts.push(
+      people.length
+        ? `Сотрудники: ${people
+            .map((id) => peopleOptions.find((p) => p.id === id)?.name ?? id)
+            .join(", ")}`
+        : "Все сотрудники",
+    );
     parts.push(from === to ? short(from) : `${short(from)}–${short(to)}`);
     parts.push(unit === "hours" ? "ч" : "дн");
-    return parts.join(" · ").slice(0, 60);
+    return parts.join(" · ").slice(0, 160);
+
   };
 
   const saveSet = () => {
