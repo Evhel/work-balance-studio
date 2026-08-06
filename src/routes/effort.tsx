@@ -55,6 +55,7 @@ function EffortPage() {
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
   const person = store.employees.find((e) => e.id === personId) ?? employees[0];
   const fileRef = useRef<HTMLInputElement>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
 
   const ym = ymKey(year, month);
   const dim = daysInMonth(year, month);
