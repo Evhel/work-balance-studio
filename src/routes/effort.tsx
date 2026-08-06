@@ -16,7 +16,13 @@ import { PersonLink } from "@/components/PersonLink";
 import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, MONTHS_SHORT, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import { effortRows, isEffortDone, rowTotal, workTypeSuggestions, ymKey } from "@/lib/effort";
-import { downloadEffort, parseEffortImport, type EffortExportRow } from "@/lib/excel";
+import {
+  downloadEffort,
+  downloadEffortRowTemplate,
+  parseEffortImport,
+  parseEffortRowImport,
+  type EffortExportRow,
+} from "@/lib/excel";
 import type { EffortRow } from "@/lib/types";
 
 export const Route = createFileRoute("/effort")({
