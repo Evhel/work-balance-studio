@@ -49,6 +49,8 @@ const EMP_LEGEND = [
   { code: "ДО", label: 'отпуск "за свой счет" (серое)' },
   { code: "У", label: "учебный отпуск (серое)" },
   { code: "🎂", label: "день рождения (розовое)" },
+  { code: "🟡", label: "личное напоминание (ярко-жёлтая плашка)" },
+  { code: "🟥", label: "красная рамка — отсутствие совпало с занятостью на проекте" },
 ];
 
 function EmployeePage() {
@@ -165,19 +167,30 @@ function EmployeePage() {
                     (pr) => store.plan[pr.id]?.[person.id]?.[date] === "Р",
                   );
                   const event = store.personalEvents[person.id]?.[date];
+                  const conflict = !!absence && active.length > 0;
                   return (
                     <ContextMenu key={i}>
                       <ContextMenuTrigger asChild>
                         <div
                           className="min-h-24 border-r border-b p-1 text-xs last:border-r-0"
+                          title={
+                            conflict
+                              ? `Конфликт: ${absence} и занятость на проектах (${active
+                                  .map((x) => x.name)
+                                  .join(", ")})`
+                              : undefined
+                          }
                           style={{
-                            background: bday
-                              ? "#ffd9ec"
-                              : absence
-                                ? "#e2e2e2"
-                                : isWorkday(date)
-                                  ? undefined
-                                  : "var(--weekend)",
+                            background: conflict
+                              ? "#ffd9d9"
+                              : bday
+                                ? "#ffd9ec"
+                                : absence
+                                  ? "#e2e2e2"
+                                  : isWorkday(date)
+                                    ? undefined
+                                    : "var(--weekend)",
+                            boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
                           }}
                         >
                           <div className="mb-1 flex items-center justify-between font-medium">
@@ -197,8 +210,8 @@ function EmployeePage() {
                           ))}
                           {event && (
                             <div
-                              className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] font-medium text-white"
-                              style={{ background: "var(--primary)" }}
+                              className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] font-semibold"
+                              style={{ background: "#ffe600", color: "#3b2f00", boxShadow: "inset 0 0 0 1px #d4bb00" }}
                               title={event}
                             >
                               {event}
