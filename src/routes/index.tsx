@@ -35,7 +35,13 @@ import { byFio, fio, useStore } from "@/lib/store";
 import { isEmployedOn } from "@/lib/people";
 import { MONTHS, daysInMonth, iso, todayIso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import { CODE_COLORS, POSITIONS, TIME_CODES, TIME_LEGEND, type Position } from "@/lib/types";
-import { downloadMonth, downloadTemplate, parseImport, type ExportRow } from "@/lib/excel";
+import {
+  downloadMonth,
+  downloadTemplate,
+  downloadRowTemplate,
+  parseImport,
+  type ExportRow,
+} from "@/lib/excel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -231,7 +237,17 @@ function TimesheetPage() {
               toast.success("Шаблон скачан");
             }}
           >
-            <FileSpreadsheet className="size-4" /> Шаблон для импорта
+            <FileSpreadsheet className="size-4" /> Шаблон (табличный)
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              downloadRowTemplate(year, month, people.map(fio));
+              toast.success("Построчный шаблон скачан");
+            }}
+            title="Построчный формат: ФИО / Дата / Значение — удобно для массовой загрузки"
+          >
+            <FileSpreadsheet className="size-4" /> Шаблон (построчный)
           </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
             <Upload className="size-4" /> Импорт
