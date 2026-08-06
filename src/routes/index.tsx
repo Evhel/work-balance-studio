@@ -467,7 +467,11 @@ function TimesheetPage() {
                     const isEditing = edit?.personId === p.id && edit.day === d;
                     const raw = isEditing ? edit.value : cellValue(p.id, d);
                     const v = isEditing ? raw : shown(raw);
-                    const bg = CODE_COLORS[v] ?? (work ? undefined : "var(--weekend)");
+                    const remote = !hideRemote && remoteAt(p.id, d ? date : date);
+                    const bg =
+                      CODE_COLORS[v] ??
+                      (remote ? CODE_COLORS[REMOTE_CODE] : undefined) ??
+                      (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
@@ -489,13 +493,21 @@ function TimesheetPage() {
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                             onKeyDown={(e) => onCellKeyDown(e, p.id, d)}
                             onBlur={() => isEditing && commitEdit()}
+                            title={remote ? "Удалённая работа" : undefined}
                           >
-                            {v}
+                            <span className="flex flex-col items-center leading-none">
+                              <span>{v}</span>
+                              {remote && (
+                                <span className="text-[8px] font-medium text-primary">
+                                  {REMOTE_CODE}
+                                </span>
+                              )}
+                            </span>
                           </td>
                         </ContextMenuTrigger>
                         {editable && (
                           <ContextMenuContent>
-                            {TIME_CODES.map((c) => (
+                            {TIME_CODES.filter((c) => c !== REMOTE_CODE).map((c) => (
                               <ContextMenuItem
                                 key={c}
                                 onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), c)}
@@ -503,6 +515,22 @@ function TimesheetPage() {
                                 {c} — {TIME_LEGEND.find((l) => l.code === c)?.label}
                               </ContextMenuItem>
                             ))}
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), true)}
+                            >
+                              Поставить «УД» (удалёнка)
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), false)}
+                            >
+                              Убрать «УД» (в т.ч. регулярную)
+                            </ContextMenuItem>
+                            <ContextMenuItem
+                              onSelect={() => setRemote(p.id, sel.targetDays(p.id, d), null)}
+                            >
+                              «УД» по профилю сотрудника
+                            </ContextMenuItem>
                             <ContextMenuSeparator />
                             {["4", "8", "10", "12"].map((h) => (
                               <ContextMenuItem
@@ -524,10 +552,11 @@ function TimesheetPage() {
                             <ContextMenuItem
                               onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), null)}
                             >
-                              Очистить
+                              Очистить часы
                             </ContextMenuItem>
                           </ContextMenuContent>
                         )}
+
                       </ContextMenu>
                     );
                   })}
