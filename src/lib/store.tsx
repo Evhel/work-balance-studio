@@ -77,9 +77,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setStore({
           ...base,
           ...parsed,
-          effort: parsed.effort ?? {},
-          effortDone: parsed.effortDone ?? {},
+          effort: parsed.effort ?? base.effort,
+          effortDone: parsed.effortDone ?? base.effortDone,
           filterSets: parsed.filterSets ?? [],
+          access: parsed.access ?? {},
+
         });
       }
     } catch {
