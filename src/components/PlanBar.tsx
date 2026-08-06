@@ -1,4 +1,6 @@
 import type { Store } from "@/lib/types";
+import { soft } from "@/lib/colors";
+
 
 /** Занят ли человек на проекте в этот день */
 export const isPlanned = (store: Store, projectId: string, personId: string, date: string) =>
