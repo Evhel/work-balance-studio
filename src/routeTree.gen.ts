@@ -17,6 +17,7 @@ import { Route as DepartmentRouteImport } from './routes/department'
 import { Route as EffortRouteImport } from './routes/effort'
 import { Route as EmployeeRouteImport } from './routes/employee'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as RolesRouteImport } from './routes/roles'
 import { Route as PersonPersonIdRouteImport } from './routes/person.$personId'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
@@ -61,6 +62,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RolesRoute = RolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PersonPersonIdRoute = PersonPersonIdRouteImport.update({
   id: '/person/$personId',
   path: '/person/$personId',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/effort': typeof EffortRoute
   '/employee': typeof EmployeeRoute
   '/projects': typeof ProjectsRouteWithChildren
+  '/roles': typeof RolesRoute
   '/person/$personId': typeof PersonPersonIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/department': typeof DepartmentRoute
   '/effort': typeof EffortRoute
   '/employee': typeof EmployeeRoute
+  '/roles': typeof RolesRoute
   '/person/$personId': typeof PersonPersonIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects': typeof ProjectsIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/effort': typeof EffortRoute
   '/employee': typeof EmployeeRoute
   '/projects': typeof ProjectsRouteWithChildren
+  '/roles': typeof RolesRoute
   '/person/$personId': typeof PersonPersonIdRoute
   '/projects/$projectId': typeof ProjectsProjectIdRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/effort'
     | '/employee'
     | '/projects'
+    | '/roles'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/department'
     | '/effort'
     | '/employee'
+    | '/roles'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/effort'
     | '/employee'
     | '/projects'
+    | '/roles'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects/'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   EffortRoute: typeof EffortRoute
   EmployeeRoute: typeof EmployeeRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
+  RolesRoute: typeof RolesRoute
   PersonPersonIdRoute: typeof PersonPersonIdRoute
 }
 
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roles': {
+      id: '/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof RolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/person/$personId': {
       id: '/person/$personId'
       path: '/person/$personId'
@@ -274,6 +294,7 @@ const rootRouteChildren: RootRouteChildren = {
   EffortRoute: EffortRoute,
   EmployeeRoute: EmployeeRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
+  RolesRoute: RolesRoute,
   PersonPersonIdRoute: PersonPersonIdRoute,
 }
 export const routeTree = rootRouteImport

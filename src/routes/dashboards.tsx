@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Download, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -328,14 +328,61 @@ function DashboardsPage() {
     toast.success("Файл скачивается");
   };
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  const exportPdf = async () => {
+    const node = pageRef.current;
+    if (!node) return;
+    setPdfBusy(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const img = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pw = pdf.internal.pageSize.getWidth();
+      const ph = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const w = pw - margin * 2;
+      const h = (canvas.height * w) / canvas.width;
+      let rest = h;
+      let offset = 0;
+      while (rest > 0) {
+        pdf.addImage(img, "JPEG", margin, margin - offset, w, h);
+        rest -= ph - margin * 2;
+        offset += ph - margin * 2;
+        if (rest > 0) pdf.addPage();
+      }
+      pdf.save("АРВ_Дашборды.pdf");
+      toast.success("PDF готов");
+    } catch {
+      toast.error("Не удалось сформировать PDF");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   return (
-    <div>
+    <div ref={pageRef} className="bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Дашборды</h1>
-        <Button variant="outline" onClick={exportAll}>
-          <Download className="size-4" /> Экспорт страницы в Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportAll}>
+            <Download className="size-4" /> Экспорт страницы в Excel
+          </Button>
+          <Button onClick={exportPdf} disabled={pdfBusy}>
+            <Download className="size-4" /> {pdfBusy ? "Формирую PDF…" : "Экспорт в PDF"}
+          </Button>
+        </div>
       </div>
+
 
       {/* Фильтры */}
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
@@ -553,38 +600,7 @@ function DashboardsPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      {/* Доп. графики */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div>
-          <h2 className="text-lg font-medium">Загрузка сотрудников</h2>
-          <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byPerson} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" width={140} fontSize={10} />
-                <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                <Bar dataKey="value" fill="#520099" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div>
-          <h2 className="text-lg font-medium">Топ видов работ</h2>
-          <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byWorkType} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" width={140} fontSize={10} />
-                <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-                <Bar dataKey="value" fill="#0e7490" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
     </div>
   );
+
 }

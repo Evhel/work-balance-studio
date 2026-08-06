@@ -352,6 +352,97 @@ export async function parseEffortImport(file: File): Promise<ImportedEffortRow[]
   return out;
 }
 
+/* ─────────── Построчный (массовый) импорт трудозатрат ─────────── */
+
+const EFFORT_ROW_HEADER = ["ФИО", "Дата", "Проект", "Вид работ", "Часы"];
+
+export type EffortRowRecord = {
+  fio: string;
+  date: string; // YYYY-MM-DD
+  project: string;
+  workType: string;
+  hours: number;
+};
+
+/** Шаблон: одна строка = сотрудник + дата + проект + вид работ + часы (за любое число месяцев) */
+export function downloadEffortRowTemplate(names: string[], projects: string[]) {
+  const today = new Date();
+  const aoa: unknown[][] = [
+    [
+      cell("Построчный импорт трудозатрат АРВ", { bold: true, sz: 13, border: false }),
+    ],
+    [
+      cell(
+        "Одна строка — один сотрудник, одна дата, один проект и вид работ. Можно загружать сразу много месяцев.",
+        { border: false },
+      ),
+    ],
+    [
+      cell("Формат даты: ГГГГ-ММ-ДД или ДД.ММ.ГГГГ. Часы — число (например 8 или 4,5).", {
+        border: false,
+      }),
+    ],
+    [],
+    EFFORT_ROW_HEADER.map((h) => cell(h, { bold: true, fill: "E7DCF5", center: true })),
+  ];
+  const sample = names.slice(0, 3);
+  for (const n of sample) {
+    for (let d = 1; d <= 3; d++) {
+      aoa.push([
+        cell(n),
+        cell(iso(today.getFullYear(), today.getMonth(), d), { center: true }),
+        cell(projects[0] ?? ""),
+        cell(""),
+        cell("", { center: true }),
+      ]);
+    }
+  }
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{ wch: 30 }, { wch: 14 }, { wch: 30 }, { wch: 26 }, { wch: 8 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Трудозатраты");
+  const ref = XLSX.utils.aoa_to_sheet([
+    [cell("Проекты (копируйте названия в столбец «Проект»)", { bold: true, border: false })],
+    ...projects.map((p) => [cell(p)]),
+    [],
+    [cell("Сотрудники", { bold: true, border: false })],
+    ...names.map((n) => [cell(n)]),
+  ]);
+  ref["!cols"] = [{ wch: 40 }];
+  XLSX.utils.book_append_sheet(wb, ref, "Справочники");
+  XLSX.writeFile(wb, "АРВ_Шаблон_трудозатраты_построчный.xlsx");
+}
+
+/** Разбор построчного файла трудозатрат */
+export async function parseEffortRowImport(file: File): Promise<EffortRowRecord[]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const out: EffortRowRecord[] = [];
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    if (!ws) continue;
+    const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, raw: false });
+    const headerIdx = aoa.findIndex(
+      (row) =>
+        String(row?.[0] ?? "").trim().toUpperCase() === "ФИО" &&
+        String(row?.[1] ?? "").trim().toLowerCase().startsWith("дат") &&
+        String(row?.[2] ?? "").trim().toLowerCase().startsWith("проект"),
+    );
+    if (headerIdx < 0) continue;
+    for (let r = headerIdx + 1; r < aoa.length; r++) {
+      const row = aoa[r] ?? [];
+      const f = String(row[0] ?? "").trim();
+      const date = normDate(String(row[1] ?? ""));
+      const project = String(row[2] ?? "").trim();
+      const hours = Number(String(row[4] ?? "").replace(",", "."));
+      if (!f || !date || !project || !hours || Number.isNaN(hours)) continue;
+      out.push({ fio: f, date, project, workType: String(row[3] ?? "").trim(), hours });
+    }
+  }
+  return out;
+}
+
+
 /* ─────────── Универсальный экспорт таблиц (дашборды) ─────────── */
 
 export function downloadTables(

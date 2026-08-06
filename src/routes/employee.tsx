@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
-import { byFio, fio, useStore } from "@/lib/store";
+import { birthDayMonth, byFio, fio, useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
 import {
   MONTHS,
@@ -135,10 +135,10 @@ function EmployeePage() {
         {person.birthDate && (
           <p className="mt-1 inline-block rounded-md px-2 py-1 text-sm font-medium"
             style={{ background: "#ffd9ec" }}>
-            🎂 День рождения: {person.birthDate.slice(8, 10)}.{person.birthDate.slice(5, 7)}.
-            {person.birthDate.slice(0, 4)}
+            🎂 День рождения: {birthDayMonth(person.birthDate)}
           </p>
         )}
+
       </div>
 
       <p className="mt-5 text-sm font-medium">

@@ -16,7 +16,13 @@ import { PersonLink } from "@/components/PersonLink";
 import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, MONTHS_SHORT, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import { effortRows, isEffortDone, rowTotal, workTypeSuggestions, ymKey } from "@/lib/effort";
-import { downloadEffort, parseEffortImport, type EffortExportRow } from "@/lib/excel";
+import {
+  downloadEffort,
+  downloadEffortRowTemplate,
+  parseEffortImport,
+  parseEffortRowImport,
+  type EffortExportRow,
+} from "@/lib/excel";
 import type { EffortRow } from "@/lib/types";
 
 export const Route = createFileRoute("/effort")({
@@ -49,6 +55,7 @@ function EffortPage() {
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
   const person = store.employees.find((e) => e.id === personId) ?? employees[0];
   const fileRef = useRef<HTMLInputElement>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
 
   const ym = ymKey(year, month);
   const dim = daysInMonth(year, month);
@@ -113,6 +120,55 @@ function EffortPage() {
       toast.error("Не удалось прочитать файл");
     }
   };
+
+  /** Массовый построчный импорт: сразу много сотрудников и месяцев */
+  const handleBulkImport = async (file: File) => {
+    try {
+      const recs = await parseEffortRowImport(file);
+      if (!recs.length) {
+        toast.error("В файле не найдено строк (нужны колонки ФИО, Дата, Проект, Вид работ, Часы)");
+        return;
+      }
+      const byName = new Map(employees.map((e) => [fio(e).toLowerCase(), e.id]));
+      const byProject = new Map(store.projects.map((p) => [p.name.toLowerCase(), p.id]));
+      let ok = 0;
+      const skipped = new Set<string>();
+      update((d) => {
+        for (const r of recs) {
+          const pid = byName.get(r.fio.trim().toLowerCase());
+          const projectId = byProject.get(r.project.trim().toLowerCase());
+          if (!pid || !projectId) {
+            skipped.add(!pid ? r.fio : r.project);
+            continue;
+          }
+          const key = r.date.slice(0, 7);
+          const day = String(Number(r.date.slice(8, 10)));
+          d.effort[pid] = d.effort[pid] ?? {};
+          const rows = (d.effort[pid]![key] = d.effort[pid]![key] ?? []);
+          let row = rows.find(
+            (x) => x.projectId === projectId && (x.workType || "") === (r.workType || ""),
+          );
+          if (!row) {
+            row = {
+              id: `b${Date.now()}_${rows.length}_${Math.random().toString(36).slice(2, 7)}`,
+              projectId,
+              workType: r.workType,
+              hours: {},
+            };
+            rows.push(row);
+          }
+          row.hours[day] = (Number(row.hours[day]) || 0) + r.hours;
+          ok++;
+        }
+      });
+      toast.success(
+        `Загружено строк: ${ok}${skipped.size ? `, не распознано: ${[...skipped].slice(0, 3).join(", ")}` : ""}`,
+      );
+    } catch {
+      toast.error("Не удалось прочитать файл");
+    }
+  };
+
 
   return (
     <div>
@@ -233,7 +289,34 @@ function EffortPage() {
             e.target.value = "";
           }}
         />
+        <Button
+          variant="outline"
+          onClick={() => {
+            downloadEffortRowTemplate(
+              employees.map((e) => fio(e)),
+              store.projects.map((p) => p.name),
+            );
+            toast.success("Шаблон скачивается");
+          }}
+        >
+          <Download className="size-4" /> Шаблон (построчный)
+        </Button>
+        <Button variant="outline" onClick={() => bulkRef.current?.click()}>
+          <Upload className="size-4" /> Массовый импорт
+        </Button>
+        <input
+          ref={bulkRef}
+          type="file"
+          accept=".xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleBulkImport(f);
+            e.target.value = "";
+          }}
+        />
       </div>
+
 
       <p className="mt-4 text-sm font-medium">
         Табель трудозатрат · {fio(person)} · {MONTHS[month]} {year}
