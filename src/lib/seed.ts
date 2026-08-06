@@ -383,6 +383,8 @@ export function seedStore(): Store {
     contractors,
     projects,
     timesheet: {},
+    remoteOverride: {},
+
     dayOverrides: {},
     plan,
     personalEvents: {},
