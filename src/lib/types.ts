@@ -123,6 +123,36 @@ export type FilterSet = {
   to: string; // YYYY-MM
 };
 
+/** Действия, доступ к которым настраивается модератором */
+export type AccessAction =
+  | "viewTimesheet"
+  | "editTimesheet"
+  | "viewContractors"
+  | "editContractors"
+  | "createProject"
+  | "editProject"
+  | "editDepartment"
+  | "viewEffort"
+  | "editEffort"
+  | "viewDashboards"
+  | "deleteEntities"
+  | "manageRoles";
+
+export const ACCESS_ACTIONS: { id: AccessAction; label: string }[] = [
+  { id: "viewTimesheet", label: "Просмотр табеля рабочего времени" },
+  { id: "editTimesheet", label: "Редактирование табеля рабочего времени" },
+  { id: "viewContractors", label: "Просмотр табеля подрядчиков" },
+  { id: "editContractors", label: "Редактирование табеля подрядчиков" },
+  { id: "createProject", label: "Создание проектов" },
+  { id: "editProject", label: "Редактирование проектов и табеля проекта" },
+  { id: "editDepartment", label: "Редактирование табеля отдела" },
+  { id: "viewEffort", label: "Просмотр трудозатрат" },
+  { id: "editEffort", label: "Редактирование трудозатрат всех сотрудников" },
+  { id: "viewDashboards", label: "Просмотр дашбордов" },
+  { id: "deleteEntities", label: "Удаление сотрудников, подрядчиков и проектов" },
+  { id: "manageRoles", label: "Управление ролями и доступами" },
+];
+
 export type Store = {
   employees: Employee[];
   contractors: Contractor[];
@@ -141,6 +171,9 @@ export type Store = {
   effortDone: Record<string, Record<string, boolean>>;
   /** Сохранённые наборы фильтров дашбордов */
   filterSets: FilterSet[];
+  /** Переопределения доступа: должность -> действие -> разрешено */
+  access: Partial<Record<Position, Partial<Record<AccessAction, boolean>>>>;
   currentUserId: string;
 };
+
 
