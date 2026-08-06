@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { soft } from "@/lib/colors";
 import { useMemo, useState } from "react";
 import { EyeOff, Eye, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -272,7 +273,7 @@ function ContractorsPage() {
           <div className="mb-2 font-medium">Проекты</div>
           {store.projects.map((p) => (
             <div key={p.id} className="mb-1 flex items-center gap-2">
-              <span className="size-3 shrink-0 rounded-full" style={{ background: p.color }} />
+              <span className="size-3 shrink-0 rounded-full" style={{ background: soft(p.color) }} />
               <span className="truncate">{p.name}</span>
             </div>
           ))}

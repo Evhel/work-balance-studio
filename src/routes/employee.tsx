@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { soft } from "@/lib/colors";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -374,7 +375,7 @@ function EmployeePage() {
                     </div>
                     {projs.map((pr) => (
                       <div key={pr.id} className="mb-0.5 flex items-center gap-1">
-                        <span className="size-2 rounded-full" style={{ background: pr.color }} />
+                        <span className="size-2 rounded-full" style={{ background: soft(pr.color) }} />
                         <span className="truncate">{pr.name}</span>
                       </div>
                     ))}
@@ -399,7 +400,7 @@ function EmployeePage() {
           )}
           {usedProjects.map((p) => (
             <div key={p.id} className="mb-1 flex items-center gap-2">
-              <span className="size-3 rounded-full" style={{ background: p.color }} />
+              <span className="size-3 rounded-full" style={{ background: soft(p.color) }} />
               {p.name}
             </div>
           ))}

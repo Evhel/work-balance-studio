@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { soft } from "@/lib/colors";
 import { useMemo, useState } from "react";
 import {
   ContextMenu,
@@ -314,7 +315,7 @@ function DepartmentPage() {
                               <span
                                 key={pr.id}
                                 className="h-1.5 w-full rounded-full"
-                                style={{ background: pr.color }}
+                                style={{ background: soft(pr.color) }}
                                 title={pr.name}
                               />
                             ))}
@@ -337,7 +338,7 @@ function DepartmentPage() {
           )}
           {usedProjects.map((p) => (
             <div key={p.id} className="mb-1 flex items-center gap-2">
-              <span className="size-3 rounded-full" style={{ background: p.color }} />
+              <span className="size-3 rounded-full" style={{ background: soft(p.color) }} />
               {p.name}
             </div>
           ))}
