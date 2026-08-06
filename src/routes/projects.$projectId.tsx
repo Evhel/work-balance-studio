@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MonthPicker, Legend } from "@/components/MonthPicker";
+import { MonthPicker } from "@/components/MonthPicker";
 import { useRowSelection } from "@/components/useRowSelection";
 import { useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
