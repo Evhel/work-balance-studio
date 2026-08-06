@@ -174,10 +174,8 @@ function EffortPage() {
     <div>
       <h1 className="text-2xl font-semibold">Трудозатраты</h1>
 
-
-
       {/* Выбор сотрудника и периода */}
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <Select value={person.id} onValueChange={setPersonId}>
           <SelectTrigger className="w-[280px]">
             <SelectValue />
