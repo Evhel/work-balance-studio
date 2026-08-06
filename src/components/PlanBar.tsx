@@ -37,9 +37,9 @@ export function PlanBar({
       title={name}
       className="block overflow-hidden"
       style={{
-        background: color,
+        background: soft(color),
         minHeight: height,
-        opacity,
+
         width: `calc(100% + ${l + r}px)`,
         marginLeft: -l,
         borderTopLeftRadius: first ? 999 : 0,
