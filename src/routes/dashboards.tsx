@@ -328,14 +328,61 @@ function DashboardsPage() {
     toast.success("Файл скачивается");
   };
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  const exportPdf = async () => {
+    const node = pageRef.current;
+    if (!node) return;
+    setPdfBusy(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const img = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pw = pdf.internal.pageSize.getWidth();
+      const ph = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const w = pw - margin * 2;
+      const h = (canvas.height * w) / canvas.width;
+      let rest = h;
+      let offset = 0;
+      while (rest > 0) {
+        pdf.addImage(img, "JPEG", margin, margin - offset, w, h);
+        rest -= ph - margin * 2;
+        offset += ph - margin * 2;
+        if (rest > 0) pdf.addPage();
+      }
+      pdf.save("АРВ_Дашборды.pdf");
+      toast.success("PDF готов");
+    } catch {
+      toast.error("Не удалось сформировать PDF");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   return (
-    <div>
+    <div ref={pageRef} className="bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Дашборды</h1>
-        <Button variant="outline" onClick={exportAll}>
-          <Download className="size-4" /> Экспорт страницы в Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportAll}>
+            <Download className="size-4" /> Экспорт страницы в Excel
+          </Button>
+          <Button onClick={exportPdf} disabled={pdfBusy}>
+            <Download className="size-4" /> {pdfBusy ? "Формирую PDF…" : "Экспорт в PDF"}
+          </Button>
+        </div>
       </div>
+
 
       {/* Фильтры */}
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
