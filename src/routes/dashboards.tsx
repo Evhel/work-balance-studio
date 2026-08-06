@@ -411,20 +411,44 @@ function DashboardsPage() {
         backgroundColor: "#ffffff",
         useCORS: true,
       });
-      const img = canvas.toDataURL("image/jpeg", 0.92);
       const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
-      const margin = 24;
+      const margin = 28;
+      const headH = 26;
+      const footH = 18;
       const w = pw - margin * 2;
-      const h = (canvas.height * w) / canvas.width;
-      let rest = h;
-      let offset = 0;
-      while (rest > 0) {
-        pdf.addImage(img, "JPEG", margin, margin - offset, w, h);
-        rest -= ph - margin * 2;
-        offset += ph - margin * 2;
-        if (rest > 0) pdf.addPage();
+      const h = ph - margin * 2 - headH - footH;
+      // Высота куска исходного холста, помещающегося на страницу А4
+      const sliceH = Math.floor((canvas.width * h) / w);
+      const pages = Math.max(1, Math.ceil(canvas.height / sliceH));
+      const slice = document.createElement("canvas");
+      const ctx = slice.getContext("2d")!;
+      for (let i = 0; i < pages; i++) {
+        const sh = Math.min(sliceH, canvas.height - i * sliceH);
+        slice.width = canvas.width;
+        slice.height = sh;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, i * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+        if (i > 0) pdf.addPage();
+        pdf.setFontSize(12);
+        pdf.setTextColor(82, 0, 153);
+        pdf.text("АРВ · Дашборды трудозатрат", margin, margin + 12);
+        pdf.setFontSize(9);
+        pdf.setTextColor(120);
+        pdf.text(new Date().toLocaleDateString("ru-RU"), pw - margin, margin + 12, {
+          align: "right",
+        });
+        pdf.addImage(
+          slice.toDataURL("image/jpeg", 0.92),
+          "JPEG",
+          margin,
+          margin + headH,
+          w,
+          (sh * w) / canvas.width,
+        );
+        pdf.text(`${i + 1} / ${pages}`, pw / 2, ph - margin + 6, { align: "center" });
       }
       pdf.save("АРВ_Дашборды.pdf");
       toast.success("PDF готов");
