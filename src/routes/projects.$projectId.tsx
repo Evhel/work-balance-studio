@@ -321,7 +321,7 @@ function ProjectPage() {
                     );
                     const here = active.some((pr) => pr.id === projectId);
                     const dayGoals = goalsAt(date);
-                    const conflict = !!absence && active.length > 0;
+                    const conflict = !!absence && here;
                     let bg: string | undefined = isWorkday(date) ? undefined : "var(--weekend)";
                     if (absence) bg = "#e2e2e2";
                     if (conflict) bg = "#ffd9d9";
