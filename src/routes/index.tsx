@@ -112,15 +112,21 @@ function TimesheetPage() {
     return wd < 5 && emp.remoteDays.includes(wd + 1);
   };
 
+  /** Статусы, при которых «УД» не ставится */
+  const NON_REMOTE_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"];
+
   /** Удалёнка на дату: ручное переопределение важнее регулярного паттерна */
   const remoteAt = (personId: string, date: string) => {
     const emp = store.employees.find((e) => e.id === personId);
     if (!emp || !isWorkday(date) || !isEmployedOn(emp, date)) return false;
+    const manual = store.timesheet[personId]?.[date];
+    if (manual && NON_REMOTE_CODES.includes(manual)) return false;
     const ov = store.remoteOverride?.[personId]?.[date];
     if (typeof ov === "boolean") return ov;
-    if (store.timesheet[personId]?.[date] === REMOTE_CODE) return true;
+    if (manual === REMOTE_CODE) return true;
     return remoteByPattern(emp, date);
   };
+
 
   const setRemote = (personId: string, dayList: number[], value: boolean | null) =>
     update((d) => {
@@ -221,7 +227,9 @@ function TimesheetPage() {
         const ov = store.remoteOverride?.[p.id]?.[date];
         const remote =
           employed &&
+          !(manual && NON_REMOTE_CODES.includes(manual)) &&
           (typeof ov === "boolean" ? ov : manual === REMOTE_CODE || remoteByPattern(p, date));
+
         const n = Number(v);
         if (v !== "" && !Number.isNaN(n)) {
           hours += n;
@@ -569,7 +577,7 @@ function TimesheetPage() {
         </table>
       </div>
 
-      <Legend items={TIME_LEGEND} />
+      <Legend items={hideRemote ? TIME_LEGEND.filter((l) => l.code !== REMOTE_CODE) : TIME_LEGEND} />
 
       {editable && store.employees.some((e) => e.hidden) && (
         <div className="mt-4 rounded-lg border bg-card p-3 text-sm">

@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { soft, SOFT_CHART_COLORS } from "@/lib/colors";
+import { CHART_COLORS } from "@/lib/colors";
 import { useMemo, useRef, useState } from "react";
-import { Calendar as CalendarIcon, Download, Save, Trash2, Pencil } from "lucide-react";
+import { Calendar as CalendarIcon, Check, Download, RotateCcw, Save, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   Bar,
@@ -168,7 +168,7 @@ function DashboardsPage() {
   const now = new Date();
   const thisYm = `${now.getFullYear()}-${pad(1)}`;
 
-  const [unit, setUnit] = useState<"hours" | "days">("hours");
+  const [unit, setUnit] = useState<"hours" | "days">("days");
   const [depts, setDepts] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
@@ -176,6 +176,20 @@ function DashboardsPage() {
   const [to, setTo] = useState(`${now.getFullYear()}-${pad(12)}`);
   const [setName, setSetName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeSetId, setActiveSetId] = useState<string | null>(null);
+
+  const resetFilters = () => {
+    setUnit("days");
+    setDepts([]);
+    setProjects([]);
+    setPeople([]);
+    setFrom(thisYm);
+    setTo(`${now.getFullYear()}-${pad(12)}`);
+    setSetName("");
+    setEditingId(null);
+    setActiveSetId(null);
+  };
+
 
   const deptOptions = useMemo(
     () =>
@@ -306,7 +320,7 @@ function DashboardsPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 12);
 
-  const DEPT_COLORS = SOFT_CHART_COLORS;
+  const DEPT_COLORS = CHART_COLORS;
 
   /* Наборы фильтров */
   const applySet = (s: FilterSet) => {
@@ -317,8 +331,10 @@ function DashboardsPage() {
     setFrom(s.from);
     setTo(s.to);
     setEditingId(s.id);
+    setActiveSetId(s.id);
     setSetName(s.name);
   };
+
   /** Краткое имя набора по выбранным фильтрам */
   const autoName = () => {
     const short = (ym: string) => {
@@ -423,23 +439,24 @@ function DashboardsPage() {
   };
 
   const pageRef = useRef<HTMLDivElement>(null);
+  const secTop = useRef<HTMLDivElement>(null);
+  const secBar = useRef<HTMLDivElement>(null);
+  const secTable5 = useRef<HTMLDivElement>(null);
+  const secCum = useRef<HTMLDivElement>(null);
+  const secDept = useRef<HTMLDivElement>(null);
 
   const [pdfBusy, setPdfBusy] = useState(false);
 
   const exportPdf = async () => {
-    const node = pageRef.current;
-    if (!node) return;
     setPdfBusy(true);
     try {
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
         import("html2canvas-pro"),
         import("jspdf"),
       ]);
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      const shoot = async (el: HTMLElement | null) =>
+        el ? await html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true }) : null;
+
       const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
@@ -447,21 +464,20 @@ function DashboardsPage() {
       const headH = 26;
       const footH = 18;
       const w = pw - margin * 2;
-      const h = ph - margin * 2 - headH - footH;
-      // Высота куска исходного холста, помещающегося на страницу А4
-      const sliceH = Math.floor((canvas.width * h) / w);
-      const pages = Math.max(1, Math.ceil(canvas.height / sliceH));
-      const slice = document.createElement("canvas");
-      const ctx = slice.getContext("2d")!;
-      for (let i = 0; i < pages; i++) {
-        const sh = Math.min(sliceH, canvas.height - i * sliceH);
-        slice.width = canvas.width;
-        slice.height = sh;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, i * sliceH, canvas.width, sh, 0, 0, canvas.width, sh);
+
+      const short = (ym: string) => {
+        const { year, month } = parseYm(ym);
+        return `${MONTHS_SHORT[month]} ${year}`;
+      };
+
+      const pages: HTMLElement[][] = [
+        [secTop.current!].filter(Boolean),
+        [secBar.current!, secTable5.current!].filter(Boolean),
+        [secCum.current!, secDept.current!].filter(Boolean),
+      ];
+
+      for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
-        // Кириллица во встроенных шрифтах jsPDF ломается — рисуем текст картинкой
         drawText(pdf, "АРВ · Дашборды трудозатрат", margin, margin, 13, "#520099", "left");
         drawText(
           pdf,
@@ -472,16 +488,34 @@ function DashboardsPage() {
           "#6b7280",
           "right",
         );
-        pdf.addImage(
-          slice.toDataURL("image/jpeg", 0.92),
-          "JPEG",
-          margin,
-          margin + headH,
-          w,
-          (sh * w) / canvas.width,
-        );
-        drawText(pdf, `${i + 1} / ${pages}`, pw / 2, ph - margin, 9, "#6b7280", "center");
 
+        let y = margin + headH;
+        if (i === 0) {
+          drawText(
+            pdf,
+            `Период: ${short(from)} — ${short(to)} · Единицы: ${unit === "hours" ? "часы" : "дни"}`,
+            margin,
+            y,
+            10,
+            "#374151",
+            "left",
+          );
+          y += 18;
+        }
+
+        const avail = ph - margin - footH - y;
+        const shots = (await Promise.all(pages[i]!.map(shoot))).filter(Boolean) as HTMLCanvasElement[];
+        const gap = 10;
+        // масштаб, при котором все блоки страницы влезают по высоте и ширине
+        const totalNatH = shots.reduce((a, c) => a + (c.height * w) / c.width, 0) + gap * (shots.length - 1);
+        const k = Math.min(1, (avail) / totalNatH);
+        for (const c of shots) {
+          const iw = w * k;
+          const ih = (c.height * iw) / c.width;
+          pdf.addImage(c.toDataURL("image/jpeg", 0.92), "JPEG", margin, y, iw, ih);
+          y += ih + gap;
+        }
+        drawText(pdf, `${i + 1} / ${pages.length}`, pw / 2, ph - margin, 9, "#6b7280", "center");
       }
       pdf.save("АРВ_Дашборды.pdf");
       toast.success("PDF готов");
@@ -491,6 +525,7 @@ function DashboardsPage() {
       setPdfBusy(false);
     }
   };
+
 
   return (
     <div ref={pageRef} className="bg-background">
@@ -525,6 +560,9 @@ function DashboardsPage() {
         <MultiSelect label="Сотрудник" options={peopleOptions} value={people} onChange={setPeople} />
         <MonthField label="с" value={from} onChange={setFrom} />
         <MonthField label="по" value={to} onChange={setTo} />
+        <Button variant="ghost" onClick={resetFilters} className="text-muted-foreground">
+          <RotateCcw className="size-4" /> Сбросить фильтры
+        </Button>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
@@ -537,31 +575,50 @@ function DashboardsPage() {
         <Button variant="outline" onClick={saveSet}>
           <Save className="size-4" /> {editingId ? "Обновить набор" : "Закрепить набор"}
         </Button>
-        {store.filterSets.map((s) => (
-          <span key={s.id} className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm">
-            <button className="font-medium text-primary" onClick={() => applySet(s)}>
-              {s.name}
-            </button>
-            <button
-              className="text-muted-foreground hover:text-foreground"
-              title="Изменить (загрузить и сохранить поверх)"
-              onClick={() => applySet(s)}
+        {store.filterSets.map((s) => {
+          const active = activeSetId === s.id;
+          return (
+            <span
+              key={s.id}
+              className={`flex items-center gap-1 rounded-md border px-2 py-1 text-sm ${
+                active ? "border-primary bg-primary/10 ring-1 ring-primary" : ""
+              }`}
             >
-              <Pencil className="size-3.5" />
-            </button>
-            <button
-              className="text-muted-foreground hover:text-destructive"
-              title="Удалить набор"
-              onClick={() => {
-                update((d) => (d.filterSets = d.filterSets.filter((x) => x.id !== s.id)));
-                if (editingId === s.id) setEditingId(null);
-              }}
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+              {active && <Check className="size-3.5 text-primary" />}
+              <button
+                className={`font-medium ${active ? "text-primary" : "text-foreground"}`}
+                onClick={() => applySet(s)}
+              >
+                {s.name}
+              </button>
+              <button
+                className="text-muted-foreground hover:text-foreground"
+                title="Изменить (загрузить и сохранить поверх)"
+                onClick={() => applySet(s)}
+              >
+                <Pencil className="size-3.5" />
+              </button>
+              <button
+                className="text-muted-foreground hover:text-destructive"
+                title="Удалить набор"
+                onClick={() => {
+                  update((d) => (d.filterSets = d.filterSets.filter((x) => x.id !== s.id)));
+                  if (editingId === s.id) setEditingId(null);
+                  if (activeSetId === s.id) setActiveSetId(null);
+                }}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </span>
+          );
+        })}
+        {activeSetId && (
+          <span className="text-xs text-muted-foreground">
+            Активный набор: «{store.filterSets.find((s) => s.id === activeSetId)?.name}»
           </span>
-        ))}
+        )}
       </div>
+
 
       {filtered.length === 0 && (
         <p className="mt-6 text-sm text-muted-foreground">
@@ -570,7 +627,11 @@ function DashboardsPage() {
       )}
 
       {/* Таблица 3 + пончик в одну строку */}
-      <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <div
+        ref={secTop}
+        className="mt-6 grid gap-3 bg-background lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
+      >
+
         <div className="min-w-0">
           <h2 className="text-base font-medium">
             Фактические трудозатраты: проект × раздел ({unitLabel})
@@ -639,7 +700,7 @@ function DashboardsPage() {
                       outerRadius="80%"
                     >
                       {donut.map((d) => (
-                        <Cell key={d.name} fill={soft(d.color)} />
+                        <Cell key={d.name} fill={d.color} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
@@ -653,7 +714,7 @@ function DashboardsPage() {
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
                   <span
                     className="size-2.5 shrink-0 rounded-sm"
-                    style={{ background: soft(d.color) }}
+                    style={{ background: d.color }}
                   />
                   <span className="truncate">{d.name}</span>
                   <b className="ml-auto">{d.value}</b>
@@ -667,25 +728,30 @@ function DashboardsPage() {
       </div>
 
       {/* Гистограмма с группировкой к таблице 3 */}
-      <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
-      <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={barData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="project" fontSize={11} />
-            <YAxis fontSize={11} />
-            <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-            <RLegend />
-            {usedDepts.map((d, i) => (
-              <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
+      <div ref={secBar} className="bg-background">
+        <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
+        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="project" fontSize={11} />
+              <YAxis fontSize={11} />
+              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+              <RLegend />
+              {usedDepts.map((d, i) => (
+                <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
+
       {/* Таблица 5 */}
+      <div ref={secTable5} className="bg-background">
       <h2 className="mt-6 text-lg font-medium">Трудозатраты по месяцам ({unitLabel})</h2>
       <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
+
         <table className="grid-table w-full text-sm">
           <thead>
             <tr className="bg-muted">
@@ -745,55 +811,62 @@ function DashboardsPage() {
           </tbody>
         </table>
       </div>
+      </div>
+
 
       {/* Линейный график с накоплением */}
-      <h2 className="mt-6 text-lg font-medium">Накопленные трудозатраты по месяцам</h2>
-      <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={cumulative}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" fontSize={11} />
-            <YAxis fontSize={11} />
-            <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-            <RLegend />
-            {usedProjects.map((pid) => (
-              <Line
-                key={pid}
-                type="monotone"
-                dataKey={projName(pid)}
-                stroke={soft(projColor(pid))}
-                strokeWidth={2}
-                dot={false}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+      <div ref={secCum} className="bg-background">
+        <h2 className="mt-6 text-lg font-medium">Накопленные трудозатраты по месяцам</h2>
+        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={cumulative}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" fontSize={11} />
+              <YAxis fontSize={11} />
+              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+              <RLegend />
+              {usedProjects.map((pid) => (
+                <Line
+                  key={pid}
+                  type="monotone"
+                  dataKey={projName(pid)}
+                  stroke={projColor(pid)}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Линейный график по разделам без накопления */}
-      <h2 className="mt-6 text-lg font-medium">Трудозатраты по разделам, по месяцам ({unitLabel})</h2>
-      <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={deptLineData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" fontSize={11} />
-            <YAxis fontSize={11} />
-            <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-            <RLegend />
-            {usedDepts.map((d, i) => (
-              <Line
-                key={d}
-                type="monotone"
-                dataKey={d}
-                stroke={DEPT_COLORS[i % DEPT_COLORS.length]}
-                strokeWidth={2}
-                dot={false}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+      <div ref={secDept} className="bg-background">
+        <h2 className="mt-6 text-lg font-medium">Трудозатраты по разделам, по месяцам ({unitLabel})</h2>
+        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={deptLineData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" fontSize={11} />
+              <YAxis fontSize={11} />
+              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+              <RLegend />
+              {usedDepts.map((d, i) => (
+                <Line
+                  key={d}
+                  type="monotone"
+                  dataKey={d}
+                  stroke={DEPT_COLORS[i % DEPT_COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
+
   );
 
 }

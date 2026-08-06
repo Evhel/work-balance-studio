@@ -1,22 +1,9 @@
 import type { Contractor, Employee, EffortRow, Project, Store } from "./types";
 import { isWeekendDate, pad } from "./dates";
+import { CHART_COLORS } from "./colors";
 
-export const PALETTE = [
-  "#520099",
-  "#0e7490",
-  "#b45309",
-  "#be123c",
-  "#15803d",
-  "#7c3aed",
-  "#0369a1",
-  "#a16207",
-  "#9d174d",
-  "#166534",
-  "#1d4ed8",
-  "#c2410c",
-  "#4d7c0f",
-  "#6d28d9",
-];
+export const PALETTE = CHART_COLORS;
+
 
 export function projectColor(index: number) {
   return PALETTE[index % PALETTE.length]!;
