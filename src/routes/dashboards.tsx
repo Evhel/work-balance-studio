@@ -748,8 +748,10 @@ function DashboardsPage() {
 
 
       {/* Таблица 5 */}
+      <div ref={secTable5} className="bg-background">
       <h2 className="mt-6 text-lg font-medium">Трудозатраты по месяцам ({unitLabel})</h2>
       <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
+
         <table className="grid-table w-full text-sm">
           <thead>
             <tr className="bg-muted">
