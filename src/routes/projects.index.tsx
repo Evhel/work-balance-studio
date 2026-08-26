@@ -101,6 +101,27 @@ function ProjectsPage() {
     (p) => monthIndex(p.start, year) < 12 && monthIndex(p.end, year) >= 0,
   );
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const horizon = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 2);
+    return d.toISOString().slice(0, 10);
+  })();
+  const upcomingGoals = store.projects
+    .flatMap((p) =>
+      (p.goals ?? [])
+        .filter((g) => g.date >= todayIso && g.date <= horizon)
+        .map((g) => ({
+          key: `${p.id}_${g.id}`,
+          date: g.date,
+          name: g.name,
+          projectId: p.id,
+          projectName: p.name,
+          color: p.color,
+        })),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+
   return (
     <div>
       <h1 className="text-2xl font-semibold">Проекты</h1>
