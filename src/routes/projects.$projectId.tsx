@@ -338,11 +338,9 @@ function ProjectPage() {
                     if (conflict) bg = "#ffd9d9";
                     const border = conflict
                       ? "inset 0 0 0 2px #dc2626"
-                      : here && active.length > 1
-                        ? "inset 0 0 0 2px #eab308"
-                        : dayGoals.length
-                          ? "inset 0 0 0 2px #d4a017"
-                          : undefined;
+                      : dayGoals.length
+                        ? "inset 0 0 0 2px #d4a017"
+                        : undefined;
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
