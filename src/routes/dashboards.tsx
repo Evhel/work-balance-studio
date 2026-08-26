@@ -296,25 +296,6 @@ function DashboardsPage() {
     for (const pid of usedProjects) row[projName(pid)] = num(sum((f) => f.projectId === pid && f.ym === k));
     return row;
   });
-  // накопление
-  const cumulative = lineData.map((row, i) => {
-    const out: Record<string, string | number> = { label: row["label"]! };
-    for (const pid of usedProjects) {
-      const n = projName(pid);
-      out[n] = num(
-        lineData.slice(0, i + 1).reduce((a, r) => a + (Number(r[n]) || 0), 0),
-      );
-    }
-    return out;
-  });
-
-  const deptLineData = usedYms.map((k) => {
-    const row: Record<string, string | number> = {
-      label: `${MONTHS_SHORT[parseYm(k).month]} ${parseYm(k).year}`,
-    };
-    for (const d of usedDepts) row[d] = num(sum((f) => f.department === d && f.ym === k));
-    return row;
-  });
 
   const barData = usedProjects.map((pid) => {
     const row: Record<string, string | number> = { project: projName(pid) };
