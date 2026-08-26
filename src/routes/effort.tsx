@@ -309,7 +309,7 @@ function EffortPage() {
                           const st =
                             store.projects.find((p) => p.id === e.target.value)?.stages ?? [];
                           if (!row.stage || !st.includes(row.stage as never))
-                            row.stage = st.length === 1 ? st[0] : "";
+                            row.stage = st.length === 1 ? st[0]! : "";
                         });
                       }}
                     >
