@@ -304,7 +304,13 @@ function EffortPage() {
                       value={r.projectId}
                       onChange={(e) => {
                         ensureRows();
-                        setRow(r.id, (row) => (row.projectId = e.target.value));
+                        setRow(r.id, (row) => {
+                          row.projectId = e.target.value;
+                          const st =
+                            store.projects.find((p) => p.id === e.target.value)?.stages ?? [];
+                          if (!row.stage || !st.includes(row.stage as never))
+                            row.stage = st.length === 1 ? st[0] : "";
+                        });
                       }}
                     >
                       <option value="">— выберите проект —</option>
