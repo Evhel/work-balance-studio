@@ -303,8 +303,10 @@ function makePlan(projects: Project[], contractors: Contractor[], year: number) 
   const yStart = `${year}-01-01`;
   const yEnd = `${year}-12-31`;
 
-  for (const p of projects) {
+  for (const [i, p] of projects.entries()) {
     if (p.id === NO_OBJECT_ID) continue;
+    // на половине проектов занятость не планируется
+    if (i % 2 === 1) continue;
     const from = p.start > yStart ? p.start : yStart;
     const to = p.end < yEnd ? p.end : yEnd;
     if (from > to) continue;
