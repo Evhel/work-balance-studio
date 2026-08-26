@@ -87,7 +87,7 @@ function ProjectsPage() {
         id: `p${Date.now()}`,
         name,
         color: projectColor(d.projects.length),
-        stage: "Концепция",
+        stages: ["ОТР"],
         start: `${year}-${pad(m + 1)}-01`,
         end: `${year}-${pad(Math.min(12, m + 3))}-${pad(daysInMonth(year, Math.min(11, m + 2)))}`,
         description: "",
@@ -209,7 +209,7 @@ function ProjectsPage() {
                       <span className="truncate text-sm font-medium">{p.name}</span>
                     </Link>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {p.stage} · {p.start} — {p.end}
+                      {(p.stages ?? []).join(", ") || "—"} · {p.start} — {p.end}
                     </div>
                     {editable && (
                       <button
