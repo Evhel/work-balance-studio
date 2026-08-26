@@ -151,10 +151,13 @@ function TimesheetPage() {
     return "";
   };
 
+  /** Часы в табеле видит только офис-менеджер */
+  const canSeeHours = editable;
+
   /** Значение с учётом кнопок «Скрыть удалёнку» / «Скрыть часы» */
   const shown = (v: string) => {
     if (hideRemote && v === REMOTE_CODE) return "";
-    if (hideHours && v !== "" && !Number.isNaN(Number(v))) return "";
+    if ((hideHours || !canSeeHours) && v !== "" && !Number.isNaN(Number(v))) return "";
     return v;
   };
 
@@ -370,13 +373,15 @@ function TimesheetPage() {
         >
           {hideRemote ? "Показать удалёнку" : "Скрыть удалёнку"}
         </Button>
-        <Button
-          variant={hideHours ? "default" : "outline"}
-          onClick={() => setHideHours((v) => !v)}
-          title="Скрывает часы в таблице и при экспорте"
-        >
-          {hideHours ? "Показать часы" : "Скрыть часы"}
-        </Button>
+        {canSeeHours && (
+          <Button
+            variant={hideHours ? "default" : "outline"}
+            onClick={() => setHideHours((v) => !v)}
+            title="Скрывает часы в таблице и при экспорте"
+          >
+            {hideHours ? "Показать часы" : "Скрыть часы"}
+          </Button>
+        )}
       </div>
 
       <p className="mt-4 text-sm font-medium">
