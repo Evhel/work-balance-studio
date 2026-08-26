@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AccessAction, Employee, Store } from "./types";
+import type { AccessAction, Employee, Project, Store } from "./types";
 import { isWeekendDate } from "./dates";
 import { seedStore, PALETTE, projectColor } from "./seed";
 
