@@ -554,7 +554,7 @@ function ProjectPage() {
         ))}
         {[
           { color: "#dc2626", label: "конфликт: отсутствие и работа в один день" },
-          { color: "#eab308", label: "занят ещё на другом проекте" },
+          
           { color: "#d4a017", label: "цель проекта" },
         ].map((b) => (
           <span key={b.color} className="flex items-center gap-1.5 text-muted-foreground">
