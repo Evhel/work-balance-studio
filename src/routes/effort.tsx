@@ -271,6 +271,9 @@ function EffortPage() {
               <th className="sticky left-0 z-10 min-w-[220px] border-r border-b bg-muted px-3 py-2 text-left text-xs font-medium">
                 Проект
               </th>
+              <th className="min-w-[110px] border-r border-b px-2 py-2 text-left text-xs font-medium">
+                Стадия
+              </th>
               <th className="min-w-[160px] border-r border-b px-2 py-2 text-left text-xs font-medium">
                 Вид работ
               </th>
