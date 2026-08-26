@@ -233,6 +233,36 @@ function ProjectsPage() {
         })}
       </div>
 
+      <h2 className="mt-8 text-lg font-medium">Цели на ближайшие два месяца</h2>
+      <div className="mt-3 overflow-hidden rounded-lg border bg-card">
+        {upcomingGoals.length === 0 ? (
+          <p className="p-3 text-sm text-muted-foreground">Целей нет</p>
+        ) : (
+          <table className="w-full text-sm">
+            <tbody>
+              {upcomingGoals.map((g) => (
+                <tr key={g.key} className="border-b last:border-b-0">
+                  <td className="w-28 px-3 py-2 text-xs text-muted-foreground">{g.date}</td>
+                  <td className="w-64 px-3 py-2">
+                    <Link
+                      to="/projects/$projectId"
+                      params={{ projectId: g.projectId }}
+                      className="flex items-center gap-2"
+                    >
+                      <span
+                        className="size-3 shrink-0 rounded-full"
+                        style={{ background: g.color }}
+                      />
+                      <span className="truncate text-xs font-medium">{g.projectName}</span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-2 text-xs">{g.name}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
