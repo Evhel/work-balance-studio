@@ -344,6 +344,7 @@ function DashboardsPage() {
     setDepts(s.depts);
     setProjects(s.projects);
     setPeople(s.people);
+    setStages(s.stages ?? []);
     setFrom(s.from);
     setTo(s.to);
     setEditingId(s.id);
@@ -369,6 +370,7 @@ function DashboardsPage() {
             .join(", ")}`
         : "Все сотрудники",
     );
+    parts.push(stages.length ? `Стадии: ${stages.join(", ")}` : "Все стадии");
     parts.push(from === to ? short(from) : `${short(from)}–${short(to)}`);
     parts.push(unit === "hours" ? "ч" : "дн");
     return parts.join(" · ").slice(0, 160);
@@ -386,6 +388,7 @@ function DashboardsPage() {
         depts,
         projects,
         people,
+        stages,
         from,
         to,
       };
