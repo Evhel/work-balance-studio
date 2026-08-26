@@ -842,58 +842,6 @@ function DashboardsPage() {
       </div>
       </div>
 
-
-      {/* Линейный график с накоплением */}
-      <div ref={secCum} className="bg-background">
-        <h2 className="mt-6 text-lg font-medium">Накопленные трудозатраты по месяцам</h2>
-        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={cumulative}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-              <RLegend />
-              {usedProjects.map((pid) => (
-                <Line
-                  key={pid}
-                  type="monotone"
-                  dataKey={projName(pid)}
-                  stroke={projColor(pid)}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Линейный график по разделам без накопления */}
-      <div ref={secDept} className="bg-background">
-        <h2 className="mt-6 text-lg font-medium">Трудозатраты по разделам, по месяцам ({unitLabel})</h2>
-        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={deptLineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-              <RLegend />
-              {usedDepts.map((d, i) => (
-                <Line
-                  key={d}
-                  type="monotone"
-                  dataKey={d}
-                  stroke={DEPT_COLORS[i % DEPT_COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
     </div>
 
   );
