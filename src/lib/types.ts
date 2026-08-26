@@ -45,7 +45,9 @@ export type Contractor = {
 };
 
 
-export type ProjectStage = "Концепция" | "ПД" | "РД";
+export type ProjectStage = "ОТР" | "ПД" | "РД" | "Экспертиза" | "ВОРы" | "АН";
+
+export const PROJECT_STAGES: ProjectStage[] = ["ОТР", "ПД", "РД", "Экспертиза", "ВОРы", "АН"];
 
 export type ProjectMember = { personId: string; kind: "employee" | "contractor" };
 
