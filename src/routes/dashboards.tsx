@@ -26,7 +26,7 @@ import { fio, useStore } from "@/lib/store";
 import { MONTHS_SHORT, pad } from "@/lib/dates";
 import { allFacts, parseYm, ymValue } from "@/lib/effort";
 import { downloadTables } from "@/lib/excel";
-import type { FilterSet } from "@/lib/types";
+import { PROJECT_STAGES, type FilterSet } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
