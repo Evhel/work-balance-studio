@@ -332,6 +332,29 @@ function EffortPage() {
                   </div>
                 </th>
                 <td className="border-r border-b px-1 py-1">
+                  {(() => {
+                    const st = store.projects.find((p) => p.id === r.projectId)?.stages ?? [];
+                    return (
+                      <select
+                        className="w-full rounded border bg-background px-1 py-1 text-xs disabled:opacity-50"
+                        value={r.stage ?? ""}
+                        disabled={!st.length}
+                        onChange={(e) => {
+                          ensureRows();
+                          setRow(r.id, (row) => (row.stage = e.target.value));
+                        }}
+                      >
+                        <option value="">{st.length ? "— стадия —" : "нет стадий"}</option>
+                        {st.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })()}
+                </td>
+                <td className="border-r border-b px-1 py-1">
                   <input
                     list="worktypes"
                     className="w-full rounded border bg-background px-1 py-1 text-xs"
