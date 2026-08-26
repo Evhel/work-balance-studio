@@ -9,8 +9,6 @@ import {
   CartesianGrid,
   Cell,
   Legend as RLegend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
