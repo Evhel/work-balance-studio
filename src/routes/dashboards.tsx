@@ -172,6 +172,8 @@ function DashboardsPage() {
   const [depts, setDepts] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
+  const [stages, setStages] = useState<string[]>([]);
+  const [splitStages, setSplitStages] = useState(false);
   const [from, setFrom] = useState(thisYm);
   const [to, setTo] = useState(`${now.getFullYear()}-${pad(12)}`);
   const [setName, setSetName] = useState("");
@@ -183,6 +185,8 @@ function DashboardsPage() {
     setDepts([]);
     setProjects([]);
     setPeople([]);
+    setStages([]);
+    setSplitStages(false);
     setFrom(thisYm);
     setTo(`${now.getFullYear()}-${pad(12)}`);
     setSetName("");
@@ -205,6 +209,7 @@ function DashboardsPage() {
     [store.employees, store.contractors],
   );
   const projectOptions = store.projects.map((p) => ({ id: p.id, name: p.name }));
+  const stageOptions = PROJECT_STAGES.map((s) => ({ id: s, name: s }));
   const peopleOptions = [...store.employees]
     .map((e) => ({ id: e.id, name: fio(e) }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
@@ -212,17 +217,28 @@ function DashboardsPage() {
   const conv = (h: number) => (unit === "hours" ? h : Math.round(h / 8));
   const unitLabel = unit === "hours" ? "ч" : "дн";
 
-  const filtered = facts.filter((f) => {
-    if (depts.length && !depts.includes(f.department)) return false;
-    if (projects.length && !projects.includes(f.projectId)) return false;
-    if (people.length && !people.includes(f.personId)) return false;
-    const v = ymValue(f.ym);
-    if (v < ymValue(from) || v > ymValue(to)) return false;
-    return true;
-  });
+  const filtered = facts
+    .filter((f) => {
+      if (depts.length && !depts.includes(f.department)) return false;
+      if (projects.length && !projects.includes(f.projectId)) return false;
+      if (people.length && !people.includes(f.personId)) return false;
+      if (stages.length && !stages.includes(f.stage)) return false;
+      const v = ymValue(f.ym);
+      if (v < ymValue(from) || v > ymValue(to)) return false;
+      return true;
+    })
+    .map((f) =>
+      splitStages && f.stage ? { ...f, projectId: `${f.projectId}__${f.stage}` } : f,
+    );
 
-  const projName = (id: string) => store.projects.find((p) => p.id === id)?.name ?? "—";
-  const projColor = (id: string) => store.projects.find((p) => p.id === id)?.color ?? "#999";
+  const baseId = (id: string) => id.split("__")[0]!;
+  const projName = (id: string) => {
+    const name = store.projects.find((p) => p.id === baseId(id))?.name ?? "—";
+    const st = id.includes("__") ? id.split("__")[1] : "";
+    return st ? `${name} · ${st}` : name;
+  };
+  const projColor = (id: string) =>
+    store.projects.find((p) => p.id === baseId(id))?.color ?? "#999";
 
   const usedProjects = Array.from(new Set(filtered.map((f) => f.projectId)));
   const usedDepts = Array.from(new Set(filtered.map((f) => f.department))).sort();
