@@ -442,8 +442,6 @@ function DashboardsPage() {
   const secTop = useRef<HTMLDivElement>(null);
   const secBar = useRef<HTMLDivElement>(null);
   const secTable5 = useRef<HTMLDivElement>(null);
-  const secCum = useRef<HTMLDivElement>(null);
-  const secDept = useRef<HTMLDivElement>(null);
 
   const [pdfBusy, setPdfBusy] = useState(false);
 
