@@ -577,8 +577,18 @@ function DashboardsPage() {
         <MultiSelect label="Раздел" options={deptOptions} value={depts} onChange={setDepts} />
         <MultiSelect label="Проект" options={projectOptions} value={projects} onChange={setProjects} />
         <MultiSelect label="Сотрудник" options={peopleOptions} value={people} onChange={setPeople} />
+        <MultiSelect label="Стадия" options={stageOptions} value={stages} onChange={setStages} />
         <MonthField label="с" value={from} onChange={setFrom} />
         <MonthField label="по" value={to} onChange={setTo} />
+        <button
+          className={`rounded-md border px-3 py-1.5 text-sm ${
+            splitStages ? "bg-primary text-primary-foreground" : "bg-background"
+          }`}
+          onClick={() => setSplitStages((v) => !v)}
+          title="Каждая стадия проекта — отдельная строка"
+        >
+          Разделить по стадиям
+        </button>
         <Button variant="ghost" onClick={resetFilters} className="text-muted-foreground">
           <RotateCcw className="size-4" /> Сбросить фильтры
         </Button>
