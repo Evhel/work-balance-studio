@@ -271,6 +271,9 @@ function EffortPage() {
               <th className="sticky left-0 z-10 min-w-[220px] border-r border-b bg-muted px-3 py-2 text-left text-xs font-medium">
                 Проект
               </th>
+              <th className="min-w-[110px] border-r border-b px-2 py-2 text-left text-xs font-medium">
+                Стадия
+              </th>
               <th className="min-w-[160px] border-r border-b px-2 py-2 text-left text-xs font-medium">
                 Вид работ
               </th>
@@ -301,7 +304,13 @@ function EffortPage() {
                       value={r.projectId}
                       onChange={(e) => {
                         ensureRows();
-                        setRow(r.id, (row) => (row.projectId = e.target.value));
+                        setRow(r.id, (row) => {
+                          row.projectId = e.target.value;
+                          const st =
+                            store.projects.find((p) => p.id === e.target.value)?.stages ?? [];
+                          if (!row.stage || !st.includes(row.stage as never))
+                            row.stage = st.length === 1 ? st[0]! : "";
+                        });
                       }}
                     >
                       <option value="">— выберите проект —</option>
@@ -322,6 +331,29 @@ function EffortPage() {
                     )}
                   </div>
                 </th>
+                <td className="border-r border-b px-1 py-1">
+                  {(() => {
+                    const st = store.projects.find((p) => p.id === r.projectId)?.stages ?? [];
+                    return (
+                      <select
+                        className="w-full rounded border bg-background px-1 py-1 text-xs disabled:opacity-50"
+                        value={r.stage ?? ""}
+                        disabled={!st.length}
+                        onChange={(e) => {
+                          ensureRows();
+                          setRow(r.id, (row) => (row.stage = e.target.value));
+                        }}
+                      >
+                        <option value="">{st.length ? "— стадия —" : "нет стадий"}</option>
+                        {st.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  })()}
+                </td>
                 <td className="border-r border-b px-1 py-1">
                   <input
                     list="worktypes"
@@ -369,7 +401,7 @@ function EffortPage() {
               <th className="sticky left-0 z-10 border-r border-b bg-muted/60 px-3 py-1 text-left text-xs">
                 Итого
               </th>
-              <td className="border-r border-b" />
+              <td className="border-r border-b" colSpan={2} />
               {days.map((d) => (
                 <td key={d} className="day-cell text-xs">
                   {dayTotal(d) || ""}

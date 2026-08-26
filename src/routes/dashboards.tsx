@@ -9,8 +9,6 @@ import {
   CartesianGrid,
   Cell,
   Legend as RLegend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -26,7 +24,7 @@ import { fio, useStore } from "@/lib/store";
 import { MONTHS_SHORT, pad } from "@/lib/dates";
 import { allFacts, parseYm, ymValue } from "@/lib/effort";
 import { downloadTables } from "@/lib/excel";
-import type { FilterSet } from "@/lib/types";
+import { PROJECT_STAGES, type FilterSet } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
@@ -172,6 +170,8 @@ function DashboardsPage() {
   const [depts, setDepts] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [people, setPeople] = useState<string[]>([]);
+  const [stages, setStages] = useState<string[]>([]);
+  const [splitStages, setSplitStages] = useState(false);
   const [from, setFrom] = useState(thisYm);
   const [to, setTo] = useState(`${now.getFullYear()}-${pad(12)}`);
   const [setName, setSetName] = useState("");
@@ -183,6 +183,8 @@ function DashboardsPage() {
     setDepts([]);
     setProjects([]);
     setPeople([]);
+    setStages([]);
+    setSplitStages(false);
     setFrom(thisYm);
     setTo(`${now.getFullYear()}-${pad(12)}`);
     setSetName("");
@@ -205,6 +207,7 @@ function DashboardsPage() {
     [store.employees, store.contractors],
   );
   const projectOptions = store.projects.map((p) => ({ id: p.id, name: p.name }));
+  const stageOptions = PROJECT_STAGES.map((s) => ({ id: s, name: s }));
   const peopleOptions = [...store.employees]
     .map((e) => ({ id: e.id, name: fio(e) }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
@@ -212,17 +215,28 @@ function DashboardsPage() {
   const conv = (h: number) => (unit === "hours" ? h : Math.round(h / 8));
   const unitLabel = unit === "hours" ? "ч" : "дн";
 
-  const filtered = facts.filter((f) => {
-    if (depts.length && !depts.includes(f.department)) return false;
-    if (projects.length && !projects.includes(f.projectId)) return false;
-    if (people.length && !people.includes(f.personId)) return false;
-    const v = ymValue(f.ym);
-    if (v < ymValue(from) || v > ymValue(to)) return false;
-    return true;
-  });
+  const filtered = facts
+    .filter((f) => {
+      if (depts.length && !depts.includes(f.department)) return false;
+      if (projects.length && !projects.includes(f.projectId)) return false;
+      if (people.length && !people.includes(f.personId)) return false;
+      if (stages.length && !stages.includes(f.stage)) return false;
+      const v = ymValue(f.ym);
+      if (v < ymValue(from) || v > ymValue(to)) return false;
+      return true;
+    })
+    .map((f) =>
+      splitStages && f.stage ? { ...f, projectId: `${f.projectId}__${f.stage}` } : f,
+    );
 
-  const projName = (id: string) => store.projects.find((p) => p.id === id)?.name ?? "—";
-  const projColor = (id: string) => store.projects.find((p) => p.id === id)?.color ?? "#999";
+  const baseId = (id: string) => id.split("__")[0]!;
+  const projName = (id: string) => {
+    const name = store.projects.find((p) => p.id === baseId(id))?.name ?? "—";
+    const st = id.includes("__") ? id.split("__")[1] : "";
+    return st ? `${name} · ${st}` : name;
+  };
+  const projColor = (id: string) =>
+    store.projects.find((p) => p.id === baseId(id))?.color ?? "#999";
 
   const usedProjects = Array.from(new Set(filtered.map((f) => f.projectId)));
   const usedDepts = Array.from(new Set(filtered.map((f) => f.department))).sort();
@@ -280,25 +294,6 @@ function DashboardsPage() {
     for (const pid of usedProjects) row[projName(pid)] = num(sum((f) => f.projectId === pid && f.ym === k));
     return row;
   });
-  // накопление
-  const cumulative = lineData.map((row, i) => {
-    const out: Record<string, string | number> = { label: row["label"]! };
-    for (const pid of usedProjects) {
-      const n = projName(pid);
-      out[n] = num(
-        lineData.slice(0, i + 1).reduce((a, r) => a + (Number(r[n]) || 0), 0),
-      );
-    }
-    return out;
-  });
-
-  const deptLineData = usedYms.map((k) => {
-    const row: Record<string, string | number> = {
-      label: `${MONTHS_SHORT[parseYm(k).month]} ${parseYm(k).year}`,
-    };
-    for (const d of usedDepts) row[d] = num(sum((f) => f.department === d && f.ym === k));
-    return row;
-  });
 
   const barData = usedProjects.map((pid) => {
     const row: Record<string, string | number> = { project: projName(pid) };
@@ -328,6 +323,7 @@ function DashboardsPage() {
     setDepts(s.depts);
     setProjects(s.projects);
     setPeople(s.people);
+    setStages(s.stages ?? []);
     setFrom(s.from);
     setTo(s.to);
     setEditingId(s.id);
@@ -353,6 +349,7 @@ function DashboardsPage() {
             .join(", ")}`
         : "Все сотрудники",
     );
+    parts.push(stages.length ? `Стадии: ${stages.join(", ")}` : "Все стадии");
     parts.push(from === to ? short(from) : `${short(from)}–${short(to)}`);
     parts.push(unit === "hours" ? "ч" : "дн");
     return parts.join(" · ").slice(0, 160);
@@ -370,6 +367,7 @@ function DashboardsPage() {
         depts,
         projects,
         people,
+        stages,
         from,
         to,
       };
@@ -442,8 +440,6 @@ function DashboardsPage() {
   const secTop = useRef<HTMLDivElement>(null);
   const secBar = useRef<HTMLDivElement>(null);
   const secTable5 = useRef<HTMLDivElement>(null);
-  const secCum = useRef<HTMLDivElement>(null);
-  const secDept = useRef<HTMLDivElement>(null);
 
   const [pdfBusy, setPdfBusy] = useState(false);
 
@@ -473,7 +469,7 @@ function DashboardsPage() {
       const pages: HTMLElement[][] = [
         [secTop.current!].filter(Boolean),
         [secBar.current!, secTable5.current!].filter(Boolean),
-        [secCum.current!, secDept.current!].filter(Boolean),
+        
       ];
 
       for (let i = 0; i < pages.length; i++) {
@@ -558,8 +554,18 @@ function DashboardsPage() {
         <MultiSelect label="Раздел" options={deptOptions} value={depts} onChange={setDepts} />
         <MultiSelect label="Проект" options={projectOptions} value={projects} onChange={setProjects} />
         <MultiSelect label="Сотрудник" options={peopleOptions} value={people} onChange={setPeople} />
+        <MultiSelect label="Стадия" options={stageOptions} value={stages} onChange={setStages} />
         <MonthField label="с" value={from} onChange={setFrom} />
         <MonthField label="по" value={to} onChange={setTo} />
+        <button
+          className={`rounded-md border px-3 py-1.5 text-sm ${
+            splitStages ? "bg-primary text-primary-foreground" : "bg-background"
+          }`}
+          onClick={() => setSplitStages((v) => !v)}
+          title="Каждая стадия проекта — отдельная строка"
+        >
+          Разделить по стадиям
+        </button>
         <Button variant="ghost" onClick={resetFilters} className="text-muted-foreground">
           <RotateCcw className="size-4" /> Сбросить фильтры
         </Button>
@@ -813,58 +819,6 @@ function DashboardsPage() {
       </div>
       </div>
 
-
-      {/* Линейный график с накоплением */}
-      <div ref={secCum} className="bg-background">
-        <h2 className="mt-6 text-lg font-medium">Накопленные трудозатраты по месяцам</h2>
-        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={cumulative}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-              <RLegend />
-              {usedProjects.map((pid) => (
-                <Line
-                  key={pid}
-                  type="monotone"
-                  dataKey={projName(pid)}
-                  stroke={projColor(pid)}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Линейный график по разделам без накопления */}
-      <div ref={secDept} className="bg-background">
-        <h2 className="mt-6 text-lg font-medium">Трудозатраты по разделам, по месяцам ({unitLabel})</h2>
-        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={deptLineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-              <RLegend />
-              {usedDepts.map((d, i) => (
-                <Line
-                  key={d}
-                  type="monotone"
-                  dataKey={d}
-                  stroke={DEPT_COLORS[i % DEPT_COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
     </div>
 
   );

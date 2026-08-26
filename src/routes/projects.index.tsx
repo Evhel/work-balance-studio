@@ -87,7 +87,7 @@ function ProjectsPage() {
         id: `p${Date.now()}`,
         name,
         color: projectColor(d.projects.length),
-        stage: "Концепция",
+        stages: ["ОТР"],
         start: `${year}-${pad(m + 1)}-01`,
         end: `${year}-${pad(Math.min(12, m + 3))}-${pad(daysInMonth(year, Math.min(11, m + 2)))}`,
         description: "",
@@ -100,6 +100,27 @@ function ProjectsPage() {
   const visible = store.projects.filter(
     (p) => monthIndex(p.start, year) < 12 && monthIndex(p.end, year) >= 0,
   );
+
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const horizon = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 2);
+    return d.toISOString().slice(0, 10);
+  })();
+  const upcomingGoals = store.projects
+    .flatMap((p) =>
+      (p.goals ?? [])
+        .filter((g) => g.date >= todayIso && g.date <= horizon)
+        .map((g) => ({
+          key: `${p.id}_${g.id}`,
+          date: g.date,
+          name: g.name,
+          projectId: p.id,
+          projectName: p.name,
+          color: p.color,
+        })),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div>
@@ -209,7 +230,7 @@ function ProjectsPage() {
                       <span className="truncate text-sm font-medium">{p.name}</span>
                     </Link>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {p.stage} · {p.start} — {p.end}
+                      {(p.stages ?? []).join(", ") || "—"} · {p.start} — {p.end}
                     </div>
                     {editable && (
                       <button
@@ -233,6 +254,36 @@ function ProjectsPage() {
         })}
       </div>
 
+      <h2 className="mt-8 text-lg font-medium">Цели на ближайшие два месяца</h2>
+      <div className="mt-3 overflow-hidden rounded-lg border bg-card">
+        {upcomingGoals.length === 0 ? (
+          <p className="p-3 text-sm text-muted-foreground">Целей нет</p>
+        ) : (
+          <table className="w-full text-sm">
+            <tbody>
+              {upcomingGoals.map((g) => (
+                <tr key={g.key} className="border-b last:border-b-0">
+                  <td className="w-28 px-3 py-2 text-xs text-muted-foreground">{g.date}</td>
+                  <td className="w-64 px-3 py-2">
+                    <Link
+                      to="/projects/$projectId"
+                      params={{ projectId: g.projectId }}
+                      className="flex items-center gap-2"
+                    >
+                      <span
+                        className="size-3 shrink-0 rounded-full"
+                        style={{ background: g.color }}
+                      />
+                      <span className="truncate text-xs font-medium">{g.projectName}</span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-2 text-xs">{g.name}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

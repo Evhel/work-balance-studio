@@ -45,7 +45,9 @@ export type Contractor = {
 };
 
 
-export type ProjectStage = "Концепция" | "ПД" | "РД";
+export type ProjectStage = "ОТР" | "ПД" | "РД" | "Экспертиза" | "ВОРы" | "АН";
+
+export const PROJECT_STAGES: ProjectStage[] = ["ОТР", "ПД", "РД", "Экспертиза", "ВОРы", "АН"];
 
 export type ProjectMember = { personId: string; kind: "employee" | "contractor" };
 
@@ -56,7 +58,8 @@ export type Project = {
   id: string;
   name: string;
   color: string;
-  stage: ProjectStage;
+  /** Стадии проекта (можно несколько) */
+  stages: ProjectStage[];
   start: string; // YYYY-MM-DD
   end: string;
   milestone?: string;
@@ -112,6 +115,8 @@ export const ABSENCE_CODES = ["Б", "ОТ", "ДО", "У"];
 export type EffortRow = {
   id: string;
   projectId: string;
+  /** Стадия проекта */
+  stage?: string;
   /** Вид работ (свободный текст) */
   workType: string;
   /** день месяца (1..31) -> часы */
@@ -126,6 +131,8 @@ export type FilterSet = {
   depts: string[];
   projects: string[];
   people: string[];
+  /** Стадии проектов */
+  stages?: string[];
   from: string; // YYYY-MM
   to: string; // YYYY-MM
 };

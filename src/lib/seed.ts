@@ -102,7 +102,7 @@ function makeProjects(y: number): Project[] {
       id: "p1",
       name: "ЖК «Северный»",
       color: PALETTE[0]!,
-      stage: "ПД",
+      stages: ["ПД", "Экспертиза"],
       start: `${y}-01-15`,
       end: `${y}-08-30`,
       milestone: `${y}-05-20`,
@@ -113,7 +113,7 @@ function makeProjects(y: number): Project[] {
       id: "p2",
       name: "Технопарк «Восток»",
       color: PALETTE[1]!,
-      stage: "Концепция",
+      stages: ["ОТР"],
       start: `${y}-04-01`,
       end: `${y}-12-15`,
       milestone: `${y}-09-10`,
@@ -124,7 +124,7 @@ function makeProjects(y: number): Project[] {
       id: "p3",
       name: "Школа №42",
       color: PALETTE[2]!,
-      stage: "РД",
+      stages: ["РД", "ВОРы"],
       start: `${y - 1}-09-01`,
       end: `${y}-03-01`,
       description: "",
@@ -132,19 +132,12 @@ function makeProjects(y: number): Project[] {
     },
   ];
 
-  const extra: [string, Project["stage"], string, string][] = [
-    // 3 завершённых
-    ["Детский сад «Ромашка»", "РД", `${y - 1}-02-01`, `${y - 1}-11-20`],
-    ["Поликлиника на ул. Мира", "РД", `${y - 1}-04-10`, `${y}-01-25`],
-    ["Склад «Логопарк-3»", "ПД", `${y - 1}-06-01`, `${y}-02-10`],
-    // 7 текущих
-    ["БЦ «Меридиан»", "ПД", `${y}-01-10`, `${y + 1}-04-30`],
-    ["ЖК «Прибрежный»", "РД", `${y}-02-01`, `${y + 1}-06-30`],
-    ["Спорткомплекс «Атлант»", "Концепция", `${y}-03-05`, `${y + 1}-02-28`],
-    ["Реконструкция завода «Мотор»", "ПД", `${y}-01-20`, `${y + 1}-03-31`],
-    ["Гостиница «Панорама»", "РД", `${y}-02-15`, `${y + 1}-05-15`],
-    ["Театр драмы, реставрация", "Концепция", `${y}-04-01`, `${y + 1}-08-31`],
-    ["ТЦ «Галерея»", "ПД", `${y}-01-05`, `${y + 1}-01-31`],
+  const extra: [string, Project["stages"], string, string][] = [
+    ["Поликлиника на ул. Мира", ["РД", "АН"], `${y - 1}-04-10`, `${y}-01-25`],
+    ["БЦ «Меридиан»", ["ПД", "Экспертиза"], `${y}-01-10`, `${y + 1}-04-30`],
+    ["ЖК «Прибрежный»", ["РД"], `${y}-02-01`, `${y + 1}-06-30`],
+    ["Гостиница «Панорама»", ["РД", "ВОРы"], `${y}-02-15`, `${y + 1}-05-15`],
+    ["ТЦ «Галерея»", ["ПД"], `${y}-01-05`, `${y + 1}-01-31`],
   ];
 
   const projects = base.concat(
@@ -152,7 +145,7 @@ function makeProjects(y: number): Project[] {
       id: `p${i + 4}`,
       name: r[0],
       color: PALETTE[(i + 3) % PALETTE.length]!,
-      stage: r[1],
+      stages: r[1],
       start: r[2],
       end: r[3],
       description: "",
@@ -164,7 +157,7 @@ function makeProjects(y: number): Project[] {
     id: NO_OBJECT_ID,
     name: "Без объекта",
     color: "#64748b",
-    stage: "Концепция",
+    stages: ["ОТР"],
     start: `${y - 1}-01-01`,
     end: `${y + 1}-12-31`,
     description: "Внутренние работы: совещания, шаблоны, оценка проектов",
@@ -260,10 +253,12 @@ function makeEffort(employees: Employee[], projects: Project[]) {
       const maxDay = year * 12 + month === nowKey ? Math.min(dim, now.getDate()) : dim;
       const rowsMap = new Map<string, EffortRow>();
       const put = (projectId: string, workType: string, day: number, hours: number) => {
-        const key = `${projectId}|${workType}`;
+        const pr = projects.find((x) => x.id === projectId);
+        const stage = pr?.stages?.[day % (pr.stages.length || 1)] ?? pr?.stages?.[0] ?? "";
+        const key = `${projectId}|${stage}|${workType}`;
         let row = rowsMap.get(key);
         if (!row) {
-          row = { id: `s_${emp.id}_${ym}_${rowsMap.size}`, projectId, workType, hours: {} };
+          row = { id: `s_${emp.id}_${ym}_${rowsMap.size}`, projectId, stage, workType, hours: {} };
           rowsMap.set(key, row);
         }
         row.hours[String(day)] = (row.hours[String(day)] ?? 0) + hours;
@@ -308,8 +303,10 @@ function makePlan(projects: Project[], contractors: Contractor[], year: number) 
   const yStart = `${year}-01-01`;
   const yEnd = `${year}-12-31`;
 
-  for (const p of projects) {
+  for (const [i, p] of projects.entries()) {
     if (p.id === NO_OBJECT_ID) continue;
+    // на половине проектов занятость не планируется
+    if (i % 2 === 1) continue;
     const from = p.start > yStart ? p.start : yStart;
     const to = p.end < yEnd ? p.end : yEnd;
     if (from > to) continue;

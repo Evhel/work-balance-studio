@@ -40,6 +40,7 @@ export type EffortFact = {
   projectId: string;
   department: string;
   workType: string;
+  stage: string;
   ym: string;
   hours: number;
 };
@@ -61,6 +62,7 @@ export function allFacts(store: Store): EffortFact[] {
           projectId: r.projectId,
           department: dept.get(personId) ?? "—",
           workType: r.workType || "—",
+          stage: r.stage || "",
           ym,
           hours,
         });

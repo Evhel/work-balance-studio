@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AccessAction, Employee, Store } from "./types";
+import type { AccessAction, Employee, Project, Store } from "./types";
 import { isWeekendDate } from "./dates";
 import { seedStore, PALETTE, projectColor } from "./seed";
 
-const KEY = "arv-workload-store-v2";
+const KEY = "arv-workload-store-v3";
 
 export { PALETTE, projectColor };
 
@@ -77,9 +77,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(raw) as Partial<Store>;
         const base = seed();
         // цвета проектов всегда берём из единой палитры
-        const projects = (parsed.projects ?? base.projects).map((p, i) =>
-          p.name === "Без объекта" ? p : { ...p, color: projectColor(i) },
-        );
+        const projects = (parsed.projects ?? base.projects).map((p, i) => ({
+          ...p,
+          color: p.name === "Без объекта" ? p.color : projectColor(i),
+          stages: p.stages?.length ? p.stages : (["ОТР"] as Project["stages"]),
+        }));
         setStore({
           ...base,
           ...parsed,

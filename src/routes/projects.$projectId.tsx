@@ -39,7 +39,7 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-import { REMOTE_CODE, type ProjectGoal, type ProjectStage } from "@/lib/types";
+import { PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
 
 export const Route = createFileRoute("/projects/$projectId")({
   head: () => ({
@@ -149,31 +149,42 @@ function ProjectPage() {
       </Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">{project.name}</h1>
-        <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-          {project.stage}
-        </span>
+        {(project.stages ?? []).map((s) => (
+          <span
+            key={s}
+            className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
+          >
+            {s}
+          </span>
+        ))}
       </div>
 
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <Label>Стадия</Label>
-          <Select
-            value={project.stage}
-            onValueChange={(v) => patch((p) => (p.stage = v as ProjectStage))}
-            disabled={!editable}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(["Концепция", "ПД", "РД"] as ProjectStage[]).map((s) => (
-                <SelectItem key={s} value={s}>
+          <Label>Стадии</Label>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {PROJECT_STAGES.map((s) => {
+              const on = (project.stages ?? []).includes(s);
+              return (
+                <button
+                  key={s}
+                  disabled={!editable}
+                  className={`rounded-md border px-2 py-1 text-xs ${
+                    on ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent"
+                  } ${editable ? "" : "opacity-70"}`}
+                  onClick={() =>
+                    patch((p) => {
+                      const cur = p.stages ?? [];
+                      p.stages = on ? cur.filter((x) => x !== s) : [...cur, s];
+                    })
+                  }
+                >
                   {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div>
           <Label>Дата начала</Label>
@@ -327,11 +338,9 @@ function ProjectPage() {
                     if (conflict) bg = "#ffd9d9";
                     const border = conflict
                       ? "inset 0 0 0 2px #dc2626"
-                      : here && active.length > 1
-                        ? "inset 0 0 0 2px #eab308"
-                        : dayGoals.length
-                          ? "inset 0 0 0 2px #d4a017"
-                          : undefined;
+                      : dayGoals.length
+                        ? "inset 0 0 0 2px #d4a017"
+                        : undefined;
                     const selected = sel.isSelected(p.id, d);
                     return (
                       <ContextMenu key={d}>
@@ -545,7 +554,7 @@ function ProjectPage() {
         ))}
         {[
           { color: "#dc2626", label: "конфликт: отсутствие и работа в один день" },
-          { color: "#eab308", label: "занят ещё на другом проекте" },
+          
           { color: "#d4a017", label: "цель проекта" },
         ].map((b) => (
           <span key={b.color} className="flex items-center gap-1.5 text-muted-foreground">
