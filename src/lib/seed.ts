@@ -253,10 +253,12 @@ function makeEffort(employees: Employee[], projects: Project[]) {
       const maxDay = year * 12 + month === nowKey ? Math.min(dim, now.getDate()) : dim;
       const rowsMap = new Map<string, EffortRow>();
       const put = (projectId: string, workType: string, day: number, hours: number) => {
-        const key = `${projectId}|${workType}`;
+        const pr = projects.find((x) => x.id === projectId);
+        const stage = pr?.stages?.[day % (pr.stages.length || 1)] ?? pr?.stages?.[0] ?? "";
+        const key = `${projectId}|${stage}|${workType}`;
         let row = rowsMap.get(key);
         if (!row) {
-          row = { id: `s_${emp.id}_${ym}_${rowsMap.size}`, projectId, workType, hours: {} };
+          row = { id: `s_${emp.id}_${ym}_${rowsMap.size}`, projectId, stage, workType, hours: {} };
           rowsMap.set(key, row);
         }
         row.hours[String(day)] = (row.hours[String(day)] ?? 0) + hours;
