@@ -39,7 +39,7 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-import { REMOTE_CODE, type ProjectGoal, type ProjectStage } from "@/lib/types";
+import { PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
 
 export const Route = createFileRoute("/projects/$projectId")({
   head: () => ({
