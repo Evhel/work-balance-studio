@@ -471,7 +471,7 @@ function DashboardsPage() {
       const pages: HTMLElement[][] = [
         [secTop.current!].filter(Boolean),
         [secBar.current!, secTable5.current!].filter(Boolean),
-        [secCum.current!, secDept.current!].filter(Boolean),
+        
       ];
 
       for (let i = 0; i < pages.length; i++) {
