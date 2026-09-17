@@ -324,9 +324,13 @@ function ProjectPage() {
                   <td className="border-r border-b px-2 text-center text-xs">{p.department}</td>
                   {days.map((d) => {
                     const date = iso(year, month, d);
-                    const absence = absenceAt(store, p.id, date);
                     const rawStatus = store.timesheet[p.id]?.[date] ?? "";
-                    const status = rawStatus === REMOTE_CODE ? "" : rawStatus;
+                    // «ОЖ» тоже считаем отсутствием (серая ячейка)
+                    const absence =
+                      absenceAt(store, p.id, date) || (rawStatus === "ОЖ" ? "ОЖ" : "");
+                    // Часы из табеля рабочего времени здесь не показываем
+                    const status =
+                      rawStatus === REMOTE_CODE || /^[\d.,]+$/.test(rawStatus) ? "" : rawStatus;
                     const active = store.projects.filter(
                       (pr) => store.plan[pr.id]?.[p.id]?.[date] === "Р",
                     );
