@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "АРВ — учёт и прогноз трудозатрат" },
+      { title: "Трудозатраты" },
       {
         name: "description",
         content:
           "Табели рабочего времени, подрядчики, проекты и загрузка отделов проектного бюро.",
       },
-      { property: "og:title", content: "АРВ — учёт и прогноз трудозатрат" },
+      { property: "og:title", content: "Трудозатраты" },
       {
         property: "og:description",
         content: "Планирование загрузки сотрудников и подрядчиков проектного бюро.",
@@ -122,14 +122,12 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const TABS = [
-  { to: "/", label: "Табель рабочего времени" },
-  { to: "/birthdays", label: "Дни рождения" },
-  { to: "/contractors", label: "Табель подрядчиков" },
-  { to: "/projects", label: "Проекты" },
-  { to: "/department", label: "Отдел" },
-  { to: "/employee", label: "Сотрудник" },
   { to: "/effort", label: "Трудозатраты" },
   { to: "/dashboards", label: "Дашборды" },
+  { to: "/projects", label: "Проекты" },
+  { to: "/department", label: "Отдел" },
+  { to: "/contractors", label: "Табель подрядчиков" },
+  { to: "/", label: "Табель рабочего времени", officeOnly: true },
   { to: "/roles", label: "Роли и доступы" },
   { to: "/instruction", label: "Инструкция" },
 ] as const;

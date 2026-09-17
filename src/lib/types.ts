@@ -126,6 +126,8 @@ export type EffortRow = {
 /** Сохранённый набор фильтров дашбордов */
 export type FilterSet = {
   id: string;
+  /** Владелец набора: у каждого пользователя свои наборы */
+  ownerId?: string;
   name: string;
   unit: "hours" | "days";
   depts: string[];
