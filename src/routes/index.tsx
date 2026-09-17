@@ -78,6 +78,9 @@ function TimesheetPage() {
   const [hideRemote, setHideRemote] = useState(false);
   const [hideHours, setHideHours] = useState(false);
   const [edit, setEdit] = useState<{ personId: string; day: number; value: string } | null>(null);
+  /** Подсветка строки и столбца под курсором */
+  const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const sel = useRowSelection();
   const editable = can("editTimesheet");
   const canDelete = can("deleteEntities");
