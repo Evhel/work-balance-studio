@@ -125,7 +125,7 @@ function ProjectsPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Проекты</h1>
-      <h2 className="mt-6 text-lg font-medium">Табель всех проектов</h2>
+
 
       <div className="mt-3 flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={() => setYear(year - 1)}>
