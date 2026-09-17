@@ -423,7 +423,10 @@ function TimesheetPage() {
                     <ContextMenuTrigger asChild>
                       <th
                         className="day-cell font-medium"
-                        style={{ background: work ? undefined : "var(--weekend)" }}
+                        style={{
+                          background: work ? undefined : "var(--weekend)",
+                          boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined,
+                        }}
                         title={editable ? "ПКМ — изменить статус дня" : undefined}
                       >
                         <div>{d}</div>
