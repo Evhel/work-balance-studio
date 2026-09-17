@@ -584,7 +584,7 @@ function DashboardsPage() {
         <Button variant="outline" onClick={saveSet}>
           <Save className="size-4" /> {editingId ? "Обновить набор" : "Закрепить набор"}
         </Button>
-        {store.filterSets.map((s) => {
+        {mySets.map((s) => {
           const active = activeSetId === s.id;
           return (
             <span
@@ -623,7 +623,7 @@ function DashboardsPage() {
         })}
         {activeSetId && (
           <span className="text-xs text-muted-foreground">
-            Активный набор: «{store.filterSets.find((s) => s.id === activeSetId)?.name}»
+            Активный набор: «{mySets.find((s) => s.id === activeSetId)?.name}»
           </span>
         )}
       </div>
