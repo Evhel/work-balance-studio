@@ -408,7 +408,10 @@ function TimesheetPage() {
         </p>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div
+        className="mt-3 overflow-x-auto rounded-lg border bg-card"
+        onMouseLeave={() => setHoverCell(null)}
+      >
         <table className="grid-table w-full">
           <thead>
             <tr className="bg-muted">
