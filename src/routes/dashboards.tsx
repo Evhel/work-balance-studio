@@ -161,7 +161,9 @@ function MonthField({
 const num = (n: number) => Math.round(n * 10) / 10;
 
 function DashboardsPage() {
-  const { store, update } = useStore();
+  const { store, update, currentUser } = useStore();
+  /** Наборы фильтров у каждого пользователя свои */
+  const mySets = store.filterSets.filter((s) => (s.ownerId ?? currentUser?.id) === currentUser?.id);
   const facts = useMemo(() => allFacts(store), [store]);
   const now = new Date();
   const thisYm = `${now.getFullYear()}-${pad(1)}`;
@@ -362,6 +364,7 @@ function DashboardsPage() {
     update((d) => {
       const payload: FilterSet = {
         id: editingId ?? `fs${Date.now()}`,
+        ownerId: currentUser?.id,
         name,
         unit,
         depts,
@@ -581,7 +584,7 @@ function DashboardsPage() {
         <Button variant="outline" onClick={saveSet}>
           <Save className="size-4" /> {editingId ? "Обновить набор" : "Закрепить набор"}
         </Button>
-        {store.filterSets.map((s) => {
+        {mySets.map((s) => {
           const active = activeSetId === s.id;
           return (
             <span
@@ -620,7 +623,7 @@ function DashboardsPage() {
         })}
         {activeSetId && (
           <span className="text-xs text-muted-foreground">
-            Активный набор: «{store.filterSets.find((s) => s.id === activeSetId)?.name}»
+            Активный набор: «{mySets.find((s) => s.id === activeSetId)?.name}»
           </span>
         )}
       </div>

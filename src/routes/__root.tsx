@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "АРВ — учёт и прогноз трудозатрат" },
+      { title: "Трудозатраты" },
       {
         name: "description",
         content:
           "Табели рабочего времени, подрядчики, проекты и загрузка отделов проектного бюро.",
       },
-      { property: "og:title", content: "АРВ — учёт и прогноз трудозатрат" },
+      { property: "og:title", content: "Трудозатраты" },
       {
         property: "og:description",
         content: "Планирование загрузки сотрудников и подрядчиков проектного бюро.",
@@ -122,14 +122,12 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const TABS = [
-  { to: "/", label: "Табель рабочего времени" },
-  { to: "/birthdays", label: "Дни рождения" },
-  { to: "/contractors", label: "Табель подрядчиков" },
-  { to: "/projects", label: "Проекты" },
-  { to: "/department", label: "Отдел" },
-  { to: "/employee", label: "Сотрудник" },
   { to: "/effort", label: "Трудозатраты" },
   { to: "/dashboards", label: "Дашборды" },
+  { to: "/projects", label: "Проекты" },
+  { to: "/department", label: "Отдел" },
+  { to: "/contractors", label: "Табель подрядчиков" },
+  { to: "/", label: "Табель рабочего времени", officeOnly: true },
   { to: "/roles", label: "Роли и доступы" },
   { to: "/instruction", label: "Инструкция" },
 ] as const;
@@ -155,17 +153,19 @@ function RoleSwitcher() {
 }
 
 function Chrome() {
+  const { can } = useStore();
+  const tabs = TABS.filter((t) => !("officeOnly" in t && t.officeOnly) || can("editTimesheet"));
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="text-2xl font-bold tracking-wide text-primary-foreground sm:text-3xl">
-            АРВ · Учёт и прогнозирование трудозатрат
+            Трудозатраты
           </div>
           <RoleSwitcher />
         </div>
         <nav className="mx-auto flex max-w-[1600px] flex-wrap gap-1 px-4">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <Link
               key={t.to}
               to={t.to}

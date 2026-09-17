@@ -44,7 +44,7 @@ export const Route = createFileRoute("/effort")({
 });
 
 function EffortPage() {
-  const { store, update, isWorkday, currentUser } = useStore();
+  const { store, update, isWorkday, currentUser, can } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -63,6 +63,8 @@ function EffortPage() {
 
   const rows = person ? effortRows(store, person.id, ym) : [];
   const suggestions = person ? workTypeSuggestions(store, person.id) : [];
+  /** Заполнять можно только свою страницу (либо при праве редактировать всех) */
+  const editable = !!person && (person.id === currentUser?.id || can("editEffort"));
 
   if (!person) return <p>Нет сотрудников</p>;
 
@@ -199,6 +201,7 @@ function EffortPage() {
         <label className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm">
           <Checkbox
             checked={done}
+            disabled={!editable}
             onCheckedChange={(v) =>
               update((d) => {
                 d.effortDone[person.id] = d.effortDone[person.id] ?? {};
@@ -217,7 +220,7 @@ function EffortPage() {
         >
           <Download className="size-4" /> Экспорт
         </Button>
-        <Button variant="outline" onClick={() => fileRef.current?.click()}>
+        <Button variant="outline" disabled={!editable} onClick={() => fileRef.current?.click()}>
           <Upload className="size-4" /> Импорт
         </Button>
         <input
@@ -243,7 +246,7 @@ function EffortPage() {
         >
           <Download className="size-4" /> Шаблон (построчный)
         </Button>
-        <Button variant="outline" onClick={() => bulkRef.current?.click()}>
+        <Button variant="outline" disabled={!editable} onClick={() => bulkRef.current?.click()}>
           <Upload className="size-4" /> Массовый импорт
         </Button>
         <input
@@ -259,6 +262,12 @@ function EffortPage() {
         />
       </div>
 
+
+      {!editable && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Вы можете заполнять только свою страницу трудозатрат. Чужие данные доступны для просмотра.
+        </p>
+      )}
 
       <p className="mt-4 text-sm font-medium">
         Табель трудозатрат · {fio(person)} · {MONTHS[month]} {year}
@@ -301,6 +310,7 @@ function EffortPage() {
                   <div className="flex items-center gap-1">
                     <select
                       className="w-full rounded border bg-background px-1 py-1 text-xs"
+                      disabled={!editable}
                       value={r.projectId}
                       onChange={(e) => {
                         ensureRows();
@@ -338,7 +348,7 @@ function EffortPage() {
                       <select
                         className="w-full rounded border bg-background px-1 py-1 text-xs disabled:opacity-50"
                         value={r.stage ?? ""}
-                        disabled={!st.length}
+                        disabled={!editable || !st.length}
                         onChange={(e) => {
                           ensureRows();
                           setRow(r.id, (row) => (row.stage = e.target.value));
@@ -358,6 +368,7 @@ function EffortPage() {
                   <input
                     list="worktypes"
                     className="w-full rounded border bg-background px-1 py-1 text-xs"
+                    disabled={!editable}
                     value={r.workType}
                     placeholder="необязательно"
                     onChange={(e) => {
@@ -377,6 +388,7 @@ function EffortPage() {
                     >
                       <input
                         className="h-full w-full bg-transparent text-center text-xs outline-none"
+                        readOnly={!editable}
                         value={v === undefined ? "" : String(v)}
                         inputMode="decimal"
                         onChange={(e) => {
@@ -422,6 +434,7 @@ function EffortPage() {
       <Button
         className="mt-3"
         variant="outline"
+        disabled={!editable}
         onClick={() =>
           patchRows((l) => [
             ...(l.length ? l : [{ id: `r${Date.now()}`, projectId: "", workType: "", hours: {} }]),

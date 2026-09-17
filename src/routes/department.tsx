@@ -75,7 +75,12 @@ function DepartmentPage() {
     () =>
       people
         .filter((p) => dept === "all" || p.department === dept)
-        .sort((a, b) => a.name.localeCompare(b.name, "ru")),
+        // подрядчики — в конце списка
+        .sort(
+          (a, b) =>
+            (a.kind === "contractor" ? 1 : 0) - (b.kind === "contractor" ? 1 : 0) ||
+            a.name.localeCompare(b.name, "ru"),
+        ),
     [people, dept],
   );
 

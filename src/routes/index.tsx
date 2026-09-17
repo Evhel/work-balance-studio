@@ -78,6 +78,9 @@ function TimesheetPage() {
   const [hideRemote, setHideRemote] = useState(false);
   const [hideHours, setHideHours] = useState(false);
   const [edit, setEdit] = useState<{ personId: string; day: number; value: string } | null>(null);
+  /** Подсветка строки и столбца под курсором */
+  const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const sel = useRowSelection();
   const editable = can("editTimesheet");
   const canDelete = can("deleteEntities");
@@ -269,6 +272,17 @@ function TimesheetPage() {
     }
   };
 
+  if (!editable) {
+    return (
+      <div className="rounded-lg border bg-card p-6">
+        <h1 className="text-2xl font-semibold">Табель рабочего времени</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Страница доступна только офис-менеджеру.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div onMouseUp={sel.onMouseUp}>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -394,7 +408,10 @@ function TimesheetPage() {
         </p>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+      <div
+        className="mt-3 overflow-x-auto rounded-lg border bg-card"
+        onMouseLeave={() => setHoverCell(null)}
+      >
         <table className="grid-table w-full">
           <thead>
             <tr className="bg-muted">
@@ -409,7 +426,10 @@ function TimesheetPage() {
                     <ContextMenuTrigger asChild>
                       <th
                         className="day-cell font-medium"
-                        style={{ background: work ? undefined : "var(--weekend)" }}
+                        style={{
+                          background: work ? undefined : "var(--weekend)",
+                          boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined,
+                        }}
                         title={editable ? "ПКМ — изменить статус дня" : undefined}
                       >
                         <div>{d}</div>
@@ -437,7 +457,10 @@ function TimesheetPage() {
               const t = rowTotals(p.id);
               return (
                 <tr key={p.id}>
-                  <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
+                  <th
+                    className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal"
+                    style={{ boxShadow: hoverCell?.row === p.id ? HOVER_TINT : undefined }}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span>
                         <PersonLink id={p.id} name={fio(p)} />
@@ -486,6 +509,7 @@ function TimesheetPage() {
                       (remote ? CODE_COLORS[REMOTE_CODE] : undefined) ??
                       (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
+                    const hovered = hoverCell?.row === p.id || hoverCell?.col === d;
                     return (
                       <ContextMenu key={d}>
                         <ContextMenuTrigger asChild>
@@ -494,6 +518,7 @@ function TimesheetPage() {
                             tabIndex={editable ? 0 : undefined}
                             style={{
                               background: bg,
+                              boxShadow: hovered ? HOVER_TINT : undefined,
                               outline: isEditing
                                 ? "2px solid var(--destructive)"
                                 : selected
@@ -502,7 +527,10 @@ function TimesheetPage() {
                               outlineOffset: "-2px",
                             }}
                             onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
-                            onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
+                            onMouseEnter={() => {
+                              setHoverCell({ row: p.id, col: d });
+                              if (editable) sel.onMouseEnter(p.id, d);
+                            }}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                             onKeyDown={(e) => onCellKeyDown(e, p.id, d)}
                             onBlur={() => isEditing && commitEdit()}
