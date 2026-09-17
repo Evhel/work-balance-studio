@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonCalendar } from "@/components/PersonCalendar";
 import { POSITIONS, type Position } from "@/lib/types";
 import { fio, useStore } from "@/lib/store";
 
@@ -290,6 +291,12 @@ function PersonPage() {
           onChange={(e) => setComment(e.target.value)}
         />
       </div>
+
+      {employee && (
+        <div className="mt-8 border-t pt-6">
+          <PersonCalendar personId={employee.id} />
+        </div>
+      )}
     </div>
   );
 }
