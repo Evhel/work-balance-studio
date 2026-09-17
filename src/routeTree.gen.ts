@@ -10,12 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BirthdaysRouteImport } from './routes/birthdays'
 import { Route as ContractorsRouteImport } from './routes/contractors'
 import { Route as DashboardsRouteImport } from './routes/dashboards'
 import { Route as DepartmentRouteImport } from './routes/department'
 import { Route as EffortRouteImport } from './routes/effort'
-import { Route as EmployeeRouteImport } from './routes/employee'
 import { Route as InstructionRouteImport } from './routes/instruction'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as RolesRouteImport } from './routes/roles'
@@ -26,11 +24,6 @@ import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projec
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BirthdaysRoute = BirthdaysRouteImport.update({
-  id: '/birthdays',
-  path: '/birthdays',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractorsRoute = ContractorsRouteImport.update({
@@ -51,11 +44,6 @@ const DepartmentRoute = DepartmentRouteImport.update({
 const EffortRoute = EffortRouteImport.update({
   id: '/effort',
   path: '/effort',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmployeeRoute = EmployeeRouteImport.update({
-  id: '/employee',
-  path: '/employee',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstructionRoute = InstructionRouteImport.update({
@@ -91,12 +79,10 @@ const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/birthdays': typeof BirthdaysRoute
   '/contractors': typeof ContractorsRoute
   '/dashboards': typeof DashboardsRoute
   '/department': typeof DepartmentRoute
   '/effort': typeof EffortRoute
-  '/employee': typeof EmployeeRoute
   '/instruction': typeof InstructionRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/roles': typeof RolesRoute
@@ -106,12 +92,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/birthdays': typeof BirthdaysRoute
   '/contractors': typeof ContractorsRoute
   '/dashboards': typeof DashboardsRoute
   '/department': typeof DepartmentRoute
   '/effort': typeof EffortRoute
-  '/employee': typeof EmployeeRoute
   '/instruction': typeof InstructionRoute
   '/roles': typeof RolesRoute
   '/person/$personId': typeof PersonPersonIdRoute
@@ -121,12 +105,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/birthdays': typeof BirthdaysRoute
   '/contractors': typeof ContractorsRoute
   '/dashboards': typeof DashboardsRoute
   '/department': typeof DepartmentRoute
   '/effort': typeof EffortRoute
-  '/employee': typeof EmployeeRoute
   '/instruction': typeof InstructionRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/roles': typeof RolesRoute
@@ -138,12 +120,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/birthdays'
     | '/contractors'
     | '/dashboards'
     | '/department'
     | '/effort'
-    | '/employee'
     | '/instruction'
     | '/projects'
     | '/roles'
@@ -153,12 +133,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/birthdays'
     | '/contractors'
     | '/dashboards'
     | '/department'
     | '/effort'
-    | '/employee'
     | '/instruction'
     | '/roles'
     | '/person/$personId'
@@ -167,12 +145,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/birthdays'
     | '/contractors'
     | '/dashboards'
     | '/department'
     | '/effort'
-    | '/employee'
     | '/instruction'
     | '/projects'
     | '/roles'
@@ -183,12 +159,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BirthdaysRoute: typeof BirthdaysRoute
   ContractorsRoute: typeof ContractorsRoute
   DashboardsRoute: typeof DashboardsRoute
   DepartmentRoute: typeof DepartmentRoute
   EffortRoute: typeof EffortRoute
-  EmployeeRoute: typeof EmployeeRoute
   InstructionRoute: typeof InstructionRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   RolesRoute: typeof RolesRoute
@@ -202,13 +176,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/birthdays': {
-      id: '/birthdays'
-      path: '/birthdays'
-      fullPath: '/birthdays'
-      preLoaderRoute: typeof BirthdaysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contractors': {
@@ -237,13 +204,6 @@ declare module '@tanstack/react-router' {
       path: '/effort'
       fullPath: '/effort'
       preLoaderRoute: typeof EffortRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/employee': {
-      id: '/employee'
-      path: '/employee'
-      fullPath: '/employee'
-      preLoaderRoute: typeof EmployeeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/instruction': {
@@ -307,12 +267,10 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BirthdaysRoute: BirthdaysRoute,
   ContractorsRoute: ContractorsRoute,
   DashboardsRoute: DashboardsRoute,
   DepartmentRoute: DepartmentRoute,
   EffortRoute: EffortRoute,
-  EmployeeRoute: EmployeeRoute,
   InstructionRoute: InstructionRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   RolesRoute: RolesRoute,
