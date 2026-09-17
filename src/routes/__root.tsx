@@ -153,17 +153,19 @@ function RoleSwitcher() {
 }
 
 function Chrome() {
+  const { can } = useStore();
+  const tabs = TABS.filter((t) => !("officeOnly" in t && t.officeOnly) || can("editTimesheet"));
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="text-2xl font-bold tracking-wide text-primary-foreground sm:text-3xl">
-            АРВ · Учёт и прогнозирование трудозатрат
+            Трудозатраты
           </div>
           <RoleSwitcher />
         </div>
         <nav className="mx-auto flex max-w-[1600px] flex-wrap gap-1 px-4">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <Link
               key={t.to}
               to={t.to}
