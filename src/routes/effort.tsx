@@ -44,7 +44,7 @@ export const Route = createFileRoute("/effort")({
 });
 
 function EffortPage() {
-  const { store, update, isWorkday, currentUser } = useStore();
+  const { store, update, isWorkday, currentUser, can } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -63,6 +63,8 @@ function EffortPage() {
 
   const rows = person ? effortRows(store, person.id, ym) : [];
   const suggestions = person ? workTypeSuggestions(store, person.id) : [];
+  /** Заполнять можно только свою страницу (либо при праве редактировать всех) */
+  const editable = !!person && (person.id === currentUser?.id || can("editEffort"));
 
   if (!person) return <p>Нет сотрудников</p>;
 
