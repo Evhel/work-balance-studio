@@ -1,26 +1,44 @@
-/** Единая приглушённая палитра проектов и графиков */
+/** Единая гармоничная палитра проектов по цветовому кругу. */
 export const CHART_COLORS = [
-  "#7f63b8",
-  "#3f8ca3",
-  "#c9764a",
-  "#c26073",
-  "#5b9c6d",
-  "#5b7fc4",
-  "#bb914f",
-  "#c27099",
-  "#4f9b88",
-  "#8f6fb5",
-  "#5c8fb8",
-  "#86a25a",
-  "#cc7a86",
-  "#7b76c4",
+  "#7665A3",
+  "#866A96",
+  "#A06F87",
+  "#A5796D",
+  "#9A8564",
+  "#709078",
+  "#60908E",
+  "#63879A",
+  "#657BA4",
 ];
+
+/** Контрастный текст для цветной полосы проекта. */
+export function contrastText(hex: string) {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  const value = match?.[1];
+  if (!value) return "#ffffff";
+  const color = parseInt(value, 16);
+  const channels = [(color >> 16) & 255, (color >> 8) & 255, color & 255].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance =
+    0.2126 * (channels[0] ?? 0) +
+    0.7152 * (channels[1] ?? 0) +
+    0.0722 * (channels[2] ?? 0);
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const darkContrast = (luminance + 0.05) / 0.057;
+  return darkContrast > whiteContrast ? "#17131c" : "#ffffff";
+}
 
 /** Осветление цвета для полос занятости (цвет остаётся ярким и узнаваемым). */
 export function soft(hex: string, mix = 0.18) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
   if (!m) return hex;
-  const int = parseInt(m[1]!, 16);
+  const value = m[1];
+  if (!value) return hex;
+  const int = parseInt(value, 16);
   let r = (int >> 16) & 255;
   let g = (int >> 8) & 255;
   let b = int & 255;

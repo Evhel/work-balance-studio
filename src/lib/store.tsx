@@ -79,7 +79,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // цвета проектов всегда берём из единой палитры
         const projects = (parsed.projects ?? base.projects).map((p, i) => ({
           ...p,
-          color: p.name === "Без объекта" ? p.color : projectColor(i),
+          color: projectColor(i),
           stages: p.stages?.length ? p.stages : (["ОТР"] as Project["stages"]),
         }));
         setStore({

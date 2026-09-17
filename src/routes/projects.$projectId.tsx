@@ -29,6 +29,7 @@ import {
 import { MonthPicker } from "@/components/MonthPicker";
 import { useRowSelection } from "@/components/useRowSelection";
 import { PlanBar, isPlanned } from "@/components/PlanBar";
+import { PersonLink } from "@/components/PersonLink";
 import { useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
 import {
@@ -319,7 +320,7 @@ function ProjectPage() {
               {members.map((p) => (
                 <tr key={p.id}>
                   <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
-                    {p.name}
+                    <PersonLink id={p.id} name={p.name} />
                   </th>
                   <td className="border-r border-b px-2 text-center text-xs">{p.department}</td>
                   {days.map((d) => {
@@ -454,7 +455,7 @@ function ProjectPage() {
               {members.map((p) => (
                 <tr key={p.id}>
                   <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
-                    {p.name}
+                    <PersonLink id={p.id} name={p.name} />
                   </th>
                   {MONTHS_SHORT.map((_, m) => {
                     const busy = Array.from({ length: daysInMonth(year, m) }, (_, i) =>

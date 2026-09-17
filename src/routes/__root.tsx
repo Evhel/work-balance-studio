@@ -122,12 +122,12 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 const TABS = [
+  { to: "/", label: "Табель рабочего времени", officeOnly: true },
   { to: "/effort", label: "Трудозатраты" },
   { to: "/dashboards", label: "Дашборды" },
   { to: "/projects", label: "Проекты" },
   { to: "/department", label: "Отдел" },
   { to: "/contractors", label: "Табель подрядчиков" },
-  { to: "/", label: "Табель рабочего времени", officeOnly: true },
   { to: "/roles", label: "Роли и доступы" },
   { to: "/instruction", label: "Инструкция" },
 ] as const;
