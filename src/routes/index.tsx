@@ -500,6 +500,7 @@ function TimesheetPage() {
                       (remote ? CODE_COLORS[REMOTE_CODE] : undefined) ??
                       (work ? undefined : "var(--weekend)");
                     const selected = sel.isSelected(p.id, d);
+                    const hovered = hoverCell?.row === p.id || hoverCell?.col === d;
                     return (
                       <ContextMenu key={d}>
                         <ContextMenuTrigger asChild>
@@ -508,6 +509,7 @@ function TimesheetPage() {
                             tabIndex={editable ? 0 : undefined}
                             style={{
                               background: bg,
+                              boxShadow: hovered ? HOVER_TINT : undefined,
                               outline: isEditing
                                 ? "2px solid var(--destructive)"
                                 : selected
@@ -516,7 +518,10 @@ function TimesheetPage() {
                               outlineOffset: "-2px",
                             }}
                             onMouseDown={(e) => editable && sel.onMouseDown(p.id, d, e)}
-                            onMouseEnter={() => editable && sel.onMouseEnter(p.id, d)}
+                            onMouseEnter={() => {
+                              setHoverCell({ row: p.id, col: d });
+                              if (editable) sel.onMouseEnter(p.id, d);
+                            }}
                             onContextMenu={() => editable && sel.ensureSelected(p.id, d)}
                             onKeyDown={(e) => onCellKeyDown(e, p.id, d)}
                             onBlur={() => isEditing && commitEdit()}
