@@ -17,11 +17,19 @@ export function contrastText(hex: string) {
   const value = match?.[1];
   if (!value) return "#ffffff";
   const color = parseInt(value, 16);
-  const r = (color >> 16) & 255;
-  const g = (color >> 8) & 255;
-  const b = color & 255;
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return luminance > 0.52 ? "#241f2b" : "#ffffff";
+  const channels = [(color >> 16) & 255, (color >> 8) & 255, color & 255].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance =
+    0.2126 * (channels[0] ?? 0) +
+    0.7152 * (channels[1] ?? 0) +
+    0.0722 * (channels[2] ?? 0);
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const darkContrast = (luminance + 0.05) / 0.057;
+  return darkContrast > whiteContrast ? "#17131c" : "#ffffff";
 }
 
 /** Осветление цвета для полос занятости (цвет остаётся ярким и узнаваемым). */
