@@ -457,7 +457,10 @@ function TimesheetPage() {
               const t = rowTotals(p.id);
               return (
                 <tr key={p.id}>
-                  <th className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal">
+                  <th
+                    className="sticky left-0 z-10 border-r border-b bg-card px-3 py-1 text-left text-xs font-normal"
+                    style={{ boxShadow: hoverCell?.row === p.id ? HOVER_TINT : undefined }}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span>
                         <PersonLink id={p.id} name={fio(p)} />
