@@ -97,7 +97,10 @@ function ProjectsPage() {
     toast.success("Проект создан");
   };
 
-  const visible = store.projects.filter(
+  /** Служебный проект «Без объекта» на этой вкладке не показываем */
+  const listed = store.projects.filter((p) => p.name !== "Без объекта");
+
+  const visible = listed.filter(
     (p) => monthIndex(p.start, year) < 12 && monthIndex(p.end, year) >= 0,
   );
 
