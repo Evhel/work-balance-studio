@@ -110,7 +110,7 @@ function ProjectsPage() {
     d.setMonth(d.getMonth() + 2);
     return d.toISOString().slice(0, 10);
   })();
-  const upcomingGoals = store.projects
+  const upcomingGoals = listed
     .flatMap((p) =>
       (p.goals ?? [])
         .filter((g) => g.date >= todayIso && g.date <= horizon)
@@ -213,7 +213,7 @@ function ProjectsPage() {
       <h2 className="mt-8 text-lg font-medium">Список проектов</h2>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {COLUMNS.map((col) => {
-          const list = store.projects.filter((p) => status(p) === col.key);
+          const list = listed.filter((p) => status(p) === col.key);
           return (
             <div key={col.key} className="rounded-lg border bg-card p-3">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium">
