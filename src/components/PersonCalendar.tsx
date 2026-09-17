@@ -1,7 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { soft } from "@/lib/colors";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { soft } from "@/lib/colors";
 import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
@@ -10,16 +9,9 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { PlanBar, isPlanned } from "@/components/PlanBar";
-import { birthDayMonth, byFio, fio, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
 import {
   MONTHS,
@@ -29,21 +21,6 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-
-export const Route = createFileRoute("/employee")({
-  head: () => ({
-    meta: [
-      { title: "Сотрудник — АРВ" },
-      { name: "description", content: "Личный календарь сотрудника: проекты, отсутствия, задачи." },
-      { property: "og:title", content: "Сотрудник — АРВ" },
-      {
-        property: "og:description",
-        content: "Личный календарь сотрудника: проекты, отсутствия, задачи.",
-      },
-    ],
-  }),
-  component: EmployeePage,
-});
 
 const EMP_LEGEND = [
   { code: "Б", label: "больничный лист" },
@@ -60,17 +37,15 @@ const dayRange = (a: number, b: number) => {
   return Array.from({ length: e - s + 1 }, (_, i) => s + i);
 };
 
-function EmployeePage() {
-  const { store, update, isWorkday, setPlanCells, currentUser, can } = useStore();
+/** Личный календарь человека: проекты, отсутствия, задачи */
+export function PersonCalendar({ personId }: { personId: string }) {
+  const { store, update, isWorkday, setPlanCells, can } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [view, setView] = useState<"month" | "year">("month");
-  const employees = [...store.employees.filter((e) => !e.hidden)].sort(byFio);
-  const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
-  const person = store.employees.find((e) => e.id === personId) ?? employees[0];
+  const person = store.employees.find((e) => e.id === personId);
   const editable = can("editDepartment");
-  const isSelf = person?.id === currentUser?.id;
 
   const [selDays, setSelDays] = useState<number[]>([]);
   const anchor = useRef<number | null>(null);
@@ -106,7 +81,7 @@ function EmployeePage() {
   const targetDates = (d: number) =>
     (selDays.includes(d) ? selDays : [d]).map((x) => iso(year, month, x));
 
-  if (!person) return <p>Нет сотрудников</p>;
+  if (!person) return null;
 
   const birthMd = person.birthDate ? person.birthDate.slice(5) : "";
   const isBirthday = (date: string) => !!birthMd && date.slice(5) === birthMd;
@@ -125,30 +100,10 @@ function EmployeePage() {
     ),
   );
 
-
   return (
     <div onMouseUp={() => (dragging.current = false)}>
-      <h1 className="text-2xl font-semibold">Сотрудник</h1>
-      {editable && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          Выделяйте несколько дней протяжкой мыши, Shift или Ctrl, затем ПКМ — задать занятость сразу
-          для всех выбранных дней{selDays.length > 1 ? ` (выбрано: ${selDays.length})` : ""}.
-        </p>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Select value={person.id} onValueChange={setPersonId}>
-          <SelectTrigger className="w-[280px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {employees.map((e) => (
-              <SelectItem key={e.id} value={e.id}>
-                {fio(e)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="text-lg font-medium">Личный календарь</h2>
         {view === "month" ? (
           <MonthPicker
             year={year}
@@ -174,22 +129,14 @@ function EmployeePage() {
         </Button>
       </div>
 
-      <div className="mt-4">
-        <h2 className="text-lg font-medium">{fio(person)}</h2>
-        <p className="text-sm text-muted-foreground">
-          {person.position} · {person.department} ·{" "}
-          {person.fullTime ? "полный день" : "неполный день"}
+      {editable && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Выделяйте несколько дней протяжкой мыши, Shift или Ctrl, затем ПКМ — задать занятость сразу
+          для всех выбранных дней{selDays.length > 1 ? ` (выбрано: ${selDays.length})` : ""}.
         </p>
-        {person.birthDate && (
-          <p className="mt-1 inline-block rounded-md px-2 py-1 text-sm font-medium"
-            style={{ background: "#ffd9ec" }}>
-            🎂 День рождения: {birthDayMonth(person.birthDate)}
-          </p>
-        )}
+      )}
 
-      </div>
-
-      <p className="mt-5 text-sm font-medium">
+      <p className="mt-3 text-sm font-medium">
         {view === "month" ? `${MONTHS[month]} ${year}` : `${year} год`}
       </p>
 
@@ -286,7 +233,11 @@ function EmployeePage() {
                           {event && (
                             <div
                               className="mb-0.5 truncate rounded px-1 py-0.5 text-[10px] font-semibold"
-                              style={{ background: "#ffe600", color: "#3b2f00", boxShadow: "inset 0 0 0 1px #d4bb00" }}
+                              style={{
+                                background: "#ffe600",
+                                color: "#3b2f00",
+                                boxShadow: "inset 0 0 0 1px #d4bb00",
+                              }}
                               title={event}
                             >
                               {event}
@@ -301,9 +252,7 @@ function EmployeePage() {
                               key={pr.id}
                               onSelect={() => {
                                 setPlanCells(pr.id, person.id, targetDates(d), "Р");
-                                toast.success(
-                                  `Занятость задана: ${targetDates(d).length} дн.`,
-                                );
+                                toast.success(`Занятость задана: ${targetDates(d).length} дн.`);
                                 setSelDays([]);
                               }}
                             >
@@ -375,7 +324,10 @@ function EmployeePage() {
                     </div>
                     {projs.map((pr) => (
                       <div key={pr.id} className="mb-0.5 flex items-center gap-1">
-                        <span className="size-2 rounded-full" style={{ background: soft(pr.color) }} />
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ background: soft(pr.color) }}
+                        />
                         <span className="truncate">{pr.name}</span>
                       </div>
                     ))}
@@ -404,16 +356,6 @@ function EmployeePage() {
               {p.name}
             </div>
           ))}
-          {isSelf && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3 w-full"
-              onClick={() => toast.info("ПКМ по дню — добавить задачу")}
-            >
-              Как добавить задачу?
-            </Button>
-          )}
         </div>
       </div>
 
