@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MONTHS_SHORT, daysInMonth, pad } from "@/lib/dates";
 import { projectColor, useStore } from "@/lib/store";
+import { contrastText } from "@/lib/colors";
 import type { Project } from "@/lib/types";
 
 export const Route = createFileRoute("/projects/")({
@@ -171,10 +172,11 @@ function ProjectsPage() {
               return (
                 <div key={p.id} className="grid grid-cols-12 px-0">
                   <div
-                    className="group relative mx-0.5 flex h-8 items-center rounded-md px-2 text-xs text-white"
+                    className="group relative mx-0.5 flex h-8 items-center rounded-md px-2 text-xs"
                     style={{
                       gridColumn: `${s + 1} / ${e + 2}`,
                       background: p.color,
+                      color: contrastText(p.color),
                     }}
                   >
                     <span
