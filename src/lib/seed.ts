@@ -75,6 +75,7 @@ function makeEmployees(): Employee[] {
     department: r[3],
     position: r[4],
     fullTime: r[5],
+    trackEffort: true,
     birthDate: r[6],
   }));
 }

@@ -29,12 +29,12 @@ import { PROJECT_STAGES, type FilterSet } from "@/lib/types";
 export const Route = createFileRoute("/dashboards")({
   head: () => ({
     meta: [
-      { title: "Дашборды — АРВ" },
+      { title: "Дашборды — ARV. Трудозатораты" },
       {
         name: "description",
         content: "Сводные таблицы и графики фактических трудозатрат по проектам и разделам.",
       },
-      { property: "og:title", content: "Дашборды — АРВ" },
+      { property: "og:title", content: "Дашборды — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Сводные таблицы и графики фактических трудозатрат бюро.",
@@ -199,7 +199,7 @@ function DashboardsPage() {
     () =>
       Array.from(
         new Set([
-          ...store.employees.map((e) => e.department),
+          ...store.employees.filter((e) => e.trackEffort !== false).map((e) => e.department),
           ...store.contractors.map((c) => c.department),
         ]),
       )
@@ -210,7 +210,7 @@ function DashboardsPage() {
   );
   const projectOptions = store.projects.map((p) => ({ id: p.id, name: p.name }));
   const stageOptions = PROJECT_STAGES.map((s) => ({ id: s, name: s }));
-  const peopleOptions = [...store.employees]
+  const peopleOptions = [...store.employees.filter((e) => e.trackEffort !== false)]
     .map((e) => ({ id: e.id, name: fio(e) }))
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 

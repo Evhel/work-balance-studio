@@ -82,9 +82,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           color: projectColor(i),
           stages: p.stages?.length ? p.stages : (["ОТР"] as Project["stages"]),
         }));
+        const employees = (parsed.employees ?? base.employees).map((employee) => ({
+          ...employee,
+          trackEffort: employee.trackEffort !== false,
+        }));
         setStore({
           ...base,
           ...parsed,
+          employees,
           projects,
           effort: parsed.effort ?? base.effort,
           effortDone: parsed.effortDone ?? base.effortDone,

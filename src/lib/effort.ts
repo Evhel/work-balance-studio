@@ -48,11 +48,18 @@ export type EffortFact = {
 /** Плоский список фактических трудозатрат по всем сотрудникам */
 export function allFacts(store: Store): EffortFact[] {
   const dept = new Map<string, string>();
-  store.employees.forEach((e) => dept.set(e.id, e.department));
+  const trackedPeople = new Set<string>();
+  store.employees.forEach((e) => {
+    if (e.trackEffort !== false) {
+      dept.set(e.id, e.department);
+      trackedPeople.add(e.id);
+    }
+  });
   store.contractors.forEach((c) => dept.set(c.id, c.department));
 
   const out: EffortFact[] = [];
   for (const [personId, byMonth] of Object.entries(store.effort)) {
+    if (!trackedPeople.has(personId)) continue;
     for (const [ym, rows] of Object.entries(byMonth ?? {})) {
       for (const r of rows) {
         const hours = rowTotal(r);
