@@ -299,6 +299,7 @@ function EffortPage() {
                   className="day-cell font-medium"
                   style={{
                     background: isWorkday(iso(year, month, d)) ? undefined : "var(--weekend)",
+                    boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined,
                   }}
                 >
                   <div>{d}</div>
