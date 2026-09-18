@@ -8,7 +8,7 @@ import { projectColor, useStore } from "@/lib/store";
 import { contrastText } from "@/lib/colors";
 import type { Project } from "@/lib/types";
 
-export const Route = createFileRoute("/projects/")({
+export const Route = createFileRoute("/_authenticated/projects/")({
   head: () => ({
     meta: [
       { title: "Проекты — ARV. Трудозатораты" },

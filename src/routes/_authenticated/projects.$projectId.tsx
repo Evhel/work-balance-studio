@@ -42,7 +42,7 @@ import {
 } from "@/lib/dates";
 import { PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
 
-export const Route = createFileRoute("/projects/$projectId")({
+export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   head: () => ({
     meta: [
       { title: "Карточка проекта — ARV. Трудозатораты" },

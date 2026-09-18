@@ -36,7 +36,7 @@ import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import { CODE_COLORS, CONTRACTOR_LEGEND } from "@/lib/types";
 
-export const Route = createFileRoute("/contractors")({
+export const Route = createFileRoute("/_authenticated/contractors")({
   head: () => ({
     meta: [
       { title: "Табель подрядчиков — ARV. Трудозатораты" },

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { fio, useStore } from "@/lib/store";
 import { POSITIONS, type Position } from "@/lib/types";
 
-export const Route = createFileRoute("/instruction")({
+export const Route = createFileRoute("/_authenticated/instruction")({
   component: InstructionPage,
   head: () => ({
     meta: [
