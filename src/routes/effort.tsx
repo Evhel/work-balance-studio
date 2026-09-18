@@ -313,8 +313,11 @@ function EffortPage() {
           </thead>
           <tbody>
             {list.map((r) => (
-              <tr key={r.id}>
-                <th className="sticky left-0 z-10 border-r border-b bg-card px-2 py-1 text-left text-xs font-normal">
+              <tr key={r.id} onMouseEnter={() => setHoverCell({ row: r.id, col: -1 })}>
+                <th
+                  className="sticky left-0 z-10 border-r border-b bg-card px-2 py-1 text-left text-xs font-normal"
+                  style={{ boxShadow: hoverCell?.row === r.id ? HOVER_TINT : undefined }}
+                >
                   <div className="flex items-center gap-1">
                     <select
                       className="w-full rounded border bg-background px-1 py-1 text-xs"
