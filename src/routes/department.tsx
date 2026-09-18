@@ -36,13 +36,15 @@ import {
 export const Route = createFileRoute("/department")({
   head: () => ({
     meta: [
-      { title: "Отдел — АРВ" },
+      { title: "Отдел — ARV. Трудозатораты" },
       { name: "description", content: "Загрузка сотрудников отдела по проектам и дням месяца." },
-      { property: "og:title", content: "Отдел — АРВ" },
+      { property: "og:title", content: "Отдел — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Загрузка сотрудников отдела по проектам и дням месяца.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DepartmentPage,

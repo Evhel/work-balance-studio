@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Трудозатраты" },
+      { title: "ARV. Трудозатораты" },
       {
         name: "description",
         content:
           "Табели рабочего времени, подрядчики, проекты и загрузка отделов проектного бюро.",
       },
-      { property: "og:title", content: "Трудозатраты" },
+      { property: "og:title", content: "ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Планирование загрузки сотрудников и подрядчиков проектного бюро.",
@@ -160,7 +160,7 @@ function Chrome() {
       <header className="bg-primary">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="text-2xl font-bold tracking-wide text-primary-foreground sm:text-3xl">
-            Трудозатраты
+            ARV. Трудозатораты
           </div>
           <RoleSwitcher />
         </div>

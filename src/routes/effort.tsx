@@ -28,16 +28,18 @@ import type { EffortRow } from "@/lib/types";
 export const Route = createFileRoute("/effort")({
   head: () => ({
     meta: [
-      { title: "Трудозатраты — АРВ" },
+      { title: "Трудозатраты — ARV. Трудозатораты" },
       {
         name: "description",
         content: "Фактические трудозатраты сотрудников по проектам и видам работ по дням месяца.",
       },
-      { property: "og:title", content: "Трудозатраты — АРВ" },
+      { property: "og:title", content: "Трудозатраты — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Фактические трудозатраты по проектам и видам работ по дням месяца.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EffortPage,
@@ -49,11 +51,13 @@ function EffortPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [gridYear, setGridYear] = useState(now.getFullYear());
-  const employees = useMemo(() => [...store.employees.filter((e) => !e.hidden)].sort(byFio), [
-    store.employees,
-  ]);
+  const employees = useMemo(
+    () =>
+      [...store.employees.filter((e) => !e.hidden && e.trackEffort !== false)].sort(byFio),
+    [store.employees],
+  );
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
-  const person = store.employees.find((e) => e.id === personId) ?? employees[0];
+  const person = employees.find((e) => e.id === personId) ?? employees[0];
   const fileRef = useRef<HTMLInputElement>(null);
   const bulkRef = useRef<HTMLInputElement>(null);
 

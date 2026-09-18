@@ -45,13 +45,15 @@ import { PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
 export const Route = createFileRoute("/projects/$projectId")({
   head: () => ({
     meta: [
-      { title: "Карточка проекта — АРВ" },
+      { title: "Карточка проекта — ARV. Трудозатораты" },
       { name: "description", content: "План работ по проекту и загрузка участников по дням." },
-      { property: "og:title", content: "Карточка проекта — АРВ" },
+      { property: "og:title", content: "Карточка проекта — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "План работ по проекту и загрузка участников по дням.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProjectPage,

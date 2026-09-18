@@ -39,13 +39,15 @@ import { CODE_COLORS, CONTRACTOR_LEGEND } from "@/lib/types";
 export const Route = createFileRoute("/contractors")({
   head: () => ({
     meta: [
-      { title: "Табель подрядчиков — АРВ" },
+      { title: "Табель подрядчиков — ARV. Трудозатораты" },
       { name: "description", content: "Месячный табель занятости подрядчиков проектного бюро." },
-      { property: "og:title", content: "Табель подрядчиков — АРВ" },
+      { property: "og:title", content: "Табель подрядчиков — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Месячный табель занятости подрядчиков проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ContractorsPage,

@@ -17,13 +17,13 @@ export const Route = createFileRoute("/roles")({
   component: RolesPage,
   head: () => ({
     meta: [
-      { title: "Роли и доступы — АРВ" },
+      { title: "Роли и доступы — ARV. Трудозатораты" },
       {
         name: "description",
         content:
           "Управление ролями сотрудников и правами просмотра и редактирования табелей в системе учёта трудозатрат АРВ.",
       },
-      { property: "og:title", content: "Роли и доступы — АРВ" },
+      { property: "og:title", content: "Роли и доступы — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Настройка должностей и прав доступа к табелям, проектам и дашбордам.",
@@ -65,15 +65,18 @@ function RolesPage() {
       </p>
 
       <h2 className="mt-6 text-sm font-medium">Должности сотрудников</h2>
-      <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
-        <table className="grid-table w-full">
+       <div className="mt-2 w-fit max-w-full overflow-x-auto rounded-lg border bg-card">
+         <table className="grid-table w-auto">
           <thead>
             <tr className="bg-muted">
               <th className="min-w-[260px] border-r border-b px-3 py-2 text-left text-xs font-medium">
                 ФИО
               </th>
               <th className="border-r border-b px-3 py-2 text-left text-xs font-medium">Отдел</th>
-              <th className="border-b px-3 py-2 text-left text-xs font-medium">Должность</th>
+               <th className="border-r border-b px-3 py-2 text-left text-xs font-medium">Должность</th>
+               <th className="whitespace-nowrap border-b px-3 py-2 text-center text-xs font-medium">
+                 Учет трудозатрат
+               </th>
             </tr>
           </thead>
           <tbody>
@@ -83,7 +86,7 @@ function RolesPage() {
                   <PersonLink id={e.id} name={fio(e)} />
                 </td>
                 <td className="border-r border-b px-3 py-1.5 text-xs">{e.department}</td>
-                <td className="border-b px-3 py-1.5">
+                 <td className="border-r border-b px-3 py-1.5">
                   <Select
                     value={e.position}
                     onValueChange={(v) =>
@@ -105,6 +108,18 @@ function RolesPage() {
                     </SelectContent>
                   </Select>
                 </td>
+                 <td className="border-b px-3 py-1.5 text-center">
+                   <Checkbox
+                     aria-label={`Учет трудозатрат: ${fio(e)}`}
+                     checked={e.trackEffort !== false}
+                     onCheckedChange={(checked) =>
+                       update((d) => {
+                         const employee = d.employees.find((item) => item.id === e.id);
+                         if (employee) employee.trackEffort = checked === true;
+                       })
+                     }
+                   />
+                 </td>
               </tr>
             ))}
           </tbody>
@@ -127,8 +142,8 @@ function RolesPage() {
         </Button>
       </div>
 
-      <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
-        <table className="grid-table w-full">
+       <div className="mt-2 w-fit max-w-full overflow-x-auto rounded-lg border bg-card">
+         <table className="grid-table w-auto">
           <thead>
             <tr className="bg-muted">
               <th className="min-w-[320px] border-r border-b px-3 py-2 text-left text-xs font-medium">

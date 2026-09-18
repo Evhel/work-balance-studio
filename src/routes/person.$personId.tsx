@@ -19,13 +19,15 @@ import { fio, useStore } from "@/lib/store";
 export const Route = createFileRoute("/person/$personId")({
   head: () => ({
     meta: [
-      { title: "Карточка человека — АРВ" },
-      { name: "description", content: "Данные сотрудника или подрядчика проектного бюро." },
-      { property: "og:title", content: "Карточка человека — АРВ" },
+      { title: "Сотрудник — ARV. Трудозатораты" },
+      { name: "description", content: "Данные сотрудника проектного бюро." },
+      { property: "og:title", content: "Сотрудник — ARV. Трудозатораты" },
       {
         property: "og:description",
-        content: "Данные сотрудника или подрядчика проектного бюро.",
+        content: "Данные сотрудника проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PersonPage,
@@ -33,7 +35,7 @@ export const Route = createFileRoute("/person/$personId")({
 
 function PersonPage() {
   const { personId } = Route.useParams();
-  const { store, update, can, removeEmployee, removeContractor } = useStore();
+  const { store, update, can, currentUser, removeEmployee, removeContractor } = useStore();
   const navigate = useNavigate();
   const employee = store.employees.find((e) => e.id === personId);
   const contractor = store.contractors.find((c) => c.id === personId);
@@ -52,6 +54,8 @@ function PersonPage() {
 
   const editable = employee ? can("editDepartment") : can("editContractors");
   const cardEditable = can("editEmployeeCard");
+  const nameEditable =
+    currentUser.position === "Модератор" || currentUser.position === "Офис-менеджер";
   const person = employee ?? contractor!;
   const comment = person.comment ?? "";
 
@@ -77,7 +81,10 @@ function PersonPage() {
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{fio(person)}</h1>
+        <div>
+          <p className="text-sm text-muted-foreground">Сотрудник</p>
+          <h1 className="text-2xl font-semibold">{fio(person)}</h1>
+        </div>
         {canDelete && (
           <Button
             variant="destructive"
@@ -94,12 +101,41 @@ function PersonPage() {
         )}
       </div>
 
-      <div className="mt-4 grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-x-3 gap-y-2 rounded-lg border bg-card p-3 sm:grid-cols-2 lg:grid-cols-4">
         {employee ? (
           <>
             <div>
+              <Label>Фамилия</Label>
+              <Input
+                className="h-8"
+                value={employee.lastName}
+                disabled={!nameEditable}
+                onChange={(e) =>
+                  update((d) => {
+                    const x = d.employees.find((z) => z.id === personId);
+                    if (x) x.lastName = e.target.value;
+                  })
+                }
+              />
+            </div>
+            <div>
+              <Label>Имя</Label>
+              <Input
+                className="h-8"
+                value={employee.firstName}
+                disabled={!nameEditable}
+                onChange={(e) =>
+                  update((d) => {
+                    const x = d.employees.find((z) => z.id === personId);
+                    if (x) x.firstName = e.target.value;
+                  })
+                }
+              />
+            </div>
+            <div>
               <Label>Отдел</Label>
               <Input
+                className="h-8"
                 value={employee.department}
                 disabled={!cardEditable}
                 onChange={(e) =>
@@ -122,7 +158,7 @@ function PersonPage() {
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,7 +182,7 @@ function PersonPage() {
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,31 +192,9 @@ function PersonPage() {
               </Select>
             </div>
             <div>
-              <Label>Дата рождения (ДД.ММ)</Label>
-              <Input
-                placeholder="дд.мм"
-                value={
-                  employee.birthDate
-                    ? `${employee.birthDate.slice(8, 10)}.${employee.birthDate.slice(5, 7)}`
-                    : ""
-                }
-                disabled={!cardEditable}
-                onChange={(e) => {
-                  const m = e.target.value.match(/^(\d{1,2})[.\/-](\d{1,2})$/);
-                  if (!m) return;
-                  const dd = String(m[1]).padStart(2, "0");
-                  const mm = String(m[2]).padStart(2, "0");
-                  update((d) => {
-                    const x = d.employees.find((z) => z.id === personId);
-                    if (x) x.birthDate = `${(x.birthDate || "2000-01-01").slice(0, 4)}-${mm}-${dd}`;
-                  });
-                }}
-              />
-            </div>
-
-            <div>
               <Label>Дата начала работы</Label>
               <Input
+                className="h-8"
                 type="date"
                 value={employee.startWork ?? ""}
                 disabled={!cardEditable}
@@ -195,6 +209,7 @@ function PersonPage() {
             <div>
               <Label>Дата конца работы</Label>
               <Input
+                className="h-8"
                 type="date"
                 value={employee.endWork ?? ""}
                 disabled={!cardEditable}
@@ -205,6 +220,42 @@ function PersonPage() {
                   })
                 }
               />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <div className="text-xs font-medium">Рег. удалёнка</div>
+                  <p className="text-[11px] text-muted-foreground">Автоматическая отметка «УД»</p>
+                </div>
+                <div className="flex gap-1">
+                  {["Пн", "Вт", "Ср", "Чт", "Пт"].map((w, i) => {
+                    const day = i + 1;
+                    const on = employee.remoteDays?.includes(day) ?? false;
+                    return (
+                      <Button
+                        key={w}
+                        type="button"
+                        variant={on ? "default" : "outline"}
+                        size="sm"
+                        disabled={!cardEditable}
+                        className="size-8 px-0"
+                        onClick={() =>
+                          update((d) => {
+                            const x = d.employees.find((z) => z.id === personId);
+                            if (!x) return;
+                            const cur = new Set(x.remoteDays ?? []);
+                            if (cur.has(day)) cur.delete(day);
+                            else cur.add(day);
+                            x.remoteDays = [...cur].sort((a, b) => a - b);
+                          })
+                        }
+                      >
+                        {w}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </>
         ) : (
@@ -217,46 +268,9 @@ function PersonPage() {
           </>
         )}
       </div>
-      {employee && (
-        <div className="mt-4 inline-block rounded-lg border bg-card p-4">
-          <div className="text-sm font-medium">Рег. удалёнка</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Дни недели, в которые в табеле автоматически ставится «УД»
-          </p>
-          <div className="mt-2 flex gap-1">
-            {["Пн", "Вт", "Ср", "Чт", "Пт"].map((w, i) => {
-              const day = i + 1;
-              const on = employee.remoteDays?.includes(day) ?? false;
-              return (
-                <button
-                  key={w}
-                  disabled={!cardEditable}
-                  className="size-11 rounded-md border text-xs font-medium disabled:opacity-60"
-                  style={{
-                    background: on ? "var(--primary)" : undefined,
-                    color: on ? "var(--primary-foreground)" : undefined,
-                  }}
-                  onClick={() =>
-                    update((d) => {
-                      const x = d.employees.find((z) => z.id === personId);
-                      if (!x) return;
-                      const cur = new Set(x.remoteDays ?? []);
-                      if (cur.has(day)) cur.delete(day);
-                      else cur.add(day);
-                      x.remoteDays = [...cur].sort((a, b) => a - b);
-                    })
-                  }
-                >
-                  {w}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
       {employee && !cardEditable && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Изменять эти данные может только офис-менеджер.
+          Профиль редактирует офис-менеджер; фамилию и имя также может изменить модератор.
         </p>
       )}
 

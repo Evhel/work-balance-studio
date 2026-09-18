@@ -53,16 +53,18 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Табель рабочего времени — АРВ" },
+      { title: "Табель рабочего времени — ARV. Трудозатораты" },
       {
         name: "description",
         content: "Месячный табель учёта рабочего времени сотрудников проектного бюро.",
       },
-      { property: "og:title", content: "Табель рабочего времени — АРВ" },
+      { property: "og:title", content: "Табель рабочего времени — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Месячный табель учёта рабочего времени сотрудников проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: TimesheetPage,
@@ -712,6 +714,7 @@ function AddEmployeeDialog({ departments }: { departments: string[] }) {
     department: "",
     position: "Сотрудник" as Position,
     fullTime: true,
+    trackEffort: true,
     birthDate: "",
     startWork: "",
     endWork: "",
