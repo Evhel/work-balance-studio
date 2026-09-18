@@ -181,6 +181,10 @@ function DashboardsPage() {
   const [setName, setSetName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeSetId, setActiveSetId] = useState<string | null>(null);
+  /** Подсветка строки и столбца под курсором в таблицах */
+  const [hoverA, setHoverA] = useState<{ row: string; col: number } | null>(null);
+  const [hoverB, setHoverB] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
 
   const resetFilters = () => {
     setUnit("days");
@@ -647,15 +651,22 @@ function DashboardsPage() {
           <h2 className="text-base font-medium">
             Фактические трудозатраты: проект × раздел ({unitLabel})
           </h2>
-          <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
-            <table className="grid-table w-full text-xs">
+          <div className="mt-2 w-fit max-w-full overflow-x-auto rounded-lg border bg-card">
+            <table
+              className="grid-table w-auto text-xs"
+              onMouseLeave={() => setHoverA(null)}
+            >
               <thead>
                 <tr className="bg-muted">
                   <th className="min-w-[170px] border-r border-b px-2 py-1.5 text-left text-xs font-medium">
                     Проект
                   </th>
-                  {usedDepts.map((d) => (
-                    <th key={d} className="border-r border-b px-2 py-1.5 text-xs font-medium">
+                  {usedDepts.map((d, i) => (
+                    <th
+                      key={d}
+                      className="border-r border-b px-2 py-1.5 text-xs font-medium"
+                      style={{ boxShadow: hoverA?.col === i ? HOVER_TINT : undefined }}
+                    >
                       {d}
                     </th>
                   ))}
@@ -664,8 +675,11 @@ function DashboardsPage() {
               </thead>
               <tbody>
                 {table3.map((r) => (
-                  <tr key={r.pid}>
-                    <th className="border-r border-b px-2 py-0.5 text-left text-xs font-normal">
+                  <tr key={r.pid} onMouseEnter={() => setHoverA({ row: r.pid, col: -1 })}>
+                    <th
+                      className="border-r border-b px-2 py-0.5 text-left text-xs font-normal"
+                      style={{ boxShadow: hoverA?.row === r.pid ? HOVER_TINT : undefined }}
+                    >
                       <Link
                         to="/projects/$projectId"
                         params={{ projectId: r.pid }}
@@ -675,17 +689,34 @@ function DashboardsPage() {
                       </Link>
                     </th>
                     {r.cells.map((c, i) => (
-                      <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                      <td
+                        key={i}
+                        className="border-r border-b px-2 py-0.5 text-center"
+                        onMouseEnter={() => setHoverA({ row: r.pid, col: i })}
+                        style={{
+                          boxShadow:
+                            hoverA?.row === r.pid || hoverA?.col === i ? HOVER_TINT : undefined,
+                        }}
+                      >
                         {c || ""}
                       </td>
                     ))}
-                    <td className="border-b px-2 py-0.5 text-center font-medium">{r.total}</td>
+                    <td
+                      className="border-b px-2 py-0.5 text-center font-medium"
+                      style={{ boxShadow: hoverA?.row === r.pid ? HOVER_TINT : undefined }}
+                    >
+                      {r.total}
+                    </td>
                   </tr>
                 ))}
                 <tr className="bg-muted/60 font-medium">
                   <th className="border-r border-b px-2 py-0.5 text-left text-xs">Общий итог</th>
                   {table3Totals.map((c, i) => (
-                    <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                    <td
+                      key={i}
+                      className="border-r border-b px-2 py-0.5 text-center"
+                      style={{ boxShadow: hoverA?.col === i ? HOVER_TINT : undefined }}
+                    >
                       {c || ""}
                     </td>
                   ))}
@@ -738,32 +769,12 @@ function DashboardsPage() {
 
       </div>
 
-      {/* Гистограмма с группировкой к таблице 3 */}
-      <div ref={secBar} className="bg-background">
-        <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
-        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="project" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
-              <RLegend />
-              {usedDepts.map((d, i) => (
-                <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-
       {/* Таблица 5 */}
       <div ref={secTable5} className="bg-background">
       <h2 className="mt-6 text-lg font-medium">Трудозатраты по месяцам ({unitLabel})</h2>
-      <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
+      <div className="mx-auto mt-2 w-fit max-w-full overflow-x-auto rounded-lg border bg-card">
 
-        <table className="grid-table w-full text-sm">
+        <table className="grid-table w-auto text-sm" onMouseLeave={() => setHoverB(null)}>
           <thead>
             <tr className="bg-muted">
               <th rowSpan={2} className="min-w-[220px] border-r border-b px-3 py-2 text-left text-xs font-medium">
@@ -781,8 +792,12 @@ function DashboardsPage() {
               <th rowSpan={2} className="border-b px-3 py-2 text-xs font-medium">Общий итог</th>
             </tr>
             <tr className="bg-muted">
-              {columns.map((c) => (
-                <th key={c.key} className="border-r border-b px-2 py-1 text-xs font-medium">
+              {columns.map((c, i) => (
+                <th
+                  key={c.key}
+                  className="border-r border-b px-2 py-1 text-xs font-medium"
+                  style={{ boxShadow: hoverB?.col === i ? HOVER_TINT : undefined }}
+                >
                   {c.isTotal ? "Итого" : c.label}
                 </th>
               ))}
@@ -790,8 +805,11 @@ function DashboardsPage() {
           </thead>
           <tbody>
             {table5.map((r) => (
-              <tr key={r.pid}>
-                <th className="border-r border-b px-3 py-1 text-left text-xs font-normal">
+              <tr key={r.pid} onMouseEnter={() => setHoverB({ row: r.pid, col: -1 })}>
+                <th
+                  className="border-r border-b px-3 py-1 text-left text-xs font-normal"
+                  style={{ boxShadow: hoverB?.row === r.pid ? HOVER_TINT : undefined }}
+                >
                   <Link
                     to="/projects/$projectId"
                     params={{ projectId: r.pid }}
@@ -804,24 +822,59 @@ function DashboardsPage() {
                   <td
                     key={i}
                     className="border-r border-b px-2 py-1 text-center text-xs"
-                    style={{ background: columns[i]!.isTotal ? "var(--muted)" : undefined }}
+                    onMouseEnter={() => setHoverB({ row: r.pid, col: i })}
+                    style={{
+                      background: columns[i]!.isTotal ? "var(--muted)" : undefined,
+                      boxShadow:
+                        hoverB?.row === r.pid || hoverB?.col === i ? HOVER_TINT : undefined,
+                    }}
                   >
                     {c || ""}
                   </td>
                 ))}
-                <td className="border-b px-2 py-1 text-center text-xs font-medium">{r.total}</td>
+                <td
+                  className="border-b px-2 py-1 text-center text-xs font-medium"
+                  style={{ boxShadow: hoverB?.row === r.pid ? HOVER_TINT : undefined }}
+                >
+                  {r.total}
+                </td>
               </tr>
             ))}
             <tr className="bg-muted/60 font-medium">
               <th className="border-r border-b px-3 py-1 text-left text-xs">Общий итог</th>
               {table5Totals.map((c, i) => (
-                <td key={i} className="border-r border-b px-2 py-1 text-center text-xs">{c || ""}</td>
+                <td
+                  key={i}
+                  className="border-r border-b px-2 py-1 text-center text-xs"
+                  style={{ boxShadow: hoverB?.col === i ? HOVER_TINT : undefined }}
+                >
+                  {c || ""}
+                </td>
               ))}
               <td className="border-b px-2 py-1 text-center text-xs">{grand}</td>
             </tr>
           </tbody>
         </table>
       </div>
+      </div>
+
+      {/* Гистограмма с группировкой к таблице 3 */}
+      <div ref={secBar} className="bg-background">
+        <h2 className="mt-6 text-lg font-medium">Проекты по разделам (гистограмма с группировкой)</h2>
+        <div className="mt-2 h-80 rounded-lg border bg-card p-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="project" fontSize={11} />
+              <YAxis fontSize={11} />
+              <Tooltip formatter={(v: number) => `${v} ${unitLabel}`} />
+              <RLegend />
+              {usedDepts.map((d, i) => (
+                <Bar key={d} dataKey={d} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
     </div>

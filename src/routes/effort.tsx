@@ -57,6 +57,9 @@ function EffortPage() {
     [store.employees],
   );
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
+  /** Подсветка строки и столбца под курсором */
+  const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const person = employees.find((e) => e.id === personId) ?? employees[0];
   const fileRef = useRef<HTMLInputElement>(null);
   const bulkRef = useRef<HTMLInputElement>(null);
@@ -278,7 +281,7 @@ function EffortPage() {
       </p>
 
       <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
-        <table className="grid-table w-full">
+        <table className="grid-table w-full" onMouseLeave={() => setHoverCell(null)}>
           <thead>
             <tr className="bg-muted">
               <th className="sticky left-0 z-10 min-w-[220px] border-r border-b bg-muted px-3 py-2 text-left text-xs font-medium">
@@ -296,6 +299,7 @@ function EffortPage() {
                   className="day-cell font-medium"
                   style={{
                     background: isWorkday(iso(year, month, d)) ? undefined : "var(--weekend)",
+                    boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined,
                   }}
                 >
                   <div>{d}</div>
@@ -309,8 +313,11 @@ function EffortPage() {
           </thead>
           <tbody>
             {list.map((r) => (
-              <tr key={r.id}>
-                <th className="sticky left-0 z-10 border-r border-b bg-card px-2 py-1 text-left text-xs font-normal">
+              <tr key={r.id} onMouseEnter={() => setHoverCell({ row: r.id, col: -1 })}>
+                <th
+                  className="sticky left-0 z-10 border-r border-b bg-card px-2 py-1 text-left text-xs font-normal"
+                  style={{ boxShadow: hoverCell?.row === r.id ? HOVER_TINT : undefined }}
+                >
                   <div className="flex items-center gap-1">
                     <select
                       className="w-full rounded border bg-background px-1 py-1 text-xs"
@@ -385,10 +392,15 @@ function EffortPage() {
                   const weekend = !isWorkday(iso(year, month, d));
                   const v = r.hours[String(d)];
                   return (
-                    <td
+                     <td
                       key={d}
                       className="day-cell p-0"
-                      style={{ background: weekend ? "var(--weekend)" : undefined }}
+                      onMouseEnter={() => setHoverCell({ row: r.id, col: d })}
+                      style={{
+                        background: weekend ? "var(--weekend)" : undefined,
+                        boxShadow:
+                          hoverCell?.row === r.id || hoverCell?.col === d ? HOVER_TINT : undefined,
+                      }}
                     >
                       <input
                         className="h-full w-full bg-transparent text-center text-xs outline-none"
@@ -419,7 +431,11 @@ function EffortPage() {
               </th>
               <td className="border-r border-b" colSpan={2} />
               {days.map((d) => (
-                <td key={d} className="day-cell text-xs">
+                <td
+                  key={d}
+                  className="day-cell text-xs"
+                  style={{ boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined }}
+                >
                   {dayTotal(d) || ""}
                 </td>
               ))}
