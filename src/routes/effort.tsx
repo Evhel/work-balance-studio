@@ -431,7 +431,11 @@ function EffortPage() {
               </th>
               <td className="border-r border-b" colSpan={2} />
               {days.map((d) => (
-                <td key={d} className="day-cell text-xs">
+                <td
+                  key={d}
+                  className="day-cell text-xs"
+                  style={{ boxShadow: hoverCell?.col === d ? HOVER_TINT : undefined }}
+                >
                   {dayTotal(d) || ""}
                 </td>
               ))}
