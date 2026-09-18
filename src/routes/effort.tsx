@@ -392,10 +392,15 @@ function EffortPage() {
                   const weekend = !isWorkday(iso(year, month, d));
                   const v = r.hours[String(d)];
                   return (
-                    <td
+                     <td
                       key={d}
                       className="day-cell p-0"
-                      style={{ background: weekend ? "var(--weekend)" : undefined }}
+                      onMouseEnter={() => setHoverCell({ row: r.id, col: d })}
+                      style={{
+                        background: weekend ? "var(--weekend)" : undefined,
+                        boxShadow:
+                          hoverCell?.row === r.id || hoverCell?.col === d ? HOVER_TINT : undefined,
+                      }}
                     >
                       <input
                         className="h-full w-full bg-transparent text-center text-xs outline-none"
