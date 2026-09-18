@@ -13,7 +13,7 @@ import { PersonLink } from "@/components/PersonLink";
 import { byFio, defaultAccess, fio, useStore } from "@/lib/store";
 import { ACCESS_ACTIONS, POSITIONS, type Position } from "@/lib/types";
 
-export const Route = createFileRoute("/roles")({
+export const Route = createFileRoute("/_authenticated/roles")({
   component: RolesPage,
   head: () => ({
     meta: [

@@ -33,7 +33,7 @@ import {
 } from "@/lib/dates";
 
 
-export const Route = createFileRoute("/department")({
+export const Route = createFileRoute("/_authenticated/department")({
   head: () => ({
     meta: [
       { title: "Отдел — ARV. Трудозатораты" },

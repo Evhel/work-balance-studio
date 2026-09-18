@@ -16,7 +16,7 @@ import { PersonCalendar } from "@/components/PersonCalendar";
 import { POSITIONS, type Position } from "@/lib/types";
 import { fio, useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/person/$personId")({
+export const Route = createFileRoute("/_authenticated/person/$personId")({
   head: () => ({
     meta: [
       { title: "Сотрудник — ARV. Трудозатораты" },

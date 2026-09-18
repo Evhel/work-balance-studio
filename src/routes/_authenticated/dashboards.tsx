@@ -26,7 +26,7 @@ import { allFacts, parseYm, ymValue } from "@/lib/effort";
 import { downloadTables } from "@/lib/excel";
 import { PROJECT_STAGES, type FilterSet } from "@/lib/types";
 
-export const Route = createFileRoute("/dashboards")({
+export const Route = createFileRoute("/_authenticated/dashboards")({
   head: () => ({
     meta: [
       { title: "Дашборды — ARV. Трудозатораты" },

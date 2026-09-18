@@ -25,7 +25,7 @@ import {
 } from "@/lib/excel";
 import type { EffortRow } from "@/lib/types";
 
-export const Route = createFileRoute("/effort")({
+export const Route = createFileRoute("/_authenticated/effort")({
   head: () => ({
     meta: [
       { title: "Трудозатраты — ARV. Трудозатораты" },
