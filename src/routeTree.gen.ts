@@ -19,6 +19,7 @@ import { Route as AuthenticatedEffortRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedInstructionRouteImport } from './routes/_authenticated/instruction'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
+import { Route as AuthenticatedEmployeesNewRouteImport } from './routes/_authenticated/employees.new'
 import { Route as AuthenticatedPersonPersonIdRouteImport } from './routes/_authenticated/person.$personId'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
@@ -74,6 +75,12 @@ const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmployeesNewRoute =
+  AuthenticatedEmployeesNewRouteImport.update({
+    id: '/employees/new',
+    path: '/employees/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPersonPersonIdRoute =
   AuthenticatedPersonPersonIdRouteImport.update({
     id: '/person/$personId',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/instruction': typeof AuthenticatedInstructionRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/roles': typeof AuthenticatedRolesRoute
+  '/employees/new': typeof AuthenticatedEmployeesNewRoute
   '/person/$personId': typeof AuthenticatedPersonPersonIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
@@ -116,6 +124,7 @@ export interface FileRoutesByTo {
   '/instruction': typeof AuthenticatedInstructionRoute
   '/roles': typeof AuthenticatedRolesRoute
   '/': typeof AuthenticatedIndexRoute
+  '/employees/new': typeof AuthenticatedEmployeesNewRoute
   '/person/$personId': typeof AuthenticatedPersonPersonIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/_authenticated/roles': typeof AuthenticatedRolesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/employees/new': typeof AuthenticatedEmployeesNewRoute
   '/_authenticated/person/$personId': typeof AuthenticatedPersonPersonIdRoute
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/instruction'
     | '/projects'
     | '/roles'
+    | '/employees/new'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/instruction'
     | '/roles'
     | '/'
+    | '/employees/new'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/roles'
     | '/_authenticated/'
+    | '/_authenticated/employees/new'
     | '/_authenticated/person/$personId'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/projects/'
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRolesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/employees/new': {
+      id: '/_authenticated/employees/new'
+      path: '/employees/new'
+      fullPath: '/employees/new'
+      preLoaderRoute: typeof AuthenticatedEmployeesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/person/$personId': {
       id: '/_authenticated/person/$personId'
       path: '/person/$personId'
@@ -306,6 +326,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedEmployeesNewRoute: typeof AuthenticatedEmployeesNewRoute
   AuthenticatedPersonPersonIdRoute: typeof AuthenticatedPersonPersonIdRoute
 }
 
@@ -318,6 +339,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedEmployeesNewRoute: AuthenticatedEmployeesNewRoute,
   AuthenticatedPersonPersonIdRoute: AuthenticatedPersonPersonIdRoute,
 }
 

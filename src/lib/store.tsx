@@ -61,7 +61,7 @@ export function defaultAccess(
     case "viewDashboards":
       return true;
     case "editTimesheet":
-      return position === "Офис-менеджер";
+      return position === "Офис-менеджер" || position === "Модератор";
     case "editContractors":
     case "createProject":
     case "editProject":

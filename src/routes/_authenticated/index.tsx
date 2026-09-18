@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { Download, Upload, UserPlus, EyeOff, Eye, FileSpreadsheet, Trash2 } from "lucide-react";
+import { Download, Upload, EyeOff, Eye, FileSpreadsheet, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { PersonLink } from "@/components/PersonLink";
 import { useRowSelection } from "@/components/useRowSelection";
@@ -36,11 +35,9 @@ import { isEmployedOn } from "@/lib/people";
 import { MONTHS, daysInMonth, iso, todayIso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
 import {
   CODE_COLORS,
-  POSITIONS,
   REMOTE_CODE,
   TIME_CODES,
   TIME_LEGEND,
-  type Position,
 } from "@/lib/types";
 import {
   downloadMonth,
@@ -71,7 +68,7 @@ export const Route = createFileRoute("/_authenticated/")({
 });
 
 function TimesheetPage() {
-  const { store, update, isWorkday, toggleDay, setCells, can, removeEmployee } = useStore();
+  const { store, update, isWorkday, toggleDay, setCells, can, currentUser, removeEmployee } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -84,7 +81,7 @@ function TimesheetPage() {
   const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
   const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const sel = useRowSelection();
-  const editable = can("editTimesheet");
+  const editable = currentUser.position === "Модератор" || can("editTimesheet");
   const canDelete = can("deleteEntities");
   const fileRef = useRef<HTMLInputElement>(null);
   const today = todayIso();
@@ -156,7 +153,7 @@ function TimesheetPage() {
     return "";
   };
 
-  /** Часы в табеле видит только офис-менеджер */
+  /** Часы в табеле видят офис-менеджер и модератор */
   const canSeeHours = editable;
 
   /** Значение с учётом кнопок «Скрыть удалёнку» / «Скрыть часы» */
@@ -279,7 +276,7 @@ function TimesheetPage() {
       <div className="rounded-lg border bg-card p-6">
         <h1 className="text-2xl font-semibold">Табель рабочего времени</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Страница доступна только офис-менеджеру.
+          Страница доступна только модератору и офис-менеджеру.
         </p>
       </div>
     );
@@ -381,7 +378,6 @@ function TimesheetPage() {
             ))}
           </SelectContent>
         </Select>
-        {editable && <AddEmployeeDialog departments={departments} />}
         <Button
           variant={hideRemote ? "default" : "outline"}
           onClick={() => setHideRemote((v) => !v)}
@@ -704,161 +700,3 @@ function ExportDialog({
   );
 }
 
-function AddEmployeeDialog({ departments }: { departments: string[] }) {
-  const { update } = useStore();
-  const [open, setOpen] = useState(false);
-  const empty = {
-    lastName: "",
-    firstName: "",
-    middleName: "",
-    department: "",
-    position: "Сотрудник" as Position,
-    fullTime: true,
-    trackEffort: true,
-    birthDate: "",
-    startWork: "",
-    endWork: "",
-  };
-  const [f, setF] = useState(empty);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="size-4" /> Добавить нового сотрудника
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Новый сотрудник</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label>Фамилия</Label>
-              <Input value={f.lastName} onChange={(e) => setF({ ...f, lastName: e.target.value })} />
-            </div>
-            <div>
-              <Label>Имя</Label>
-              <Input
-                value={f.firstName}
-                onChange={(e) => setF({ ...f, firstName: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label>Отдел</Label>
-              {departments.length > 0 && (
-                <Select
-                  value={departments.includes(f.department) ? f.department : ""}
-                  onValueChange={(v) => setF({ ...f, department: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите из существующих" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Input
-                className="mt-1"
-                placeholder="или введите новый отдел"
-                value={f.department}
-                onChange={(e) => setF({ ...f, department: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Должность</Label>
-              <Select
-                value={f.position}
-                onValueChange={(v) => setF({ ...f, position: v as Position })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSITIONS.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label>Дата рождения (ДД.ММ)</Label>
-              <Input
-                placeholder="дд.мм"
-                value={
-                  f.birthDate ? `${f.birthDate.slice(8, 10)}.${f.birthDate.slice(5, 7)}` : ""
-                }
-                onChange={(e) => {
-                  const m = e.target.value.match(/^(\d{1,2})[.\/-](\d{1,2})$/);
-                  if (!m) {
-                    setF({ ...f, birthDate: "" });
-                    return;
-                  }
-                  setF({
-                    ...f,
-                    birthDate: `2000-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`,
-                  });
-                }}
-              />
-            </div>
-
-            <div>
-              <Label>Дата начала работы</Label>
-              <Input
-                type="date"
-                value={f.startWork}
-                onChange={(e) => setF({ ...f, startWork: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Дата конца работы</Label>
-              <Input
-                type="date"
-                value={f.endWork}
-                onChange={(e) => setF({ ...f, endWork: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={f.fullTime}
-              onCheckedChange={(v) => setF({ ...f, fullTime: v })}
-              id="ft"
-            />
-            <Label htmlFor="ft">
-              {f.fullTime ? "Полный рабочий день" : "Неполный рабочий день"}
-            </Label>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={() => {
-              if (!f.lastName || !f.firstName) {
-                toast.error("Укажите фамилию и имя");
-                return;
-              }
-              update((d) => d.employees.push({ id: `e${Date.now()}`, ...f }));
-              toast.success("Сотрудник добавлен");
-              setOpen(false);
-              setF(empty);
-            }}
-          >
-            Добавить
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
