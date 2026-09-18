@@ -68,7 +68,7 @@ export const Route = createFileRoute("/_authenticated/")({
 });
 
 function TimesheetPage() {
-  const { store, update, isWorkday, toggleDay, setCells, can, removeEmployee } = useStore();
+  const { store, update, isWorkday, toggleDay, setCells, can, currentUser, removeEmployee } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -81,7 +81,7 @@ function TimesheetPage() {
   const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
   const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const sel = useRowSelection();
-  const editable = can("editTimesheet");
+  const editable = currentUser.position === "Модератор" || can("editTimesheet");
   const canDelete = can("deleteEntities");
   const fileRef = useRef<HTMLInputElement>(null);
   const today = todayIso();
@@ -153,7 +153,7 @@ function TimesheetPage() {
     return "";
   };
 
-  /** Часы в табеле видит только офис-менеджер */
+  /** Часы в табеле видят офис-менеджер и модератор */
   const canSeeHours = editable;
 
   /** Значение с учётом кнопок «Скрыть удалёнку» / «Скрыть часы» */
