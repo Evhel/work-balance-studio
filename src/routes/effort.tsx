@@ -57,6 +57,9 @@ function EffortPage() {
     [store.employees],
   );
   const [personId, setPersonId] = useState(currentUser?.id ?? employees[0]?.id ?? "");
+  /** Подсветка строки и столбца под курсором */
+  const [hoverCell, setHoverCell] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const person = employees.find((e) => e.id === personId) ?? employees[0];
   const fileRef = useRef<HTMLInputElement>(null);
   const bulkRef = useRef<HTMLInputElement>(null);
