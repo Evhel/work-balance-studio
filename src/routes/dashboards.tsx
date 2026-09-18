@@ -651,15 +651,22 @@ function DashboardsPage() {
           <h2 className="text-base font-medium">
             Фактические трудозатраты: проект × раздел ({unitLabel})
           </h2>
-          <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
-            <table className="grid-table w-full text-xs">
+          <div className="mt-2 w-fit max-w-full overflow-x-auto rounded-lg border bg-card">
+            <table
+              className="grid-table w-auto text-xs"
+              onMouseLeave={() => setHoverA(null)}
+            >
               <thead>
                 <tr className="bg-muted">
                   <th className="min-w-[170px] border-r border-b px-2 py-1.5 text-left text-xs font-medium">
                     Проект
                   </th>
-                  {usedDepts.map((d) => (
-                    <th key={d} className="border-r border-b px-2 py-1.5 text-xs font-medium">
+                  {usedDepts.map((d, i) => (
+                    <th
+                      key={d}
+                      className="border-r border-b px-2 py-1.5 text-xs font-medium"
+                      style={{ boxShadow: hoverA?.col === i ? HOVER_TINT : undefined }}
+                    >
                       {d}
                     </th>
                   ))}
@@ -668,8 +675,11 @@ function DashboardsPage() {
               </thead>
               <tbody>
                 {table3.map((r) => (
-                  <tr key={r.pid}>
-                    <th className="border-r border-b px-2 py-0.5 text-left text-xs font-normal">
+                  <tr key={r.pid} onMouseEnter={() => setHoverA({ row: r.pid, col: -1 })}>
+                    <th
+                      className="border-r border-b px-2 py-0.5 text-left text-xs font-normal"
+                      style={{ boxShadow: hoverA?.row === r.pid ? HOVER_TINT : undefined }}
+                    >
                       <Link
                         to="/projects/$projectId"
                         params={{ projectId: r.pid }}
@@ -679,17 +689,34 @@ function DashboardsPage() {
                       </Link>
                     </th>
                     {r.cells.map((c, i) => (
-                      <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                      <td
+                        key={i}
+                        className="border-r border-b px-2 py-0.5 text-center"
+                        onMouseEnter={() => setHoverA({ row: r.pid, col: i })}
+                        style={{
+                          boxShadow:
+                            hoverA?.row === r.pid || hoverA?.col === i ? HOVER_TINT : undefined,
+                        }}
+                      >
                         {c || ""}
                       </td>
                     ))}
-                    <td className="border-b px-2 py-0.5 text-center font-medium">{r.total}</td>
+                    <td
+                      className="border-b px-2 py-0.5 text-center font-medium"
+                      style={{ boxShadow: hoverA?.row === r.pid ? HOVER_TINT : undefined }}
+                    >
+                      {r.total}
+                    </td>
                   </tr>
                 ))}
                 <tr className="bg-muted/60 font-medium">
                   <th className="border-r border-b px-2 py-0.5 text-left text-xs">Общий итог</th>
                   {table3Totals.map((c, i) => (
-                    <td key={i} className="border-r border-b px-2 py-0.5 text-center">
+                    <td
+                      key={i}
+                      className="border-r border-b px-2 py-0.5 text-center"
+                      style={{ boxShadow: hoverA?.col === i ? HOVER_TINT : undefined }}
+                    >
                       {c || ""}
                     </td>
                   ))}
