@@ -181,6 +181,10 @@ function DashboardsPage() {
   const [setName, setSetName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeSetId, setActiveSetId] = useState<string | null>(null);
+  /** Подсветка строки и столбца под курсором в таблицах */
+  const [hoverA, setHoverA] = useState<{ row: string; col: number } | null>(null);
+  const [hoverB, setHoverB] = useState<{ row: string; col: number } | null>(null);
+  const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
 
   const resetFilters = () => {
     setUnit("days");
