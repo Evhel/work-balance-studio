@@ -1,0 +1,17 @@
+# Запуск сайта на офисном сервере.
+# База данных (Supabase) разворачивается отдельно — см. DEPLOY.md.
+services:
+  arv-app:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+    # Сайт слушает только внутренний адрес сервера.
+    # Замените 192.168.0.10 на внутренний IP сервера, чтобы он не торчал наружу.
+    ports:
+      - "192.168.0.10:3000:3000"
