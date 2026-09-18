@@ -53,12 +53,12 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Табель рабочего времени — АРВ" },
+      { title: "Табель рабочего времени — ARV. Трудозатораты" },
       {
         name: "description",
         content: "Месячный табель учёта рабочего времени сотрудников проектного бюро.",
       },
-      { property: "og:title", content: "Табель рабочего времени — АРВ" },
+      { property: "og:title", content: "Табель рабочего времени — ARV. Трудозатораты" },
       {
         property: "og:description",
         content: "Месячный табель учёта рабочего времени сотрудников проектного бюро.",

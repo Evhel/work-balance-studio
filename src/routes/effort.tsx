@@ -38,6 +38,8 @@ export const Route = createFileRoute("/effort")({
         property: "og:description",
         content: "Фактические трудозатраты по проектам и видам работ по дням месяца.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EffortPage,

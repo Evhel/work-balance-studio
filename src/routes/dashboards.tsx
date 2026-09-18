@@ -39,6 +39,8 @@ export const Route = createFileRoute("/dashboards")({
         property: "og:description",
         content: "Сводные таблицы и графики фактических трудозатрат бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DashboardsPage,
