@@ -132,23 +132,25 @@ const TABS = [
   { to: "/instruction", label: "Инструкция" },
 ] as const;
 
-function RoleSwitcher() {
-  const { store, update, currentUser } = useStore();
+function CurrentUserBadge() {
+  const { currentUser, signOut } = useStore();
+  const router = useRouter();
   return (
-    <label className="flex items-center gap-2 text-xs text-primary-foreground/80">
-      Вход как:
-      <select
-        className="rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-1 text-xs text-primary-foreground outline-none"
-        value={currentUser?.id ?? ""}
-        onChange={(e) => update((d) => (d.currentUserId = e.target.value))}
+    <div className="flex items-center gap-3 text-xs text-primary-foreground/80">
+      <span>
+        {currentUser.lastName} {currentUser.firstName} — {currentUser.position}
+      </span>
+      <button
+        type="button"
+        className="rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-1 text-primary-foreground transition-colors hover:bg-primary-foreground/20"
+        onClick={async () => {
+          await signOut();
+          await router.navigate({ to: "/auth", replace: true });
+        }}
       >
-        {store.employees.map((e) => (
-          <option key={e.id} value={e.id} className="text-foreground">
-            {e.lastName} {e.firstName[0]}. — {e.position}
-          </option>
-        ))}
-      </select>
-    </label>
+        Выйти
+      </button>
+    </div>
   );
 }
 
@@ -162,7 +164,7 @@ function Chrome() {
           <div className="text-2xl font-bold tracking-wide text-primary-foreground sm:text-3xl">
             ARV. Трудозатораты
           </div>
-          <RoleSwitcher />
+          <CurrentUserBadge />
         </div>
         <nav className="mx-auto flex max-w-[1600px] flex-wrap gap-1 px-4">
           {tabs.map((t) => (
@@ -193,11 +195,13 @@ function Chrome() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const isAuthPage = router.state.location.pathname.startsWith("/auth");
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <Chrome />
+        {isAuthPage ? <Outlet /> : <Chrome />}
         <Toaster />
       </StoreProvider>
     </QueryClientProvider>

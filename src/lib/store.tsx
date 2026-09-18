@@ -1,7 +1,17 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { AccessAction, Employee, Project, Store } from "./types";
 import { isWeekendDate } from "./dates";
 import { seedStore, PALETTE, projectColor } from "./seed";
+import { supabase } from "@/integrations/supabase/client";
+import { employeeToRow, rowToEmployee, sameEmployee, type ProfileRow } from "./profiles";
 
 const KEY = "arv-workload-store-v3";
 
@@ -24,6 +34,13 @@ type Ctx = {
   removeProject: (id: string) => void;
   currentUser: Employee;
   can: (action: Action) => boolean;
+  /** id вошедшего пользователя (null — не авторизован) */
+  authUserId: string | null;
+  /** логины сотрудников: id -> логин */
+  logins: Record<string, string>;
+  /** перечитать список сотрудников из базы */
+  reloadEmployees: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 export type Action = AccessAction;
@@ -69,6 +86,9 @@ const StoreContext = createContext<Ctx | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState<Store>(() => seed());
   const [loaded, setLoaded] = useState(false);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [logins, setLogins] = useState<Record<string, string>>({});
+  const syncedRef = useRef<Record<string, Employee>>({});
 
   useEffect(() => {
     try {
@@ -82,10 +102,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           color: projectColor(i),
           stages: p.stages?.length ? p.stages : (["ОТР"] as Project["stages"]),
         }));
-        const employees = (parsed.employees ?? base.employees).map((employee) => ({
-          ...employee,
-          trackEffort: employee.trackEffort !== false,
-        }));
+        // сотрудники живут в базе, локально их не храним
+        const employees: Employee[] = [];
         setStore({
           ...base,
           ...parsed,
@@ -110,11 +128,64 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loaded) return;
     try {
-      localStorage.setItem(KEY, JSON.stringify(store));
+      localStorage.setItem(KEY, JSON.stringify({ ...store, employees: [] }));
     } catch {
       /* ignore */
     }
   }, [store, loaded]);
+
+  const loadProfiles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(
+        "id,username,last_name,first_name,middle_name,department,position,full_time,track_effort,start_work,end_work,comment,hidden,remote_days",
+      );
+    if (error || !data) return;
+    const rows = (data as unknown as ProfileRow[]).map(rowToEmployee);
+    rows.sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, "ru"));
+    const employees: Employee[] = rows.map(({ login: _login, ...rest }) => rest);
+    syncedRef.current = Object.fromEntries(employees.map((e) => [e.id, e]));
+    setLogins(Object.fromEntries(rows.map((r) => [r.id, r.login])));
+    setStore((prev) => ({ ...prev, employees }));
+  };
+
+  useEffect(() => {
+    const apply = (userId: string | null) => {
+      setAuthUserId(userId);
+      if (userId) {
+        setStore((prev) => ({ ...prev, currentUserId: userId }));
+        void loadProfiles();
+      } else {
+        syncedRef.current = {};
+        setLogins({});
+        setStore((prev) => ({ ...prev, employees: [] }));
+      }
+    };
+    void supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        apply(session?.user.id ?? null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // изменения карточек сотрудников сохраняем в базу
+  useEffect(() => {
+    if (!authUserId) return;
+    const changed = store.employees.filter((e) => {
+      const known = syncedRef.current[e.id];
+      return known && !sameEmployee(known, e);
+    });
+    if (!changed.length) return;
+    for (const e of changed) syncedRef.current[e.id] = e;
+    void (async () => {
+      for (const e of changed) {
+        await supabase.from("profiles").update(employeeToRow(e) as never).eq("id", e.id);
+      }
+    })();
+  }, [store.employees, authUserId]);
 
   const value = useMemo<Ctx>(() => {
     const update = (fn: (draft: Store) => void) =>
@@ -131,8 +202,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return !isWeekendDate(yy!, mm! - 1, dd!);
     };
 
+    const fallbackUser: Employee = {
+      id: authUserId ?? "",
+      lastName: "",
+      firstName: "",
+      middleName: "",
+      department: "",
+      position: "Сотрудник",
+      fullTime: true,
+      trackEffort: true,
+      birthDate: "",
+    };
     const currentUser =
-      store.employees.find((e) => e.id === store.currentUserId) ?? store.employees[0]!;
+      store.employees.find((e) => e.id === store.currentUserId) ??
+      store.employees[0] ??
+      fallbackUser;
 
     const can = (action: Action): boolean => {
       const p = currentUser?.position;
@@ -149,6 +233,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       isWorkday,
       currentUser,
       can,
+      authUserId,
+      logins,
+      reloadEmployees: loadProfiles,
+      signOut: async () => {
+        await supabase.auth.signOut();
+      },
       toggleDay: (dateIso) =>
         update((d) => {
           d.dayOverrides[dateIso] = isWorkday(dateIso) ? "off" : "work";
@@ -170,14 +260,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             else d.plan[projectId]![personId]![date] = val;
           }
         }),
-      removeEmployee: (id) =>
+      removeEmployee: (id) => {
+        delete syncedRef.current[id];
+        void import("./auth.functions").then(({ deleteEmployeeAccount }) =>
+          deleteEmployeeAccount({ data: { userId: id } }).catch(() => {}),
+        );
         update((d) => {
           d.employees = d.employees.filter((e) => e.id !== id);
           delete d.timesheet[id];
           delete d.personalEvents[id];
           for (const pid of Object.keys(d.plan)) delete d.plan[pid]![id];
           d.projects.forEach((p) => (p.members = p.members.filter((m) => m.personId !== id)));
-        }),
+        });
+      },
       removeContractor: (id) =>
         update((d) => {
           d.contractors = d.contractors.filter((c) => c.id !== id);
@@ -195,7 +290,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
     };
 
-  }, [store]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, authUserId, logins]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

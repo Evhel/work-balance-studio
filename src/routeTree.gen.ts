@@ -9,117 +9,138 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ContractorsRouteImport } from './routes/contractors'
-import { Route as DashboardsRouteImport } from './routes/dashboards'
-import { Route as DepartmentRouteImport } from './routes/department'
-import { Route as EffortRouteImport } from './routes/effort'
-import { Route as InstructionRouteImport } from './routes/instruction'
-import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as RolesRouteImport } from './routes/roles'
-import { Route as PersonPersonIdRouteImport } from './routes/person.$personId'
-import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
-import { Route as ProjectsProjectIdRouteImport } from './routes/projects.$projectId'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedContractorsRouteImport } from './routes/_authenticated/contractors'
+import { Route as AuthenticatedDashboardsRouteImport } from './routes/_authenticated/dashboards'
+import { Route as AuthenticatedDepartmentRouteImport } from './routes/_authenticated/department'
+import { Route as AuthenticatedEffortRouteImport } from './routes/_authenticated/effort'
+import { Route as AuthenticatedInstructionRouteImport } from './routes/_authenticated/instruction'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
+import { Route as AuthenticatedPersonPersonIdRouteImport } from './routes/_authenticated/person.$personId'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
+import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ContractorsRoute = ContractorsRouteImport.update({
-  id: '/contractors',
-  path: '/contractors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardsRoute = DashboardsRouteImport.update({
+const AuthenticatedContractorsRoute =
+  AuthenticatedContractorsRouteImport.update({
+    id: '/contractors',
+    path: '/contractors',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardsRoute = AuthenticatedDashboardsRouteImport.update({
   id: '/dashboards',
   path: '/dashboards',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const DepartmentRoute = DepartmentRouteImport.update({
+const AuthenticatedDepartmentRoute = AuthenticatedDepartmentRouteImport.update({
   id: '/department',
   path: '/department',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const EffortRoute = EffortRouteImport.update({
+const AuthenticatedEffortRoute = AuthenticatedEffortRouteImport.update({
   id: '/effort',
   path: '/effort',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const InstructionRoute = InstructionRouteImport.update({
-  id: '/instruction',
-  path: '/instruction',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsRoute = ProjectsRouteImport.update({
+const AuthenticatedInstructionRoute =
+  AuthenticatedInstructionRouteImport.update({
+    id: '/instruction',
+    path: '/instruction',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const RolesRoute = RolesRouteImport.update({
+const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const PersonPersonIdRoute = PersonPersonIdRouteImport.update({
-  id: '/person/$personId',
-  path: '/person/$personId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProjectsRoute,
-} as any)
-const ProjectsProjectIdRoute = ProjectsProjectIdRouteImport.update({
-  id: '/$projectId',
-  path: '/$projectId',
-  getParentRoute: () => ProjectsRoute,
-} as any)
+const AuthenticatedPersonPersonIdRoute =
+  AuthenticatedPersonPersonIdRouteImport.update({
+    id: '/person/$personId',
+    path: '/person/$personId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdRoute =
+  AuthenticatedProjectsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/contractors': typeof ContractorsRoute
-  '/dashboards': typeof DashboardsRoute
-  '/department': typeof DepartmentRoute
-  '/effort': typeof EffortRoute
-  '/instruction': typeof InstructionRoute
-  '/projects': typeof ProjectsRouteWithChildren
-  '/roles': typeof RolesRoute
-  '/person/$personId': typeof PersonPersonIdRoute
-  '/projects/$projectId': typeof ProjectsProjectIdRoute
-  '/projects/': typeof ProjectsIndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/contractors': typeof AuthenticatedContractorsRoute
+  '/dashboards': typeof AuthenticatedDashboardsRoute
+  '/department': typeof AuthenticatedDepartmentRoute
+  '/effort': typeof AuthenticatedEffortRoute
+  '/instruction': typeof AuthenticatedInstructionRoute
+  '/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/roles': typeof AuthenticatedRolesRoute
+  '/person/$personId': typeof AuthenticatedPersonPersonIdRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/contractors': typeof ContractorsRoute
-  '/dashboards': typeof DashboardsRoute
-  '/department': typeof DepartmentRoute
-  '/effort': typeof EffortRoute
-  '/instruction': typeof InstructionRoute
-  '/roles': typeof RolesRoute
-  '/person/$personId': typeof PersonPersonIdRoute
-  '/projects/$projectId': typeof ProjectsProjectIdRoute
-  '/projects': typeof ProjectsIndexRoute
+  '/auth': typeof AuthRoute
+  '/contractors': typeof AuthenticatedContractorsRoute
+  '/dashboards': typeof AuthenticatedDashboardsRoute
+  '/department': typeof AuthenticatedDepartmentRoute
+  '/effort': typeof AuthenticatedEffortRoute
+  '/instruction': typeof AuthenticatedInstructionRoute
+  '/roles': typeof AuthenticatedRolesRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/person/$personId': typeof AuthenticatedPersonPersonIdRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/contractors': typeof ContractorsRoute
-  '/dashboards': typeof DashboardsRoute
-  '/department': typeof DepartmentRoute
-  '/effort': typeof EffortRoute
-  '/instruction': typeof InstructionRoute
-  '/projects': typeof ProjectsRouteWithChildren
-  '/roles': typeof RolesRoute
-  '/person/$personId': typeof PersonPersonIdRoute
-  '/projects/$projectId': typeof ProjectsProjectIdRoute
-  '/projects/': typeof ProjectsIndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/contractors': typeof AuthenticatedContractorsRoute
+  '/_authenticated/dashboards': typeof AuthenticatedDashboardsRoute
+  '/_authenticated/department': typeof AuthenticatedDepartmentRoute
+  '/_authenticated/effort': typeof AuthenticatedEffortRoute
+  '/_authenticated/instruction': typeof AuthenticatedInstructionRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/_authenticated/roles': typeof AuthenticatedRolesRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/person/$personId': typeof AuthenticatedPersonPersonIdRoute
+  '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/contractors'
     | '/dashboards'
     | '/department'
@@ -132,149 +153,180 @@ export interface FileRouteTypes {
     | '/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/auth'
     | '/contractors'
     | '/dashboards'
     | '/department'
     | '/effort'
     | '/instruction'
     | '/roles'
+    | '/'
     | '/person/$personId'
     | '/projects/$projectId'
     | '/projects'
   id:
     | '__root__'
-    | '/'
-    | '/contractors'
-    | '/dashboards'
-    | '/department'
-    | '/effort'
-    | '/instruction'
-    | '/projects'
-    | '/roles'
-    | '/person/$personId'
-    | '/projects/$projectId'
-    | '/projects/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/contractors'
+    | '/_authenticated/dashboards'
+    | '/_authenticated/department'
+    | '/_authenticated/effort'
+    | '/_authenticated/instruction'
+    | '/_authenticated/projects'
+    | '/_authenticated/roles'
+    | '/_authenticated/'
+    | '/_authenticated/person/$personId'
+    | '/_authenticated/projects/$projectId'
+    | '/_authenticated/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ContractorsRoute: typeof ContractorsRoute
-  DashboardsRoute: typeof DashboardsRoute
-  DepartmentRoute: typeof DepartmentRoute
-  EffortRoute: typeof EffortRoute
-  InstructionRoute: typeof InstructionRoute
-  ProjectsRoute: typeof ProjectsRouteWithChildren
-  RolesRoute: typeof RolesRoute
-  PersonPersonIdRoute: typeof PersonPersonIdRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/contractors': {
-      id: '/contractors'
+    '/_authenticated/contractors': {
+      id: '/_authenticated/contractors'
       path: '/contractors'
       fullPath: '/contractors'
-      preLoaderRoute: typeof ContractorsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedContractorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/dashboards': {
-      id: '/dashboards'
+    '/_authenticated/dashboards': {
+      id: '/_authenticated/dashboards'
       path: '/dashboards'
       fullPath: '/dashboards'
-      preLoaderRoute: typeof DashboardsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedDashboardsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/department': {
-      id: '/department'
+    '/_authenticated/department': {
+      id: '/_authenticated/department'
       path: '/department'
       fullPath: '/department'
-      preLoaderRoute: typeof DepartmentRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedDepartmentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/effort': {
-      id: '/effort'
+    '/_authenticated/effort': {
+      id: '/_authenticated/effort'
       path: '/effort'
       fullPath: '/effort'
-      preLoaderRoute: typeof EffortRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedEffortRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/instruction': {
-      id: '/instruction'
+    '/_authenticated/instruction': {
+      id: '/_authenticated/instruction'
       path: '/instruction'
       fullPath: '/instruction'
-      preLoaderRoute: typeof InstructionRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedInstructionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/projects': {
-      id: '/projects'
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
       path: '/projects'
       fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/roles': {
-      id: '/roles'
+    '/_authenticated/roles': {
+      id: '/_authenticated/roles'
       path: '/roles'
       fullPath: '/roles'
-      preLoaderRoute: typeof RolesRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedRolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/person/$personId': {
-      id: '/person/$personId'
+    '/_authenticated/person/$personId': {
+      id: '/_authenticated/person/$personId'
       path: '/person/$personId'
       fullPath: '/person/$personId'
-      preLoaderRoute: typeof PersonPersonIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedPersonPersonIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/projects/': {
-      id: '/projects/'
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
       path: '/'
       fullPath: '/projects/'
-      preLoaderRoute: typeof ProjectsIndexRouteImport
-      parentRoute: typeof ProjectsRoute
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
     }
-    '/projects/$projectId': {
-      id: '/projects/$projectId'
+    '/_authenticated/projects/$projectId': {
+      id: '/_authenticated/projects/$projectId'
       path: '/$projectId'
       fullPath: '/projects/$projectId'
-      preLoaderRoute: typeof ProjectsProjectIdRouteImport
-      parentRoute: typeof ProjectsRoute
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
     }
   }
 }
 
-interface ProjectsRouteChildren {
-  ProjectsProjectIdRoute: typeof ProjectsProjectIdRoute
-  ProjectsIndexRoute: typeof ProjectsIndexRoute
+interface AuthenticatedProjectsRouteChildren {
+  AuthenticatedProjectsProjectIdRoute: typeof AuthenticatedProjectsProjectIdRoute
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
 }
 
-const ProjectsRouteChildren: ProjectsRouteChildren = {
-  ProjectsProjectIdRoute: ProjectsProjectIdRoute,
-  ProjectsIndexRoute: ProjectsIndexRoute,
+const AuthenticatedProjectsRouteChildren: AuthenticatedProjectsRouteChildren = {
+  AuthenticatedProjectsProjectIdRoute: AuthenticatedProjectsProjectIdRoute,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
 }
 
-const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
-  ProjectsRouteChildren,
-)
+const AuthenticatedProjectsRouteWithChildren =
+  AuthenticatedProjectsRoute._addFileChildren(
+    AuthenticatedProjectsRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedContractorsRoute: typeof AuthenticatedContractorsRoute
+  AuthenticatedDashboardsRoute: typeof AuthenticatedDashboardsRoute
+  AuthenticatedDepartmentRoute: typeof AuthenticatedDepartmentRoute
+  AuthenticatedEffortRoute: typeof AuthenticatedEffortRoute
+  AuthenticatedInstructionRoute: typeof AuthenticatedInstructionRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
+  AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedPersonPersonIdRoute: typeof AuthenticatedPersonPersonIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedContractorsRoute: AuthenticatedContractorsRoute,
+  AuthenticatedDashboardsRoute: AuthenticatedDashboardsRoute,
+  AuthenticatedDepartmentRoute: AuthenticatedDepartmentRoute,
+  AuthenticatedEffortRoute: AuthenticatedEffortRoute,
+  AuthenticatedInstructionRoute: AuthenticatedInstructionRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
+  AuthenticatedRolesRoute: AuthenticatedRolesRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedPersonPersonIdRoute: AuthenticatedPersonPersonIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ContractorsRoute: ContractorsRoute,
-  DashboardsRoute: DashboardsRoute,
-  DepartmentRoute: DepartmentRoute,
-  EffortRoute: EffortRoute,
-  InstructionRoute: InstructionRoute,
-  ProjectsRoute: ProjectsRouteWithChildren,
-  RolesRoute: RolesRoute,
-  PersonPersonIdRoute: PersonPersonIdRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
