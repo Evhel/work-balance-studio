@@ -644,7 +644,7 @@ function DashboardsPage() {
       {/* Таблица 3 + пончик в одну строку */}
       <div
         ref={secTop}
-        className="mt-6 grid gap-3 bg-background lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
+        className="mx-auto mt-6 flex max-w-full flex-wrap items-start justify-center gap-6 bg-background"
       >
 
         <div className="min-w-0">
@@ -727,10 +727,10 @@ function DashboardsPage() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col">
+        <div className="w-fit max-w-full">
           <h2 className="text-base font-medium">Трудозатраты по проектам</h2>
-          <div className="mt-2 flex min-h-56 flex-1 gap-3 rounded-lg border bg-card p-3">
-            <div className="relative min-h-48 min-w-0 flex-1">
+          <div className="mt-2 flex h-52 w-fit max-w-full items-center gap-2 rounded-lg border bg-card p-2">
+            <div className="relative h-48 w-52 shrink-0">
               <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -738,8 +738,8 @@ function DashboardsPage() {
                       data={donut}
                       dataKey="value"
                       nameKey="name"
-                      innerRadius="45%"
-                      outerRadius="80%"
+                      innerRadius="48%"
+                      outerRadius="88%"
                     >
                       {donut.map((d) => (
                         <Cell key={d.name} fill={d.color} />
@@ -751,7 +751,7 @@ function DashboardsPage() {
               </div>
             </div>
 
-            <div className="w-40 shrink-0 overflow-y-auto text-[11px]">
+            <div className="max-h-48 w-40 shrink-0 overflow-y-auto pr-1 text-[11px]">
               {donut.map((d) => (
                 <div key={d.name} className="mb-0.5 flex items-center gap-1.5">
                   <span
