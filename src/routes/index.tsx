@@ -712,6 +712,7 @@ function AddEmployeeDialog({ departments }: { departments: string[] }) {
     department: "",
     position: "Сотрудник" as Position,
     fullTime: true,
+    trackEffort: true,
     birthDate: "",
     startWork: "",
     endWork: "",

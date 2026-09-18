@@ -26,6 +26,8 @@ export const Route = createFileRoute("/person/$personId")({
         property: "og:description",
         content: "Данные сотрудника проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PersonPage,
@@ -33,7 +35,7 @@ export const Route = createFileRoute("/person/$personId")({
 
 function PersonPage() {
   const { personId } = Route.useParams();
-  const { store, update, can, removeEmployee, removeContractor } = useStore();
+  const { store, update, can, currentUser, removeEmployee, removeContractor } = useStore();
   const navigate = useNavigate();
   const employee = store.employees.find((e) => e.id === personId);
   const contractor = store.contractors.find((c) => c.id === personId);
@@ -52,7 +54,8 @@ function PersonPage() {
 
   const editable = employee ? can("editDepartment") : can("editContractors");
   const cardEditable = can("editEmployeeCard");
-  const nameEditable = cardEditable || can("manageRoles");
+  const nameEditable =
+    currentUser.position === "Модератор" || currentUser.position === "Офис-менеджер";
   const person = employee ?? contractor!;
   const comment = person.comment ?? "";
 
