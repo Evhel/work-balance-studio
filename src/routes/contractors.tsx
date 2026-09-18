@@ -46,6 +46,8 @@ export const Route = createFileRoute("/contractors")({
         property: "og:description",
         content: "Месячный табель занятости подрядчиков проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ContractorsPage,

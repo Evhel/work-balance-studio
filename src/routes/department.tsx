@@ -43,6 +43,8 @@ export const Route = createFileRoute("/department")({
         property: "og:description",
         content: "Загрузка сотрудников отдела по проектам и дням месяца.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DepartmentPage,

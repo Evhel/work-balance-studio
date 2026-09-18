@@ -18,6 +18,8 @@ export const Route = createFileRoute("/projects/")({
         property: "og:description",
         content: "Годовой календарь проектов бюро и карточки проектов.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProjectsPage,

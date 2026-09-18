@@ -63,6 +63,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Месячный табель учёта рабочего времени сотрудников проектного бюро.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: TimesheetPage,

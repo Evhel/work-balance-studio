@@ -52,6 +52,8 @@ export const Route = createFileRoute("/projects/$projectId")({
         property: "og:description",
         content: "План работ по проекту и загрузка участников по дням.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ProjectPage,
