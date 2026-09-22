@@ -5,9 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 // при каждом переключении вкладки подвешивал навигацию.
 let sessionChecked = false;
 let checking: Promise<boolean> | null = null;
+let subscribed = false;
 
 async function hasSession(): Promise<boolean> {
   if (sessionChecked) return true;
+  if (!subscribed) {
+    subscribed = true;
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") sessionChecked = false;
+    });
+  }
   if (!checking) {
     checking = (async () => {
       const { data } = await supabase.auth.getSession();
@@ -17,12 +24,7 @@ async function hasSession(): Promise<boolean> {
     });
   }
   const ok = await checking;
-  if (ok) {
-    sessionChecked = true;
-    supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") sessionChecked = false;
-    });
-  }
+  if (ok) sessionChecked = true;
   return ok;
 }
 
