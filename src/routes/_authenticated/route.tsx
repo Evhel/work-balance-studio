@@ -1,12 +1,35 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
+// Проверяем вход один раз за загрузку страницы: повторный сетевой запрос
+// при каждом переключении вкладки подвешивал навигацию.
+let sessionChecked = false;
+let checking: Promise<boolean> | null = null;
+
+async function hasSession(): Promise<boolean> {
+  if (sessionChecked) return true;
+  if (!checking) {
+    checking = (async () => {
+      const { data } = await supabase.auth.getSession();
+      return Boolean(data.session);
+    })().finally(() => {
+      checking = null;
+    });
+  }
+  const ok = await checking;
+  if (ok) {
+    sessionChecked = true;
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") sessionChecked = false;
+    });
+  }
+  return ok;
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    if (!(await hasSession())) throw redirect({ to: "/auth" });
   },
   component: () => <Outlet />,
 });
