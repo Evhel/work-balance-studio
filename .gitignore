@@ -16,6 +16,28 @@ dist-ssr
 .nitro
 *.local
 
+# Local runtime configuration and secrets. Keep only the public template.
+.env
+.env.*
+!.env.example
+
+# Local databases, deployment state, and backups must never be committed.
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+*.sql.gz
+backups/
+docker-data/
+secrets/
+
+# Private certificate material.
+*.key
+*.pem
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
