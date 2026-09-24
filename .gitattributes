@@ -1,0 +1,3 @@
+# Keep database sources byte-stable across Windows, Lovable and Linux.
+supabase/migrations/*.sql text eol=lf
+deploy/schema.sql text eol=lf

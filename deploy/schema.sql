@@ -1,4 +1,8 @@
 -- ARV. Трудозатраты — структура базы данных
+-- Снимок конечной структуры для аварийного развёртывания на чистой базе.
+-- Каноническая история изменений находится в supabase/migrations.
+-- На Windows обычно используйте deploy/apply-migrations.ps1: он проверяет
+-- контрольные суммы и не применяет один файл дважды.
 -- Выполняется один раз на новой (self-hosted) базе Supabase:
 --   psql "$DATABASE_URL" -f deploy/schema.sql
 -- Требуется расширение auth (схема auth создаётся установкой Supabase).
@@ -23,7 +27,8 @@ CREATE TABLE public.profiles (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+REVOKE ALL ON public.profiles FROM anon, authenticated;
+GRANT SELECT, UPDATE, DELETE ON public.profiles TO authenticated;
 GRANT ALL ON public.profiles TO service_role;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -34,6 +39,7 @@ CREATE TABLE public.user_roles (
   UNIQUE (user_id, role)
 );
 
+REVOKE ALL ON public.user_roles FROM anon, authenticated;
 GRANT SELECT ON public.user_roles TO authenticated;
 GRANT ALL ON public.user_roles TO service_role;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;

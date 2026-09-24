@@ -27,11 +27,18 @@ cp .env.example .env      # задайте пароли, JWT_SECRET, ANON_KEY, S
 docker compose up -d
 ```
 
-После запуска примените структуру таблиц из этого репозитория:
+После запуска проверьте и примените миграции из этого репозитория. Команда не
+содержит паролей: SQL выполняется внутри локального контейнера PostgreSQL.
 
-```sh
-psql "postgresql://postgres:ПАРОЛЬ@localhost:5432/postgres" -f deploy/schema.sql
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy\apply-migrations.ps1 -ValidateOnly
+powershell -ExecutionPolicy Bypass -File .\deploy\apply-migrations.ps1
 ```
+
+Повторный запуск безопасен: применённые файлы пропускаются, а изменение уже
+применённой миграции обнаруживается по SHA-256 независимо от переводов строк
+Windows/Linux. `deploy/schema.sql` остаётся
+снимком конечной структуры только для аварийного развёртывания чистой базы.
 
 В настройках Supabase включите вход по email/паролю, автоподтверждение адресов
 и отключите самостоятельную регистрацию — сотрудников заводит модератор или
