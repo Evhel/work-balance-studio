@@ -9,10 +9,10 @@ export function loginToEmail(login: string) {
 }
 
 const ROLE_BY_POSITION: Record<Position, string> = {
-  "Директор": "director",
-  "Модератор": "moderator",
+  Директор: "director",
+  Модератор: "moderator",
   "Руководитель отдела": "head",
-  "Сотрудник": "employee",
+  Сотрудник: "employee",
   "Офис-менеджер": "office_manager",
 };
 
@@ -66,15 +66,20 @@ async function createAccount(input: RegisterInput) {
   if (profileError) {
     await supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(
-      profileError.message.includes("duplicate")
-        ? "Такой логин уже занят"
-        : profileError.message,
+      profileError.message.includes("duplicate") ? "Такой логин уже занят" : profileError.message,
     );
   }
 
-  await supabaseAdmin
+  const expectedRole = ROLE_BY_POSITION[input.position];
+  const { data: assignedRole, error: roleError } = await supabaseAdmin
     .from("user_roles")
-    .insert({ user_id: userId, role: ROLE_BY_POSITION[input.position] as never });
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+  if (roleError || assignedRole?.role !== expectedRole) {
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+    throw new Error(roleError?.message ?? "Не удалось назначить роль сотруднику");
+  }
 
   return { userId };
 }
@@ -106,15 +111,24 @@ export const createFirstModerator = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-async function assertAdmin(supabase: {
-  from: (t: "user_roles") => {
-    select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: { role: string }[] | null }> };
-  };
-}, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+async function assertAdmin(
+  supabase: {
+    from: (t: "user_roles") => {
+      select: (c: string) => {
+        eq: (
+          k: string,
+          v: string,
+        ) => Promise<{ data: { role: string }[] | null; error: { message: string } | null }>;
+      };
+    };
+  },
+  userId: string,
+) {
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw new Error(error.message);
   const roles = (data ?? []).map((r) => r.role);
   if (!roles.includes("moderator") && !roles.includes("office_manager")) {
-    throw new Error("Регистрировать сотрудников может модератор или офис-менеджер");
+    throw new Error("Действие доступно только модератору или офис-менеджеру");
   }
 }
 
@@ -161,15 +175,22 @@ export const setEmployeeRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
-      .object({ userId: z.string().uuid(), position: z.enum(POSITIONS as [Position, ...Position[]]) })
+      .object({
+        userId: z.string().uuid(),
+        position: z.enum(POSITIONS as [Position, ...Position[]]),
+      })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase as never, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
-    await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: data.userId, role: ROLE_BY_POSITION[data.position] as never });
+    const { data: updated, error } = await supabaseAdmin
+      .from("profiles")
+      .update({ position: data.position })
+      .eq("id", data.userId)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Сотрудник не найден");
     return { ok: true as const };
   });
