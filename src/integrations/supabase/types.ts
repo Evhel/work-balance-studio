@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_records: {
+        Row: {
+          owner_id: string | null
+          payload: Json
+          record_key: string
+          record_kind: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          owner_id?: string | null
+          payload: Json
+          record_key: string
+          record_kind: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          owner_id?: string | null
+          payload?: Json
+          record_key?: string
+          record_kind?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           comment: string | null
@@ -91,7 +118,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_access: {
+        Args: { _action: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:

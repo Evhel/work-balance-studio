@@ -68,6 +68,15 @@ powershell -ExecutionPolicy Bypass -File .\deploy\start-local.ps1
 powershell -ExecutionPolicy Bypass -File .\deploy\test-account-permissions.ps1
 ```
 
+После изменений общей рабочей базы можно повторить многопользовательский тест.
+Он создаёт три временных локальных аккаунта, проверяет видимость изменений между
+двумя независимыми сессиями, серверные запреты и приватность личных фильтров, а
+затем удаляет все тестовые записи и аккаунты.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy\test-shared-data.ps1
+```
+
 Повторный запуск безопасен: применённые файлы пропускаются, а изменение уже
 применённой миграции обнаруживается по SHA-256 независимо от переводов строк
 Windows/Linux. `deploy/schema.sql` остаётся

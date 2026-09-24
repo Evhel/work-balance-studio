@@ -7,20 +7,24 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { toast } from "sonner";
 import type { AccessAction, Employee, Project, Store } from "./types";
 import { isWeekendDate } from "./dates";
-import { seedStore, PALETTE, projectColor } from "./seed";
+import { PALETTE, projectColor } from "./seed";
 import { supabase } from "@/integrations/supabase/client";
 import { employeeToRow, rowToEmployee, sameEmployee, type ProfileRow } from "./profiles";
+import {
+  emptySharedStore,
+  loadSharedRecords,
+  persistSharedChanges,
+  sharedRecordsFromStore,
+  sharedStoreFromRecords,
+  type SharedRecord,
+} from "./shared-data";
 
 const KEY = "arv-workload-store-v3";
 
 export { PALETTE, projectColor };
-
-function seed(): Store {
-  return seedStore();
-}
-
 
 type Ctx = {
   store: Store;
@@ -84,55 +88,24 @@ export function defaultAccess(
 const StoreContext = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [store, setStore] = useState<Store>(() => seed());
-  const [loaded, setLoaded] = useState(false);
+  const [store, setStore] = useState<Store>(() => emptySharedStore());
+  const [sharedLoaded, setSharedLoaded] = useState(false);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [logins, setLogins] = useState<Record<string, string>>({});
   const syncedRef = useRef<Record<string, Employee>>({});
+  const sharedSnapshotRef = useRef<Map<string, SharedRecord>>(new Map());
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const reloadTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Store>;
-        const base = seed();
-        // цвета проектов всегда берём из единой палитры
-        const projects = (parsed.projects ?? base.projects).map((p, i) => ({
-          ...p,
-          color: projectColor(i),
-          stages: p.stages?.length ? p.stages : (["ОТР"] as Project["stages"]),
-        }));
-        // сотрудники живут в базе, локально их не храним
-        const employees: Employee[] = [];
-        setStore({
-          ...base,
-          ...parsed,
-          employees,
-          projects,
-          effort: parsed.effort ?? base.effort,
-          effortDone: parsed.effortDone ?? base.effortDone,
-          remoteOverride: parsed.remoteOverride ?? {},
-          filterSets: parsed.filterSets ?? [],
-          access: parsed.access ?? {},
-
-
-        });
-
-      }
-    } catch {
-      /* ignore */
-    }
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ ...store, employees: [] }));
-    } catch {
-      /* ignore */
-    }
-  }, [store, loaded]);
+  const loadSharedData = async (userId: string) => {
+    const rows = await loadSharedRecords();
+    const shared = sharedStoreFromRecords(rows, userId);
+    sharedSnapshotRef.current = sharedRecordsFromStore(shared, userId);
+    setStore((prev) => ({ ...shared, employees: prev.employees }));
+    setSharedLoaded(true);
+    // Старый браузерный набор больше не является источником данных.
+    localStorage.removeItem(KEY);
+  };
 
   const loadProfiles = async () => {
     const { data, error } = await supabase
@@ -153,12 +126,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const apply = (userId: string | null) => {
       setAuthUserId(userId);
       if (userId) {
+        setSharedLoaded(false);
         setStore((prev) => ({ ...prev, currentUserId: userId }));
-        void loadProfiles();
+        void Promise.all([loadProfiles(), loadSharedData(userId)]).catch((error: unknown) => {
+          console.error("Could not load shared application data", error);
+          toast.error("Не удалось загрузить общие данные из базы");
+        });
       } else {
         syncedRef.current = {};
+        sharedSnapshotRef.current = new Map();
         setLogins({});
-        setStore((prev) => ({ ...prev, employees: [] }));
+        setSharedLoaded(false);
+        setStore(emptySharedStore());
       }
     };
     void supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id ?? null));
@@ -170,6 +149,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Каждое логическое значение хранится отдельной строкой PostgreSQL. Снимок
+  // позволяет отправлять только добавленные, изменённые и удалённые строки.
+  useEffect(() => {
+    if (!authUserId || !sharedLoaded) return;
+    const before = sharedSnapshotRef.current;
+    const after = sharedRecordsFromStore(store, authUserId);
+    sharedSnapshotRef.current = after;
+    writeQueueRef.current = writeQueueRef.current
+      .then(() => persistSharedChanges(before, after))
+      .catch((error: unknown) => {
+        console.error("Could not save shared application data", error);
+        toast.error("Изменения не сохранились. Данные будут перечитаны из базы.");
+        return loadSharedData(authUserId);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, authUserId, sharedLoaded]);
+
+  // Изменения другого браузера появляются без перезагрузки страницы. Повторное
+  // чтение ждёт завершения локальной очереди, чтобы не затереть ещё не отправленное.
+  useEffect(() => {
+    if (!authUserId || !sharedLoaded) return;
+    const refresh = () => {
+      if (reloadTimerRef.current !== null) window.clearTimeout(reloadTimerRef.current);
+      reloadTimerRef.current = window.setTimeout(() => {
+        reloadTimerRef.current = null;
+        void writeQueueRef.current
+          .then(() => loadSharedData(authUserId))
+          .catch((error: unknown) => console.error("Could not refresh shared data", error));
+      }, 250);
+    };
+    const channel = supabase
+      .channel("app-records")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_records" },
+        refresh,
+      )
+      .subscribe();
+    window.addEventListener("focus", refresh);
+    return () => {
+      if (reloadTimerRef.current !== null) window.clearTimeout(reloadTimerRef.current);
+      window.removeEventListener("focus", refresh);
+      void supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUserId, sharedLoaded]);
 
   // изменения карточек сотрудников сохраняем в базу
   useEffect(() => {

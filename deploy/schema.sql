@@ -99,3 +99,8 @@ CREATE POLICY "profiles_update_admin" ON public.profiles
 
 CREATE POLICY "user_roles_select_authenticated" ON public.user_roles
   FOR SELECT TO authenticated USING (true);
+
+-- Shared working data uses the canonical migration directly so the emergency
+-- clean-database snapshot cannot drift from its RLS permission matrix. `\ir`
+-- resolves relative to this schema file when psql runs it from the repository.
+\ir ../supabase/migrations/20260924180000_add_shared_application_records.sql
