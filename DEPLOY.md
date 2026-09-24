@@ -35,6 +35,30 @@ powershell -ExecutionPolicy Bypass -File .\deploy\apply-migrations.ps1 -Validate
 powershell -ExecutionPolicy Bypass -File .\deploy\apply-migrations.ps1
 ```
 
+Создайте локальный `.env` приложения из ключей установленного Supabase. Для
+проверки на самом сервере подходит адрес по умолчанию `127.0.0.1`; при открытии
+доступа локальной сети передайте закреплённый IP сервера параметром
+`-SupabaseUrl`.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy\configure-local-env.ps1
+powershell -ExecutionPolicy Bypass -File .\deploy\configure-local-env.ps1 `
+  -SupabaseUrl http://192.168.1.100:8000
+```
+
+Созданный `.env` содержит только адрес и публичный ключ и игнорируется Git.
+Секретный `service_role` остаётся в защищённом серверном файле Supabase и
+подставляется в процесс приложения только при запуске.
+
+Соберите и запустите приложение. Скрипт запуска считывает `service_role`
+непосредственно из защищённого файла и не печатает его в консоль.
+
+```powershell
+npm ci
+npm run build
+powershell -ExecutionPolicy Bypass -File .\deploy\start-local.ps1
+```
+
 Повторный запуск безопасен: применённые файлы пропускаются, а изменение уже
 применённой миграции обнаруживается по SHA-256 независимо от переводов строк
 Windows/Linux. `deploy/schema.sql` остаётся
