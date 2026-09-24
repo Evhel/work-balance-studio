@@ -17,13 +17,13 @@ export const Route = createFileRoute("/_authenticated/roles")({
   component: RolesPage,
   head: () => ({
     meta: [
-      { title: "Роли и доступы — ARV. Трудозатораты" },
+      { title: "Роли и доступы — ARV. Трудозатраты" },
       {
         name: "description",
         content:
           "Управление ролями сотрудников и правами просмотра и редактирования табелей в системе учёта трудозатрат АРВ.",
       },
-      { property: "og:title", content: "Роли и доступы — ARV. Трудозатораты" },
+      { property: "og:title", content: "Роли и доступы — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Настройка должностей и прав доступа к табелям, проектам и дашбордам.",

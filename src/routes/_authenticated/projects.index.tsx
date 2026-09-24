@@ -11,9 +11,9 @@ import type { Project } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/projects/")({
   head: () => ({
     meta: [
-      { title: "Проекты — ARV. Трудозатораты" },
+      { title: "Проекты — ARV. Трудозатраты" },
       { name: "description", content: "Годовой календарь проектов бюро и карточки проектов." },
-      { property: "og:title", content: "Проекты — ARV. Трудозатораты" },
+      { property: "og:title", content: "Проекты — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Годовой календарь проектов бюро и карточки проектов.",

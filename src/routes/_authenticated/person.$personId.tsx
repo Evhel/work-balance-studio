@@ -19,9 +19,9 @@ import { fio, useStore } from "@/lib/store";
 export const Route = createFileRoute("/_authenticated/person/$personId")({
   head: () => ({
     meta: [
-      { title: "Сотрудник — ARV. Трудозатораты" },
+      { title: "Сотрудник — ARV. Трудозатраты" },
       { name: "description", content: "Данные сотрудника проектного бюро." },
-      { property: "og:title", content: "Сотрудник — ARV. Трудозатораты" },
+      { property: "og:title", content: "Сотрудник — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Данные сотрудника проектного бюро.",

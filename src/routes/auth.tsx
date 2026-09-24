@@ -7,9 +7,9 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "Вход — ARV. Трудозатораты" },
+      { title: "Вход — ARV. Трудозатраты" },
       { name: "description", content: "Вход в систему учёта трудозатрат проектного бюро ARV." },
-      { property: "og:title", content: "Вход — ARV. Трудозатораты" },
+      { property: "og:title", content: "Вход — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Доступ к табелям, проектам и дашбордам бюро только для сотрудников.",
@@ -89,7 +89,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-sm">
-        <div className="text-xl font-bold text-foreground">ARV. Трудозатораты</div>
+        <div className="text-xl font-bold text-foreground">ARV. Трудозатраты</div>
         <p className="mt-1 text-sm text-muted-foreground">
           {mode === "setup"
             ? "Создайте первую учётную запись модератора"

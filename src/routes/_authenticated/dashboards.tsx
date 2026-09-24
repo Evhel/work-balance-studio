@@ -29,12 +29,12 @@ import { PROJECT_STAGES, type FilterSet } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/dashboards")({
   head: () => ({
     meta: [
-      { title: "Дашборды — ARV. Трудозатораты" },
+      { title: "Дашборды — ARV. Трудозатраты" },
       {
         name: "description",
         content: "Сводные таблицы и графики фактических трудозатрат по проектам и разделам.",
       },
-      { property: "og:title", content: "Дашборды — ARV. Трудозатораты" },
+      { property: "og:title", content: "Дашборды — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Сводные таблицы и графики фактических трудозатрат бюро.",

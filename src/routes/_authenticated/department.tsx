@@ -37,9 +37,9 @@ import {
 export const Route = createFileRoute("/_authenticated/department")({
   head: () => ({
     meta: [
-      { title: "Отдел — ARV. Трудозатораты" },
+      { title: "Отдел — ARV. Трудозатраты" },
       { name: "description", content: "Загрузка сотрудников отдела по проектам и дням месяца." },
-      { property: "og:title", content: "Отдел — ARV. Трудозатораты" },
+      { property: "og:title", content: "Отдел — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Загрузка сотрудников отдела по проектам и дням месяца.",

@@ -28,12 +28,12 @@ import type { EffortRow } from "@/lib/types";
 export const Route = createFileRoute("/_authenticated/effort")({
   head: () => ({
     meta: [
-      { title: "Трудозатраты — ARV. Трудозатораты" },
+      { title: "Трудозатраты — ARV. Трудозатраты" },
       {
         name: "description",
         content: "Фактические трудозатраты сотрудников по проектам и видам работ по дням месяца.",
       },
-      { property: "og:title", content: "Трудозатраты — ARV. Трудозатораты" },
+      { property: "og:title", content: "Трудозатраты — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Фактические трудозатраты по проектам и видам работ по дням месяца.",

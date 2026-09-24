@@ -21,12 +21,12 @@ export const Route = createFileRoute("/_authenticated/employees/new")({
   component: NewEmployeePage,
   head: () => ({
     meta: [
-      { title: "Новый сотрудник — ARV. Трудозатораты" },
+      { title: "Новый сотрудник — ARV. Трудозатраты" },
       {
         name: "description",
         content: "Создание учётной записи нового сотрудника в системе ARV.",
       },
-      { property: "og:title", content: "Новый сотрудник — ARV. Трудозатораты" },
+      { property: "og:title", content: "Новый сотрудник — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Регистрация сотрудников для работы в системе учёта трудозатрат ARV.",

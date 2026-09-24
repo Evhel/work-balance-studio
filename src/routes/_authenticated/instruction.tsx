@@ -7,13 +7,13 @@ export const Route = createFileRoute("/_authenticated/instruction")({
   component: InstructionPage,
   head: () => ({
     meta: [
-      { title: "Инструкция — ARV. Трудозатораты" },
+      { title: "Инструкция — ARV. Трудозатраты" },
       {
         name: "description",
         content:
           "Как пользоваться системой учёта трудозатрат АРВ: пошаговые инструкции для директора, модератора, руководителя отдела, сотрудника и офис-менеджера.",
       },
-      { property: "og:title", content: "Инструкция — ARV. Трудозатораты" },
+      { property: "og:title", content: "Инструкция — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Пошаговые инструкции по работе с табелями, проектами, трудозатратами и дашбордами.",

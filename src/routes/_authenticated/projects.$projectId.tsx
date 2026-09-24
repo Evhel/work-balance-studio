@@ -45,9 +45,9 @@ import { medicalCodeFor, PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   head: () => ({
     meta: [
-      { title: "Карточка проекта — ARV. Трудозатораты" },
+      { title: "Карточка проекта — ARV. Трудозатраты" },
       { name: "description", content: "План работ по проекту и загрузка участников по дням." },
-      { property: "og:title", content: "Карточка проекта — ARV. Трудозатораты" },
+      { property: "og:title", content: "Карточка проекта — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "План работ по проекту и загрузка участников по дням.",

@@ -39,9 +39,9 @@ import { CODE_COLORS, CONTRACTOR_LEGEND, visibleMedicalItems } from "@/lib/types
 export const Route = createFileRoute("/_authenticated/contractors")({
   head: () => ({
     meta: [
-      { title: "Табель подрядчиков — ARV. Трудозатораты" },
+      { title: "Табель подрядчиков — ARV. Трудозатраты" },
       { name: "description", content: "Месячный табель занятости подрядчиков проектного бюро." },
-      { property: "og:title", content: "Табель подрядчиков — ARV. Трудозатораты" },
+      { property: "og:title", content: "Табель подрядчиков — ARV. Трудозатраты" },
       {
         property: "og:description",
         content: "Месячный табель занятости подрядчиков проектного бюро.",
