@@ -133,16 +133,22 @@ $serviceHeaders = @{
 $suffix = [Guid]::NewGuid().ToString("N").Substring(0, 12)
 $password = "Arv-$([Guid]::NewGuid().ToString('N'))-Aa1!"
 $employeePosition = '"\u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a"' | ConvertFrom-Json
+$officePosition = '"\u041e\u0444\u0438\u0441-\u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440"' | ConvertFrom-Json
 $moderatorPosition = '"\u041c\u043e\u0434\u0435\u0440\u0430\u0442\u043e\u0440"' | ConvertFrom-Json
 $users = @()
 $projectKey = "shared-project-$suffix"
 $effortKey = $null
+$medicalKey = $null
+$rawMedicalKey = $null
 $filterKey = "shared-filter-$suffix"
 
 try {
   $moderator = New-TestUser -Name "moderator" -Position $moderatorPosition -Password $password `
     -ServiceHeaders $serviceHeaders -AnonKey $anonKey -Suffix $suffix
   $users += $moderator
+  $office = New-TestUser -Name "office" -Position $officePosition -Password $password `
+    -ServiceHeaders $serviceHeaders -AnonKey $anonKey -Suffix $suffix
+  $users += $office
   $employeeA = New-TestUser -Name "employee-a" -Position $employeePosition -Password $password `
     -ServiceHeaders $serviceHeaders -AnonKey $anonKey -Suffix $suffix
   $users += $employeeA
@@ -150,6 +156,8 @@ try {
     -ServiceHeaders $serviceHeaders -AnonKey $anonKey -Suffix $suffix
   $users += $employeeB
   $effortKey = "$($employeeA.Id)|2099-01|shared-row-$suffix"
+  $medicalKey = "$($employeeA.Id)|2099-02-01"
+  $rawMedicalKey = "$($employeeB.Id)|2099-02-01"
 
   Invoke-Api -Method POST -Uri "$SupabaseUrl/rest/v1/app_records" `
     -Headers $moderator.Headers -ExpectedStatus @(200, 201) -Body @{
@@ -225,17 +233,66 @@ try {
   Assert-True ($updatedRows[0].payload.value.name -eq "Shared project updated") `
     "A project update was not visible to another session."
 
+  Invoke-Api -Method POST -Uri "$SupabaseUrl/rest/v1/app_records" `
+    -Headers $office.Headers -ExpectedStatus @(200, 201) -Body @(
+      @{
+        record_kind = "timesheet"
+        record_key = $medicalKey
+        payload = '"\u041d"' | ConvertFrom-Json
+      },
+      @{
+        record_kind = "medical_absence"
+        record_key = $medicalKey
+        payload = $true
+      }
+    ) | Out-Null
+
+  $employeeMedicalRead = Invoke-Api -Method GET `
+    -Uri "$SupabaseUrl/rest/v1/app_records?select=record_kind,payload&record_key=eq.$medicalKey" `
+    -Headers $employeeA.Headers
+  $employeeMedicalRows = @(Convert-ResponseJson $employeeMedicalRead.Content)
+  Assert-True ($employeeMedicalRows.Count -eq 1 -and $employeeMedicalRows[0].record_kind -eq "timesheet") `
+    "An employee could see the protected medical marker."
+  Assert-True ($employeeMedicalRows[0].payload -eq ('"\u041d"' | ConvertFrom-Json)) `
+    "The public medical value was not masked as N."
+
+  $moderatorMedicalRead = Invoke-Api -Method GET `
+    -Uri "$SupabaseUrl/rest/v1/app_records?select=record_kind&record_kind=eq.medical_absence&record_key=eq.$medicalKey" `
+    -Headers $moderator.Headers
+  Assert-True (@(Convert-ResponseJson $moderatorMedicalRead.Content).Count -eq 0) `
+    "A moderator could see the protected medical marker."
+
+  $officeMedicalRead = Invoke-Api -Method GET `
+    -Uri "$SupabaseUrl/rest/v1/app_records?select=record_kind&record_kind=eq.medical_absence&record_key=eq.$medicalKey" `
+    -Headers $office.Headers
+  Assert-True (@(Convert-ResponseJson $officeMedicalRead.Content).Count -eq 1) `
+    "The office manager could not see the protected medical marker."
+
+  $rawMedicalInsert = Invoke-Api -Method POST -Uri "$SupabaseUrl/rest/v1/app_records" `
+    -Headers $moderator.Headers -ExpectedStatus @(400, 409) -Body @{
+      record_kind = "timesheet"
+      record_key = $rawMedicalKey
+      payload = '"\u0411"' | ConvertFrom-Json
+    }
+  Assert-True ($rawMedicalInsert.Status -in @(400, 409)) `
+    "The database unexpectedly accepted a raw medical code in public data."
+
   Write-Host "Shared data isolation and synchronization: PASS"
   Write-Host "- project create/update is shared between sessions"
   Write-Host "- ordinary employee cannot create projects"
   Write-Host "- employee effort is shared but protected from another employee's edits"
   Write-Host "- personal dashboard filters remain private"
+  Write-Host "- medical absence is B only for office manager and masked as N for everyone else"
+  Write-Host "- raw B values are rejected from public timesheet rows"
 }
 finally {
   foreach ($record in @(
     @{ kind = "project"; key = $projectKey },
     @{ kind = "effort_row"; key = $effortKey },
     @{ kind = "filter_set"; key = $filterKey },
+    @{ kind = "timesheet"; key = $medicalKey },
+    @{ kind = "medical_absence"; key = $medicalKey },
+    @{ kind = "timesheet"; key = $rawMedicalKey },
     @{ kind = "project"; key = "unauthorized-$suffix" }
   )) {
     if (-not $record.key) { continue }

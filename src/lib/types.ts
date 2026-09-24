@@ -23,7 +23,6 @@ export type Employee = {
   fullTime: boolean;
   /** Включён ли сотрудник в учёт и отчёты по трудозатратам */
   trackEffort: boolean;
-  birthDate: string; // YYYY-MM-DD
   /** Дата начала работы */
   startWork?: string;
   /** Дата окончания работы */
@@ -77,7 +76,7 @@ export type Project = {
 
 
 /** Коды табеля рабочего времени (стр. 1) */
-export const TIME_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У", "УД"] as const;
+export const TIME_CODES = ["Б", "Н", "ОТ", "ДО", "НН", "ОЖ", "У", "УД"] as const;
 export type TimeCode = (typeof TIME_CODES)[number];
 
 /** Код удалённой работы. Показывается только в табеле рабочего времени */
@@ -85,6 +84,7 @@ export const REMOTE_CODE = "УД";
 
 export const TIME_LEGEND: { code: string; label: string }[] = [
   { code: "Б", label: "больничный лист" },
+  { code: "Н", label: "неявка б" },
   { code: "ОТ", label: 'отпуск оплачиваемый' },
   { code: "ДО", label: 'отпуск "за свой счет"' },
   { code: "8", label: "отработанное время, час" },
@@ -96,12 +96,14 @@ export const TIME_LEGEND: { code: string; label: string }[] = [
 
 export const CONTRACTOR_LEGEND: { code: string; label: string }[] = [
   { code: "Б", label: "больничный" },
+  { code: "Н", label: "неявка б" },
   { code: "ОТ", label: "отпуск запланированный" },
   { code: "НН", label: "неявка" },
 ];
 
 export const CODE_COLORS: Record<string, string> = {
   "Б": "#fde2e2",
+  "Н": "#fde2e2",
   "ОТ": "#d8f0dc",
   "ДО": "#e4e0f5",
   "НН": "#ffe0b2",
@@ -111,7 +113,16 @@ export const CODE_COLORS: Record<string, string> = {
   "Р": "#c9f2cf",
 };
 
-export const ABSENCE_CODES = ["Б", "ОТ", "ДО", "У"];
+export const ABSENCE_CODES = ["Б", "Н", "ОТ", "ДО", "У"];
+
+export function medicalCodeFor(position: Position) {
+  return position === "Офис-менеджер" ? "Б" : "Н";
+}
+
+export function visibleMedicalItems<T extends { code: string }>(items: readonly T[], position: Position) {
+  const hiddenCode = position === "Офис-менеджер" ? "Н" : "Б";
+  return items.filter((item) => item.code !== hiddenCode);
+}
 
 /** Строка табеля трудозатрат */
 export type EffortRow = {

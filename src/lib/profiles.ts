@@ -30,7 +30,6 @@ export function rowToEmployee(r: ProfileRow): Employee & { login: string } {
     position,
     fullTime: r.full_time,
     trackEffort: r.track_effort,
-    birthDate: "",
     remoteDays: r.remote_days ?? [],
     ...(r.start_work ? { startWork: r.start_work } : {}),
     ...(r.end_work ? { endWork: r.end_work } : {}),

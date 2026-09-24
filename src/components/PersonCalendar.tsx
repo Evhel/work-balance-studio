@@ -13,6 +13,7 @@ import { MonthPicker, Legend } from "@/components/MonthPicker";
 import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { useStore } from "@/lib/store";
 import { absenceAt } from "@/lib/people";
+import { medicalCodeFor } from "@/lib/types";
 import {
   MONTHS,
   MONTHS_SHORT,
@@ -22,12 +23,10 @@ import {
   weekdayIndex,
 } from "@/lib/dates";
 
-const EMP_LEGEND = [
-  { code: "Б", label: "больничный лист" },
+const EMP_LEGEND_REST = [
   { code: "ОТ", label: "отпуск оплачиваемый" },
   { code: "ДО", label: 'отпуск "за свой счет"' },
   { code: "У", label: "учебный отпуск" },
-  { code: "🎂", label: "день рождения" },
   { code: "🟡", label: "личное напоминание" },
   { code: "🟥", label: "конфликт: отсутствие и занятость" },
 ];
@@ -39,7 +38,7 @@ const dayRange = (a: number, b: number) => {
 
 /** Личный календарь человека: проекты, отсутствия, задачи */
 export function PersonCalendar({ personId }: { personId: string }) {
-  const { store, update, isWorkday, setPlanCells, can } = useStore();
+  const { store, update, isWorkday, setPlanCells, can, currentUser } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -82,9 +81,6 @@ export function PersonCalendar({ personId }: { personId: string }) {
     (selDays.includes(d) ? selDays : [d]).map((x) => iso(year, month, x));
 
   if (!person) return null;
-
-  const birthMd = person.birthDate ? person.birthDate.slice(5) : "";
-  const isBirthday = (date: string) => !!birthMd && date.slice(5) === birthMd;
 
   const dim = daysInMonth(year, month);
   const firstWd = weekdayIndex(year, month, 1);
@@ -157,7 +153,6 @@ export function PersonCalendar({ personId }: { personId: string }) {
                     return <div key={i} className="min-h-24 border-r border-b bg-muted/40" />;
                   const date = iso(year, month, d);
                   const absence = absenceAt(store, person.id, date);
-                  const bday = isBirthday(date);
                   const active = store.projects.filter(
                     (pr) => store.plan[pr.id]?.[person.id]?.[date] === "Р",
                   );
@@ -187,13 +182,11 @@ export function PersonCalendar({ personId }: { personId: string }) {
                           style={{
                             background: conflict
                               ? "#ffd9d9"
-                              : bday
-                                ? "#ffd9ec"
-                                : absence
-                                  ? "#e2e2e2"
-                                  : isWorkday(date)
-                                    ? undefined
-                                    : "var(--weekend)",
+                              : absence
+                                ? "#e2e2e2"
+                                : isWorkday(date)
+                                  ? undefined
+                                  : "var(--weekend)",
                             boxShadow: conflict ? "inset 0 0 0 2px #dc2626" : undefined,
                             outline: selected ? "2px solid var(--primary)" : undefined,
                             outlineOffset: "-2px",
@@ -201,7 +194,6 @@ export function PersonCalendar({ personId }: { personId: string }) {
                         >
                           <div className="mb-1 flex items-center justify-between font-medium">
                             <span>{d}</span>
-                            {bday && <span title="День рождения">🎂</span>}
                           </div>
                           {absence && <div className="mb-1 font-medium">{absence}</div>}
                           {active.map((pr) => {
@@ -308,19 +300,17 @@ export function PersonCalendar({ personId }: { personId: string }) {
                 );
                 const absDays = dates.filter((date) => absenceAt(store, person.id, date)).length;
                 const tasks = dates.filter((date) => store.personalEvents[person.id]?.[date]).length;
-                const bday = dates.some(isBirthday);
                 return (
                   <button
                     key={mn}
                     className="rounded-lg border p-2 text-left text-xs hover:shadow-md"
-                    style={{ background: bday ? "#ffd9ec" : undefined }}
                     onClick={() => {
                       setMonth(m);
                       setView("month");
                     }}
                   >
                     <div className="mb-1 font-medium">
-                      {MONTHS[m]} {bday && "🎂"}
+                      {MONTHS[m]}
                     </div>
                     {projs.map((pr) => (
                       <div key={pr.id} className="mb-0.5 flex items-center gap-1">
@@ -359,7 +349,15 @@ export function PersonCalendar({ personId }: { personId: string }) {
         </div>
       </div>
 
-      <Legend items={EMP_LEGEND} />
+      <Legend
+        items={[
+          {
+            code: medicalCodeFor(currentUser.position),
+            label: currentUser.position === "Офис-менеджер" ? "больничный лист" : "неявка б",
+          },
+          ...EMP_LEGEND_REST,
+        ]}
+      />
     </div>
   );
 }

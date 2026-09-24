@@ -1,8 +1,8 @@
 import * as XLSX from "xlsx-js-style";
 import { MONTHS, daysInMonth, iso, isWeekendDate } from "./dates";
-import { TIME_LEGEND } from "./types";
 
 export type ExportRow = { fio: string; values: string[]; hours: number; days: number };
+export type ExportLegendItem = { code: string; label: string };
 
 const BORDER = {
   top: { style: "thin", color: { rgb: "9E9E9E" } },
@@ -32,6 +32,7 @@ function buildSheet(
   rows: ExportRow[],
   normDays: number,
   title: string,
+  legend: ExportLegendItem[],
 ) {
   const dim = daysInMonth(year, month);
   const weekend = Array.from({ length: dim }, (_, i) => isWeekendDate(year, month, i + 1));
@@ -61,7 +62,7 @@ function buildSheet(
 
   aoa.push([]);
   aoa.push([cell("Условные обозначения:", { bold: true, border: false })]);
-  for (const l of TIME_LEGEND) {
+  for (const l of legend) {
     aoa.push([cell(l.code, { bold: true, border: false }), cell(l.label, { border: false })]);
   }
   aoa.push([]);
@@ -80,6 +81,7 @@ export function buildMonthSheet(
   month: number,
   rows: ExportRow[],
   normDays: number,
+  legend: ExportLegendItem[],
 ) {
   return buildSheet(
     year,
@@ -87,6 +89,7 @@ export function buildMonthSheet(
     rows,
     normDays,
     `Табель АРВ ${MONTHS[month]} ${year} (норма ${normDays} р.д./${normDays * 8} ч)`,
+    legend,
   );
 }
 
@@ -95,11 +98,12 @@ export function downloadMonth(
   month: number,
   rows: ExportRow[],
   normDays: number,
+  legend: ExportLegendItem[],
 ) {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(
     wb,
-    buildMonthSheet(year, month, rows, normDays),
+    buildMonthSheet(year, month, rows, normDays, legend),
     `${MONTHS[month]}`,
   );
   XLSX.writeFile(wb, `АРВ_Табель_${year}_${MONTHS[month]}.xlsx`);
@@ -111,6 +115,7 @@ export function downloadTemplate(
   month: number,
   names: string[],
   normDays: number,
+  legend: ExportLegendItem[],
 ) {
   const dim = daysInMonth(year, month);
   const rows: ExportRow[] = names.map((n) => ({
@@ -128,6 +133,7 @@ export function downloadTemplate(
       rows,
       normDays,
       `Табель АРВ ${MONTHS[month]} ${year} (шаблон для заполнения)`,
+      legend,
     ),
     `${MONTHS[month]}`,
   );
@@ -208,7 +214,7 @@ const ROW_HEADER = ["ФИО", "Дата", "Значение"];
  * Построчный шаблон: одна строка = один человек + одна дата + значение.
  * Удобно для массовой загрузки данных сразу на многих сотрудников.
  */
-export function downloadRowTemplate(year: number, month: number, names: string[]) {
+export function downloadRowTemplate(year: number, month: number, names: string[], codes: string[]) {
   const dim = daysInMonth(year, month);
   const aoa: unknown[][] = [
     [
@@ -217,7 +223,7 @@ export function downloadRowTemplate(year: number, month: number, names: string[]
     ],
     [
       cell(
-        'Значение: число часов (например 8) или код: Б, ОТ, ДО, НН, ОЖ, У. Пустая ячейка "Значение" — пропуск.',
+        `Значение: число часов (например 8) или код: ${codes.join(", ")}. Пустая ячейка "Значение" — пропуск.`,
         { border: false },
       ),
     ],
@@ -240,7 +246,7 @@ function normDate(v: string) {
   const t = v.trim();
   let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = t.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+  m = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
   if (m) return `${m[3]}-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`;
   return "";
 }

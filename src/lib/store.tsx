@@ -237,7 +237,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       position: "Сотрудник",
       fullTime: true,
       trackEffort: true,
-      birthDate: "",
     };
     const currentUser =
       store.employees.find((e) => e.id === store.currentUserId) ??
@@ -332,13 +331,6 @@ export function useStore() {
 export function fio(p: { lastName: string; firstName: string; middleName?: string }) {
   return [p.lastName, p.firstName].filter(Boolean).join(" ");
 }
-
-/** Дата рождения без года: ДД.ММ */
-export function birthDayMonth(birthDate?: string) {
-  if (!birthDate) return "";
-  return `${birthDate.slice(8, 10)}.${birthDate.slice(5, 7)}`;
-}
-
 
 export function byFio(a: { lastName: string; firstName: string }, b: typeof a) {
   return fio(a).localeCompare(fio(b), "ru");

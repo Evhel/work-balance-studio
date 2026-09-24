@@ -40,7 +40,7 @@ import {
   WEEKDAYS_SHORT,
   weekdayIndex,
 } from "@/lib/dates";
-import { PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
+import { medicalCodeFor, PROJECT_STAGES, REMOTE_CODE, type ProjectGoal } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   head: () => ({
@@ -59,8 +59,7 @@ export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   component: ProjectPage,
 });
 
-const PROJECT_LEGEND = [
-  { code: "Б", label: "больничный лист" },
+const PROJECT_LEGEND_REST = [
   { code: "ОТ", label: "отпуск оплачиваемый" },
   { code: "ДО", label: 'отпуск "за свой счет"' },
   { code: "У", label: "учебный отпуск" },
@@ -71,7 +70,7 @@ const PROJECT_LEGEND = [
 
 function ProjectPage() {
   const { projectId } = Route.useParams();
-  const { store, update, isWorkday, setPlanCells, can } = useStore();
+  const { store, update, isWorkday, setPlanCells, can, currentUser } = useStore();
   const project = store.projects.find((p) => p.id === projectId);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -81,6 +80,13 @@ function ProjectPage() {
   const sel = useRowSelection();
   const yearSel = useRowSelection();
   const editable = can("editProject");
+  const projectLegend = [
+    {
+      code: medicalCodeFor(currentUser.position),
+      label: currentUser.position === "Офис-менеджер" ? "больничный лист" : "неявка б",
+    },
+    ...PROJECT_LEGEND_REST,
+  ];
 
   const members = useMemo(() => {
     if (!project) return [];
@@ -554,7 +560,7 @@ function ProjectPage() {
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border bg-card px-3 py-2 text-xs">
         <span className="font-medium">Обозначения:</span>
-        {PROJECT_LEGEND.map((i) => (
+        {projectLegend.map((i) => (
           <span key={i.code} className="text-muted-foreground">
             <b className="text-foreground">{i.code}</b> — {i.label}
           </span>

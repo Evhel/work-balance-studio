@@ -23,6 +23,7 @@ import { useRowSelection } from "@/components/useRowSelection";
 import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { fio, useStore } from "@/lib/store";
 import { allPeople, absenceAt } from "@/lib/people";
+import { medicalCodeFor } from "@/lib/types";
 import {
   MONTHS,
   MONTHS_SHORT,
@@ -50,8 +51,7 @@ export const Route = createFileRoute("/_authenticated/department")({
   component: DepartmentPage,
 });
 
-const DEPT_LEGEND = [
-  { code: "Б", label: "больничный лист" },
+const DEPT_LEGEND_REST = [
   { code: "ОТ", label: "отпуск оплачиваемый" },
   { code: "ДО", label: 'отпуск "за свой счет"' },
   { code: "У", label: "учебный отпуск" },
@@ -60,7 +60,7 @@ const DEPT_LEGEND = [
 ];
 
 function DepartmentPage() {
-  const { store, isWorkday, setPlanCells, can } = useStore();
+  const { store, isWorkday, setPlanCells, can, currentUser } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -352,7 +352,15 @@ function DepartmentPage() {
         </div>
       </div>
 
-      <Legend items={DEPT_LEGEND} />
+      <Legend
+        items={[
+          {
+            code: medicalCodeFor(currentUser.position),
+            label: currentUser.position === "Офис-менеджер" ? "больничный лист" : "неявка б",
+          },
+          ...DEPT_LEGEND_REST,
+        ]}
+      />
     </div>
   );
 }

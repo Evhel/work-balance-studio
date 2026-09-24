@@ -38,6 +38,7 @@ import {
   REMOTE_CODE,
   TIME_CODES,
   TIME_LEGEND,
+  visibleMedicalItems,
 } from "@/lib/types";
 import {
   downloadMonth,
@@ -82,6 +83,10 @@ function TimesheetPage() {
   const HOVER_TINT = "inset 0 0 0 999px rgba(82, 0, 153, 0.07)";
   const sel = useRowSelection();
   const editable = currentUser.position === "Модератор" || can("editTimesheet");
+  const availableTimeCodes = TIME_CODES.filter(
+    (code) => code !== (currentUser.position === "Офис-менеджер" ? "Н" : "Б"),
+  );
+  const visibleTimeLegend = visibleMedicalItems(TIME_LEGEND, currentUser.position);
   const canDelete = can("deleteEntities");
   const fileRef = useRef<HTMLInputElement>(null);
   const today = todayIso();
@@ -115,7 +120,7 @@ function TimesheetPage() {
   };
 
   /** Статусы, при которых «УД» не ставится */
-  const NON_REMOTE_CODES = ["Б", "ОТ", "ДО", "НН", "ОЖ", "У"];
+  const NON_REMOTE_CODES = ["Б", "Н", "ОТ", "ДО", "НН", "ОЖ", "У"];
 
   /** Удалёнка на дату: ручное переопределение важнее регулярного паттерна */
   const remoteAt = (personId: string, date: string) => {
@@ -262,7 +267,8 @@ function TimesheetPage() {
           const emp = d.employees.find((e) => fio(e) === c.fio);
           if (!emp) continue;
           d.timesheet[emp.id] = d.timesheet[emp.id] ?? {};
-          d.timesheet[emp.id]![c.date] = c.value;
+          d.timesheet[emp.id]![c.date] =
+            c.value === "Б" && currentUser.position !== "Офис-менеджер" ? "Н" : c.value;
         }
       });
       toast.success(`Импортировано значений: ${cells.length}`);
@@ -297,7 +303,10 @@ function TimesheetPage() {
                 ).length;
                 // Каждый месяц — отдельный файл; небольшая задержка,
                 // чтобы браузер не блокировал серию скачиваний.
-                window.setTimeout(() => downloadMonth(y, m, exportRows(y, m), nd), i * 400);
+                window.setTimeout(
+                  () => downloadMonth(y, m, exportRows(y, m), nd, visibleTimeLegend),
+                  i * 400,
+                );
               });
               toast.success(
                 list.length > 1
@@ -310,7 +319,7 @@ function TimesheetPage() {
           <Button
             variant="outline"
             onClick={() => {
-              downloadTemplate(year, month, people.map(fio), normDays);
+              downloadTemplate(year, month, people.map(fio), normDays, visibleTimeLegend);
               toast.success("Шаблон скачан");
             }}
           >
@@ -319,7 +328,12 @@ function TimesheetPage() {
           <Button
             variant="outline"
             onClick={() => {
-              downloadRowTemplate(year, month, people.map(fio));
+              downloadRowTemplate(
+                year,
+                month,
+                people.map(fio),
+                availableTimeCodes.filter((code) => code !== REMOTE_CODE),
+              );
               toast.success("Построчный шаблон скачан");
             }}
             title="Построчный формат: ФИО / Дата / Значение — удобно для массовой загрузки"
@@ -546,7 +560,7 @@ function TimesheetPage() {
                         </ContextMenuTrigger>
                         {editable && (
                           <ContextMenuContent>
-                            {TIME_CODES.filter((c) => c !== REMOTE_CODE).map((c) => (
+                            {availableTimeCodes.filter((c) => c !== REMOTE_CODE).map((c) => (
                               <ContextMenuItem
                                 key={c}
                                 onSelect={() => applyStatus(p.id, sel.targetDays(p.id, d), c)}
@@ -608,7 +622,13 @@ function TimesheetPage() {
         </table>
       </div>
 
-      <Legend items={hideRemote ? TIME_LEGEND.filter((l) => l.code !== REMOTE_CODE) : TIME_LEGEND} />
+      <Legend
+        items={
+          hideRemote
+            ? visibleTimeLegend.filter((item) => item.code !== REMOTE_CODE)
+            : visibleTimeLegend
+        }
+      />
 
       {editable && store.employees.some((e) => e.hidden) && (
         <div className="mt-4 rounded-lg border bg-card p-3 text-sm">

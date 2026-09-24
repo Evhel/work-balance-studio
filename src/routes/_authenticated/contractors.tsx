@@ -34,7 +34,7 @@ import { useRowSelection } from "@/components/useRowSelection";
 import { PlanBar, isPlanned } from "@/components/PlanBar";
 import { byFio, fio, useStore } from "@/lib/store";
 import { MONTHS, daysInMonth, iso, WEEKDAYS_SHORT, weekdayIndex } from "@/lib/dates";
-import { CODE_COLORS, CONTRACTOR_LEGEND } from "@/lib/types";
+import { CODE_COLORS, CONTRACTOR_LEGEND, visibleMedicalItems } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/contractors")({
   head: () => ({
@@ -53,10 +53,19 @@ export const Route = createFileRoute("/_authenticated/contractors")({
   component: ContractorsPage,
 });
 
-const CODES = ["Б", "ОТ", "НН"];
+const CODES = ["Б", "Н", "ОТ", "НН"];
 
 function ContractorsPage() {
-  const { store, update, isWorkday, setCells, setPlanCells, can, removeContractor } = useStore();
+  const {
+    store,
+    update,
+    isWorkday,
+    setCells,
+    setPlanCells,
+    can,
+    currentUser,
+    removeContractor,
+  } = useStore();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -64,6 +73,10 @@ function ContractorsPage() {
   const sel = useRowSelection();
   const editable = can("editContractors");
   const canDelete = can("deleteEntities");
+  const visibleCodes = CODES.filter(
+    (code) => code !== (currentUser.position === "Офис-менеджер" ? "Н" : "Б"),
+  );
+  const visibleLegend = visibleMedicalItems(CONTRACTOR_LEGEND, currentUser.position);
 
   const days = Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1);
   const people = useMemo(() => {
@@ -251,7 +264,7 @@ function ContractorsPage() {
                             Снять занятость
                           </ContextMenuItem>
                           <ContextMenuSeparator />
-                          {CODES.map((c) => (
+                          {visibleCodes.map((c) => (
                             <ContextMenuItem key={c} onSelect={() => apply(p.id, d, c)}>
                               {c} — {CONTRACTOR_LEGEND.find((l) => l.code === c)?.label}
                             </ContextMenuItem>
@@ -282,7 +295,7 @@ function ContractorsPage() {
         </div>
       </div>
 
-      <Legend items={CONTRACTOR_LEGEND} />
+      <Legend items={visibleLegend} />
 
       {editable && store.contractors.some((c) => c.hidden) && (
         <div className="mt-4 rounded-lg border bg-card p-3 text-sm">

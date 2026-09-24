@@ -22,6 +22,7 @@ export const SHARED_RECORD_KINDS = [
   "effort_done",
   "filter_set",
   "access",
+  "medical_absence",
 ] as const;
 
 export type SharedRecordKind = (typeof SHARED_RECORD_KINDS)[number];
@@ -72,7 +73,9 @@ export function sharedRecordsFromStore(store: Store, authUserId: string) {
 
   for (const [personId, dates] of Object.entries(store.timesheet)) {
     for (const [date, value] of Object.entries(dates)) {
-      put(rows, "timesheet", joinedKey(personId, date), value);
+      const key = joinedKey(personId, date);
+      put(rows, "timesheet", key, value === "Б" ? "Н" : value);
+      if (value === "Б") put(rows, "medical_absence", key, true);
     }
   }
   for (const [personId, dates] of Object.entries(store.remoteOverride)) {
@@ -159,6 +162,7 @@ export function sharedStoreFromRecords(rows: SharedRecord[], currentUserId: stri
   const contractors: OrderedPayload<Contractor>[] = [];
   const filterSets: OrderedPayload<FilterSet>[] = [];
   const efforts = new Map<string, OrderedPayload<EffortRow>[]>();
+  const medicalAbsences = new Set<string>();
 
   for (const row of rows) {
     switch (row.record_kind) {
@@ -237,7 +241,16 @@ export function sharedStoreFromRecords(rows: SharedRecord[], currentUserId: stri
         store.access[position]![action] = row.payload;
         break;
       }
+      case "medical_absence":
+        if (row.payload === true) medicalAbsences.add(row.record_key);
+        break;
     }
+  }
+
+  for (const recordKey of medicalAbsences) {
+    const key = splitKey(recordKey, 2);
+    if (!key || store.timesheet[key[0]!]?.[key[1]!] !== "Н") continue;
+    store.timesheet[key[0]!]![key[1]!] = "Б";
   }
 
   store.projects = projects.sort((a, b) => a.order - b.order).map((item) => item.value);

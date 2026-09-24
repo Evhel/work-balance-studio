@@ -104,3 +104,4 @@ CREATE POLICY "user_roles_select_authenticated" ON public.user_roles
 -- clean-database snapshot cannot drift from its RLS permission matrix. `\ir`
 -- resolves relative to this schema file when psql runs it from the repository.
 \ir ../supabase/migrations/20260924180000_add_shared_application_records.sql
+\ir ../supabase/migrations/20260924190000_protect_medical_absence.sql
