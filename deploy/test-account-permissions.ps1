@@ -34,6 +34,9 @@ function Invoke-Api {
     Uri = $Uri
     Headers = $Headers
   }
+  if ($PSVersionTable.PSVersion.Major -ge 7) {
+    $request.SkipHttpErrorCheck = $true
+  }
   if ($null -ne $Body) {
     $json = $Body | ConvertTo-Json -Depth 8 -Compress
     $request.Body = [System.Text.Encoding]::UTF8.GetBytes($json)

@@ -1,0 +1,7 @@
+# Stage 9 LAN override: publish only the Supabase API gateway on the selected
+# office-network address. PostgreSQL and Supavisor remain on 127.0.0.1 through
+# docker-compose.stage3-local.yml.
+services:
+  api-gw:
+    ports: !override
+      - "${ARV_LAN_IP:?Set ARV_LAN_IP}:${API_GW_HTTP_PORT:-8000}:8000/tcp"
