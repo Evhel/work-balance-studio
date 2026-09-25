@@ -5,6 +5,8 @@ param(
   [int]$SupabasePort = 8000,
   [string]$ServerRoot = "D:\prog\ARV-Server",
   [int]$DockerTimeoutSeconds = 180,
+  [ValidateRange(30, 1800)]
+  [int]$SupabaseTimeoutSeconds = 300,
   [switch]$SkipApplication,
   [switch]$RestartApplication
 )
@@ -91,6 +93,7 @@ Write-Host "Starting local database and API on $LanAddress..."
   -LanAddress $LanAddress `
   -ApplicationPort $ApplicationPort `
   -SupabasePort $SupabasePort `
+  -StartupTimeoutSeconds $SupabaseTimeoutSeconds `
   -SupabaseDirectory (Join-Path $ServerRoot "supabase") `
   -DockerPath $dockerPath
 

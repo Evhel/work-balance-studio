@@ -4,6 +4,8 @@ param(
   [string]$LanAddress,
   [int]$ApplicationPort = 3000,
   [int]$SupabasePort = 8000,
+  [ValidateRange(30, 1800)]
+  [int]$StartupTimeoutSeconds = 300,
   [string]$SupabaseDirectory = "D:\prog\ARV-Server\supabase",
   [string]$DockerPath = "D:\prog\ARV-Server\DockerDesktop\resources\bin\docker.exe"
 )
@@ -97,6 +99,47 @@ $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
 $previousLanAddress = $env:ARV_LAN_IP
 try {
   $env:ARV_LAN_IP = $LanAddress
+
+  # Start PostgreSQL first. After Docker Desktop itself has just started,
+  # crash recovery can take longer than Compose's health-check retry window.
+  # Waiting here prevents the rest of the stack from failing on a temporary
+  # `supabase-db is unhealthy` status.
+  Write-Host "Starting the local database..."
+  & $DockerPath compose `
+    --project-directory $SupabaseDirectory `
+    -f $baseCompose `
+    -f $localCompose `
+    -f $lanCompose `
+    up -d db
+  if ($LASTEXITCODE -ne 0) {
+    throw "Local database startup failed with exit code $LASTEXITCODE."
+  }
+
+  $databaseDeadline = (Get-Date).AddSeconds($StartupTimeoutSeconds)
+  $lastDatabaseState = $null
+  do {
+    $databaseState = [string](& $DockerPath inspect `
+      --format "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}" `
+      supabase-db 2>$null)
+    $inspectExitCode = $LASTEXITCODE
+
+    if ($inspectExitCode -eq 0 -and $databaseState.Trim() -eq "healthy") {
+      Write-Host "Local database is ready."
+      break
+    }
+
+    if ($databaseState -ne $lastDatabaseState -and -not [string]::IsNullOrWhiteSpace($databaseState)) {
+      Write-Host "Waiting for the local database (status: $($databaseState.Trim()))..."
+      $lastDatabaseState = $databaseState
+    }
+    Start-Sleep -Seconds 5
+  } while ((Get-Date) -lt $databaseDeadline)
+
+  if ($inspectExitCode -ne 0 -or $databaseState.Trim() -ne "healthy") {
+    throw "Local database did not become healthy within $StartupTimeoutSeconds seconds. No data was deleted."
+  }
+
+  Write-Host "Starting the remaining Supabase services..."
   & $DockerPath compose `
     --project-directory $SupabaseDirectory `
     -f $baseCompose `
