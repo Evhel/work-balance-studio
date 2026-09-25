@@ -125,8 +125,8 @@ function EffortPage() {
         })),
       );
       toast.success(`Импортировано строк: ${imported.length}`);
-    } catch {
-      toast.error("Не удалось прочитать файл");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не удалось прочитать файл");
     }
   };
 
@@ -173,8 +173,8 @@ function EffortPage() {
       toast.success(
         `Загружено строк: ${ok}${skipped.size ? `, не распознано: ${[...skipped].slice(0, 3).join(", ")}` : ""}`,
       );
-    } catch {
-      toast.error("Не удалось прочитать файл");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не удалось прочитать файл");
     }
   };
 

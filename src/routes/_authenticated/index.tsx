@@ -272,8 +272,8 @@ function TimesheetPage() {
         }
       });
       toast.success(`Импортировано значений: ${cells.length}`);
-    } catch {
-      toast.error("Не удалось прочитать файл");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не удалось прочитать файл");
     }
   };
 

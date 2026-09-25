@@ -1,5 +1,6 @@
-import * as XLSX from "xlsx-js-style";
+import * as StyledXLSX from "xlsx-js-style";
 import { MONTHS, daysInMonth, iso, isWeekendDate } from "./dates";
+import { readExcelRows } from "./excel-reader";
 
 export type ExportRow = { fio: string; values: string[]; hours: number; days: number };
 export type ExportLegendItem = { code: string; label: string };
@@ -68,7 +69,7 @@ function buildSheet(
   aoa.push([]);
   aoa.push([cell(`Норма: ${normDays} р.д. / ${normDays * 8} ч`, { border: false })]);
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const ws = StyledXLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = [{ wch: 30 }, ...Array.from({ length: dim + 2 }, () => ({ wch: 5 }))];
   ws["!rows"] = [{ hpt: 22 }];
   ws["!freeze"] = { xSplit: 1, ySplit: 3 };
@@ -100,13 +101,13 @@ export function downloadMonth(
   normDays: number,
   legend: ExportLegendItem[],
 ) {
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(
+  const wb = StyledXLSX.utils.book_new();
+  StyledXLSX.utils.book_append_sheet(
     wb,
     buildMonthSheet(year, month, rows, normDays, legend),
     `${MONTHS[month]}`,
   );
-  XLSX.writeFile(wb, `АРВ_Табель_${year}_${MONTHS[month]}.xlsx`);
+  StyledXLSX.writeFile(wb, `АРВ_Табель_${year}_${MONTHS[month]}.xlsx`);
 }
 
 /** Пустой шаблон для пакетного импорта: те же ФИО, пустые дни */
@@ -124,8 +125,8 @@ export function downloadTemplate(
     hours: 0,
     days: 0,
   }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(
+  const wb = StyledXLSX.utils.book_new();
+  StyledXLSX.utils.book_append_sheet(
     wb,
     buildSheet(
       year,
@@ -137,22 +138,17 @@ export function downloadTemplate(
     ),
     `${MONTHS[month]}`,
   );
-  XLSX.writeFile(wb, `АРВ_Шаблон_${year}_${MONTHS[month]}.xlsx`);
+  StyledXLSX.writeFile(wb, `АРВ_Шаблон_${year}_${MONTHS[month]}.xlsx`);
 }
 
 export type ImportedCell = { fio: string; date: string; value: string };
 
 /** Разбирает файл: ищет заголовок с месяцем/годом, строку с номерами дней и данные. */
 export async function parseImport(file: File): Promise<ImportedCell[]> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
+  const sheets = await readExcelRows(file);
   const out: ImportedCell[] = [];
 
-  for (const name of wb.SheetNames) {
-    const ws = wb.Sheets[name];
-    if (!ws) continue;
-    const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, raw: false });
-
+  for (const { name, rows: aoa } of sheets) {
     const byRows = parseRowImport(aoa);
     if (byRows.length) {
       out.push(...byRows);
@@ -235,11 +231,11 @@ export function downloadRowTemplate(year: number, month: number, names: string[]
       aoa.push([cell(n), cell(iso(year, month, d), { center: true }), cell("", { center: true })]);
     }
   }
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const ws = StyledXLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = [{ wch: 34 }, { wch: 14 }, { wch: 12 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Импорт");
-  XLSX.writeFile(wb, `АРВ_Шаблон_построчный_${year}_${MONTHS[month]}.xlsx`);
+  const wb = StyledXLSX.utils.book_new();
+  StyledXLSX.utils.book_append_sheet(wb, ws, "Импорт");
+  StyledXLSX.writeFile(wb, `АРВ_Шаблон_построчный_${year}_${MONTHS[month]}.xlsx`);
 }
 
 function normDate(v: string) {
@@ -315,23 +311,19 @@ export function downloadEffort(
     cell(totals.reduce((a, b) => a + b, 0), { center: true, bold: true }),
   ]);
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const ws = StyledXLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = [{ wch: 28 }, { wch: 22 }, ...Array.from({ length: dim + 1 }, () => ({ wch: 5 }))];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `${MONTHS[month]}`);
-  XLSX.writeFile(wb, `АРВ_Трудозатраты_${who}_${year}_${MONTHS[month]}.xlsx`);
+  const wb = StyledXLSX.utils.book_new();
+  StyledXLSX.utils.book_append_sheet(wb, ws, `${MONTHS[month]}`);
+  StyledXLSX.writeFile(wb, `АРВ_Трудозатраты_${who}_${year}_${MONTHS[month]}.xlsx`);
 }
 
 export type ImportedEffortRow = { project: string; workType: string; hours: Record<string, number> };
 
 export async function parseEffortImport(file: File): Promise<ImportedEffortRow[]> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
+  const sheets = await readExcelRows(file);
   const out: ImportedEffortRow[] = [];
-  for (const name of wb.SheetNames) {
-    const ws = wb.Sheets[name];
-    if (!ws) continue;
-    const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, raw: false });
+  for (const { rows: aoa } of sheets) {
     const headerIdx = aoa.findIndex(
       (row) => String(row?.[0] ?? "").trim().toLowerCase() === "проект",
     );
@@ -403,11 +395,11 @@ export function downloadEffortRowTemplate(names: string[], projects: string[]) {
       ]);
     }
   }
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const ws = StyledXLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = [{ wch: 30 }, { wch: 14 }, { wch: 30 }, { wch: 26 }, { wch: 8 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Трудозатраты");
-  const ref = XLSX.utils.aoa_to_sheet([
+  const wb = StyledXLSX.utils.book_new();
+  StyledXLSX.utils.book_append_sheet(wb, ws, "Трудозатраты");
+  const ref = StyledXLSX.utils.aoa_to_sheet([
     [cell("Проекты (копируйте названия в столбец «Проект»)", { bold: true, border: false })],
     ...projects.map((p) => [cell(p)]),
     [],
@@ -415,19 +407,15 @@ export function downloadEffortRowTemplate(names: string[], projects: string[]) {
     ...names.map((n) => [cell(n)]),
   ]);
   ref["!cols"] = [{ wch: 40 }];
-  XLSX.utils.book_append_sheet(wb, ref, "Справочники");
-  XLSX.writeFile(wb, "АРВ_Шаблон_трудозатраты_построчный.xlsx");
+  StyledXLSX.utils.book_append_sheet(wb, ref, "Справочники");
+  StyledXLSX.writeFile(wb, "АРВ_Шаблон_трудозатраты_построчный.xlsx");
 }
 
 /** Разбор построчного файла трудозатрат */
 export async function parseEffortRowImport(file: File): Promise<EffortRowRecord[]> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
+  const sheets = await readExcelRows(file);
   const out: EffortRowRecord[] = [];
-  for (const name of wb.SheetNames) {
-    const ws = wb.Sheets[name];
-    if (!ws) continue;
-    const aoa = XLSX.utils.sheet_to_json<(string | number)[]>(ws, { header: 1, raw: false });
+  for (const { rows: aoa } of sheets) {
     const headerIdx = aoa.findIndex(
       (row) =>
         String(row?.[0] ?? "").trim().toUpperCase() === "ФИО" &&
@@ -455,7 +443,7 @@ export function downloadTables(
   fileName: string,
   sheets: { name: string; rows: (string | number)[][] }[],
 ) {
-  const wb = XLSX.utils.book_new();
+  const wb = StyledXLSX.utils.book_new();
   for (const s of sheets) {
     const aoa = s.rows.map((row, ri) =>
       row.map((v) =>
@@ -466,9 +454,9 @@ export function downloadTables(
         }),
       ),
     );
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const ws = StyledXLSX.utils.aoa_to_sheet(aoa);
     ws["!cols"] = (s.rows[0] ?? []).map((_, i) => ({ wch: i === 0 ? 32 : 12 }));
-    XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 30));
+    StyledXLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 30));
   }
-  XLSX.writeFile(wb, fileName);
+  StyledXLSX.writeFile(wb, fileName);
 }
