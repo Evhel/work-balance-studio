@@ -12,7 +12,16 @@ $startScript = Join-Path $PSScriptRoot "start-server.ps1"
 $stopScript = Join-Path $PSScriptRoot "stop-server.ps1"
 $statusScript = Join-Path $PSScriptRoot "status-server.ps1"
 $backupScript = Join-Path $PSScriptRoot "backup-database.ps1"
-foreach ($requiredFile in @($startScript, $stopScript, $statusScript, $backupScript)) {
+$checkUpdatesScript = Join-Path $PSScriptRoot "check-updates.ps1"
+$updateScript = Join-Path $PSScriptRoot "update-server.ps1"
+foreach ($requiredFile in @(
+  $startScript,
+  $stopScript,
+  $statusScript,
+  $backupScript,
+  $checkUpdatesScript,
+  $updateScript
+)) {
   if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
     throw "Required file not found: $requiredFile"
   }
@@ -38,6 +47,8 @@ Write-CommandFile -Path (Join-Path $ServerRoot "Start ARV.cmd") -ScriptPath $sta
 Write-CommandFile -Path (Join-Path $ServerRoot "Stop ARV.cmd") -ScriptPath $stopScript -AlwaysPause
 Write-CommandFile -Path (Join-Path $ServerRoot "ARV Status.cmd") -ScriptPath $statusScript -AlwaysPause
 Write-CommandFile -Path (Join-Path $ServerRoot "Backup ARV Now.cmd") -ScriptPath $backupScript -AlwaysPause
+Write-CommandFile -Path (Join-Path $ServerRoot "Check ARV Updates.cmd") -ScriptPath $checkUpdatesScript -AlwaysPause
+Write-CommandFile -Path (Join-Path $ServerRoot "Update ARV.cmd") -ScriptPath $updateScript -AlwaysPause
 
 $userName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $principal = New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited
@@ -77,3 +88,4 @@ Register-ScheduledTask `
 Write-Host "ARV controls installed in $ServerRoot"
 Write-Host "Automatic start: after $userName signs in to Windows"
 Write-Host "Weekly backup: $BackupDay at $BackupTime; missed runs start when available"
+Write-Host "Manual update controls: Check ARV Updates.cmd, then Update ARV.cmd"
