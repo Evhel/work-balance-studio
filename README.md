@@ -310,3 +310,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Local ARV server
+
+The Russian operator guide for the self-hosted Windows installation is in
+[`docs/ARV_LOCAL_SERVER_GUIDE_RU.txt`](docs/ARV_LOCAL_SERVER_GUIDE_RU.txt).
